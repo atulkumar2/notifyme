@@ -1,0 +1,20 @@
+# Virtual environments
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+.DS_Store
+Thumbs.db
+
+# UV package manager
+uv.lock
+.python-version
