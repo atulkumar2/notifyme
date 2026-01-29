@@ -9,11 +9,14 @@ __pycache__/
 *.so
 *.egg
 *.egg-info/
-dist/
-build/
 *.log
 .DS_Store
 Thumbs.db
+
+# PyInstaller
+build/
+dist/
+*.spec
 
 # UV package manager
 uv.lock

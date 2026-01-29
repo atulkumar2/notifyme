@@ -21,12 +21,22 @@ A modern Windows desktop application that helps you stay healthy by reminding yo
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Option 1: Download Pre-built Executable (Recommended)
+
+1. **Download** the latest `NotifyMe.exe` from [GitHub Releases](../../releases/latest)
+2. **Run** `NotifyMe.exe` - no installation required!
+3. **Optional: Auto-start with Windows**:
+   - Press `Win + R`, type `shell:startup`, press Enter
+   - Copy `NotifyMe.exe` or create a shortcut there
+
+### Option 2: Run from Source
+
+#### Prerequisites
 
 - Windows 10 or Windows 11
 - Python 3.8 or higher
 
-### Installation
+#### Installation
 
 1. **Clone or download this repository**
 
@@ -50,7 +60,7 @@ A modern Windows desktop application that helps you stay healthy by reminding yo
 
 The application will appear in your system tray (look for the icon in the bottom-right corner of your screen).
 
-### Building a Standalone Executable (Optional)
+### Building a Standalone Executable (For Developers)
 
 You can create a portable `.exe` file that doesn't require Python:
 
@@ -65,9 +75,15 @@ You can create a portable `.exe` file that doesn't require Python:
 
 2. **Find your executable** at `dist/NotifyMe.exe`
 
-3. **Optional: Auto-start with Windows**:
-   - Press `Win + R`, type `shell:startup`, press Enter
-   - Copy `NotifyMe.exe` or create a shortcut there
+## 📁 Data Storage
+
+NotifyMe stores its configuration and logs in your user data folder:
+
+- **Windows**: `%APPDATA%\NotifyMe\`
+  - `config.json` - Your preferences
+  - `notifyme.log` - Application logs
+
+To open this folder: Press `Win + R`, type `%APPDATA%\NotifyMe`, press Enter.
 
 ## 📖 How to Use
 
