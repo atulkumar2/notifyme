@@ -9,6 +9,7 @@ Reminder app - Windows Desktop Application
 
 import json
 import logging
+import os
 import random
 import sys
 import threading
@@ -20,13 +21,35 @@ from PIL import Image, ImageDraw
 from pystray import Icon, Menu, MenuItem
 from winotify import Notification, audio
 
+
+def get_app_data_dir() -> Path:
+    """Get the application data directory for storing config and logs."""
+    app_data = Path(os.environ.get("APPDATA", Path.home())) / "NotifyMe"
+    app_data.mkdir(parents=True, exist_ok=True)
+    return app_data
+
+
+def get_resource_path(filename: str) -> Path:
+    """Get path to bundled resource (for PyInstaller support)."""
+    if getattr(sys, "frozen", False):
+        # Running as compiled executable
+        base_path = Path(sys._MEIPASS)  # type: ignore[attr-defined]
+    else:
+        # Running as script
+        base_path = Path(__file__).parent
+    return base_path / filename
+
+
+# App data directory for config and logs
+APP_DATA_DIR = get_app_data_dir()
+
 # Configure logging with rolling file handler
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Create rotating file handler (5 MB per file, keep up to 5 backups)
 handler = RotatingFileHandler(
-    "notifyme.log",
+    APP_DATA_DIR / "notifyme.log",
     maxBytes=5 * 1024 * 1024,  # 5 MB
     backupCount=5,
     encoding="utf-8",
@@ -78,9 +101,9 @@ class NotifyMeApp:
 
     def __init__(self):
         """Initialize the NotifyMe Reminder application."""
-        self.config_file = Path(__file__).parent / "config.json"
-        self.icon_file = Path(__file__).parent / "icon.png"
-        self.icon_file_ico = Path(__file__).parent / "icon.ico"
+        self.config_file = APP_DATA_DIR / "config.json"
+        self.icon_file = get_resource_path("icon.png")
+        self.icon_file_ico = get_resource_path("icon.ico")
 
         # Ensure .ico exists for win10toast
         self.ensure_ico_exists()

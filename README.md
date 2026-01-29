@@ -50,6 +50,25 @@ A modern Windows desktop application that helps you stay healthy by reminding yo
 
 The application will appear in your system tray (look for the icon in the bottom-right corner of your screen).
 
+### Building a Standalone Executable (Optional)
+
+You can create a portable `.exe` file that doesn't require Python:
+
+1. **Build the executable**:
+   Double-click `build.bat`
+
+   Or manually:
+
+   ```bash
+   uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." notifyme.py
+   ```
+
+2. **Find your executable** at `dist/NotifyMe.exe`
+
+3. **Optional: Auto-start with Windows**:
+   - Press `Win + R`, type `shell:startup`, press Enter
+   - Copy `NotifyMe.exe` or create a shortcut there
+
 ## 📖 How to Use
 
 ### Starting Reminders

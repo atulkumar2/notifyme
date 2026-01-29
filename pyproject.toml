@@ -18,3 +18,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 py-modules = ["blink_reminder"]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.18.0",
+]
