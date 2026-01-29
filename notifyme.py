@@ -1,33 +1,53 @@
 """
-Eye Blink Reminder - Windows Desktop Application
-Reminds users to blink their eyes at regular intervals to reduce eye strain.
+Reminder app - Windows Desktop Application
+    Reminds users to blink their eyes at regular intervals to reduce eye strain.
+    Uses system tray icon and Windows toast notifications.
+    Remind intervals and settings are configurable via a JSON file.
+    Remind user to walk at longer intervals.
+    Logs events to a rolling log file.
 """
 
 import json
 import logging
 import random
+import sys
 import threading
 import time
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from PIL import Image, ImageDraw
 from pystray import Icon, Menu, MenuItem
-from win10toast import ToastNotifier
+from winotify import Notification, audio
 
-# Configure logging
-logging.basicConfig(
-    filename="blink_reminder.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+# Configure logging with rolling file handler
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Create rotating file handler (5 MB per file, keep up to 5 backups)
+handler = RotatingFileHandler(
+    "notifyme.log",
+    maxBytes=5 * 1024 * 1024,  # 5 MB
+    backupCount=5,
+    encoding="utf-8",
 )
 
+# Create formatter
+formatter = logging.Formatter(
+    "%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+handler.setFormatter(formatter)
 
-class BlinkReminderApp:
-    """Main application class for the Eye Blink Reminder."""
+# Add handler to logger
+logger.addHandler(handler)
 
-    # Reminder messages (randomized for variety)
-    MESSAGES = [
+
+class NotifyMeApp:
+    """Main application class for the NotifyMe Reminder."""
+
+    # Blink reminder messages (randomized for variety)
+    BLINK_MESSAGES = [
         "👁️ Time to blink! Give your eyes a break.",
         "💧 Blink reminder: Keep your eyes hydrated!",
         "✨ Don't forget to blink and look away from the screen.",
@@ -36,8 +56,18 @@ class BlinkReminderApp:
         "🌈 Blink break! Look at something 20 feet away for 20 seconds.",
     ]
 
+    # Walking reminder messages (randomized for variety)
+    WALKING_MESSAGES = [
+        "🚶 Time for a walk! Stretch your legs.",
+        "🏃 Walking break: Get up and move around!",
+        "🌿 Take a short walk - your body will thank you.",
+        "💪 Stand up and walk for a few minutes!",
+        "🚶‍♂️ Sitting too long? Time for a walking break!",
+        "🌞 Walk around for 5 minutes - refresh your mind and body!",
+    ]
+
     def __init__(self):
-        """Initialize the Eye Blink Reminder application."""
+        """Initialize the NotifyMe Reminder application."""
         self.config_file = Path(__file__).parent / "config.json"
         self.icon_file = Path(__file__).parent / "icon.png"
         self.icon_file_ico = Path(__file__).parent / "icon.ico"
@@ -47,22 +77,24 @@ class BlinkReminderApp:
 
         # Load configuration
         self.config = self.load_config()
-        self.interval_minutes = self.config.get("interval_minutes", 20)
+        self.interval_minutes: int = self.config.get("interval_minutes") or 20
+        self.walking_interval_minutes: int = self.config.get("walking_interval_minutes") or 60
 
         # Application state
         self.is_running = False
         self.is_paused = False
         self.timer_thread = None
+        self.walking_timer_thread = None
         self.icon = None
-        self.toaster = ToastNotifier()
 
         # Timer tracking
         self.next_reminder_time = None
+        self.next_walking_reminder_time = None
 
         logging.info("Application initialized")
 
     def ensure_ico_exists(self):
-        """Ensure an .ico version of the icon exists for win10toast."""
+        """Ensure an .ico version of the icon exists for notifications."""
         if not self.icon_file_ico.exists() and self.icon_file.exists():
             try:
                 img = Image.open(self.icon_file)
@@ -86,6 +118,7 @@ class BlinkReminderApp:
         """Return default configuration."""
         return {
             "interval_minutes": 20,
+            "walking_interval_minutes": 60,
             "sound_enabled": False,
             "auto_start": False,
             "last_run": None,
@@ -120,11 +153,13 @@ class BlinkReminderApp:
 
         return image
 
-    def show_notification(self):
+    def show_notification(self, title="Eye Blink Reminder", messages=None):
         """Display a Windows toast notification."""
-        message = random.choice(self.MESSAGES)  # noqa: S311
+        if messages is None:
+            messages = self.BLINK_MESSAGES
+        message = random.choice(messages)  # noqa: S311
         try:
-            # Prefer .ico for Windows toasts as .png can cause issues
+            # Get icon path for notification
             icon_path = (
                 str(self.icon_file_ico)
                 if self.icon_file_ico.exists()
@@ -132,18 +167,31 @@ class BlinkReminderApp:
             )
 
             logging.info("Showing notification: %s", message)
-            self.toaster.show_toast(
-                "Eye Blink Reminder",
-                message,
-                icon_path=icon_path,
-                duration=10,
-                threaded=True,
-            )
+
+            # Create notification using winotify
+            toast_args = {
+                "app_id": "NotifyMe Reminder",
+                "title": title,
+                "msg": message,
+            }
+            if icon_path:
+                toast_args["icon"] = icon_path
+            toast = Notification(**toast_args)
+            toast.set_audio(audio.Default, loop=False)
+            toast.show()
         except Exception as e:
             logging.error("Error showing notification: %s", e)
 
+    def show_blink_notification(self):
+        """Display a blink reminder notification."""
+        self.show_notification("Eye Blink Reminder", self.BLINK_MESSAGES)
+
+    def show_walking_notification(self):
+        """Display a walking reminder notification."""
+        self.show_notification("Walking Reminder", self.WALKING_MESSAGES)
+
     def timer_worker(self):
-        """Background worker that triggers reminders at intervals."""
+        """Background worker that triggers blink reminders at intervals."""
         while self.is_running:
             if not self.is_paused:
                 # Calculate next reminder time
@@ -154,22 +202,41 @@ class BlinkReminderApp:
 
                 # Show notification if still running and not paused
                 if self.is_running and not self.is_paused:
-                    self.show_notification()
+                    self.show_blink_notification()
+            else:
+                # If paused, check every second
+                time.sleep(1)
+
+    def walking_timer_worker(self):
+        """Background worker that triggers walking reminders at intervals."""
+        while self.is_running:
+            if not self.is_paused:
+                # Calculate next walking reminder time
+                self.next_walking_reminder_time = time.time() + (self.walking_interval_minutes * 60)
+
+                # Wait for the interval
+                time.sleep(self.walking_interval_minutes * 60)
+
+                # Show notification if still running and not paused
+                if self.is_running and not self.is_paused:
+                    self.show_walking_notification()
             else:
                 # If paused, check every second
                 time.sleep(1)
 
     def start_reminders(self):
-        """Start the reminder timer."""
+        """Start the reminder timers."""
         if not self.is_running:
             self.is_running = True
             self.is_paused = False
             self.timer_thread = threading.Thread(target=self.timer_worker, daemon=True)
             self.timer_thread.start()
+            self.walking_timer_thread = threading.Thread(target=self.walking_timer_worker, daemon=True)
+            self.walking_timer_thread.start()
             logging.info("Reminders started")
             if self.icon:
                 self.icon.title = (
-                    f"Eye Blink Reminder - Active ({self.interval_minutes}min)"
+                    f"Reminders Active - Blink: {self.interval_minutes}min, Walk: {self.walking_interval_minutes}min"
                 )
 
     def pause_reminders(self):
@@ -177,7 +244,7 @@ class BlinkReminderApp:
         self.is_paused = True
         logging.info("Reminders paused")
         if self.icon:
-            self.icon.title = "Eye Blink Reminder - Paused"
+            self.icon.title = "NotifyMe - Paused"
 
     def resume_reminders(self):
         """Resume the reminder timer."""
@@ -186,7 +253,7 @@ class BlinkReminderApp:
             logging.info("Reminders resumed")
             if self.icon:
                 self.icon.title = (
-                    f"Eye Blink Reminder - Active ({self.interval_minutes}min)"
+                    f"Reminders Active - Blink: {self.interval_minutes}min, Walk: {self.walking_interval_minutes}min"
                 )
 
     def stop_reminders(self):
@@ -195,7 +262,7 @@ class BlinkReminderApp:
         self.is_paused = False
         logging.info("Reminders stopped")
         if self.icon:
-            self.icon.title = "Eye Blink Reminder - Stopped"
+            self.icon.title = "NotifyMe - Stopped"
 
     def snooze_reminder(self):
         """Snooze the reminder for 5 minutes."""
@@ -205,16 +272,31 @@ class BlinkReminderApp:
             logging.info("Reminder snoozed for 5 minutes")
 
     def set_interval(self, minutes):
-        """Set a new reminder interval."""
+        """Set a new blink reminder interval."""
 
         def _set():
             self.interval_minutes = minutes
             self.config["interval_minutes"] = minutes
             self.save_config()
-            logging.info("Interval set to %s minutes", minutes)
+            logging.info("Blink interval set to %s minutes", minutes)
             if self.icon:
                 self.icon.title = (
-                    f"Eye Blink Reminder - Active ({self.interval_minutes}min)"
+                    f"Reminders Active - Blink: {self.interval_minutes}min, Walk: {self.walking_interval_minutes}min"
+                )
+
+        return _set
+
+    def set_walking_interval(self, minutes):
+        """Set a new walking reminder interval."""
+
+        def _set():
+            self.walking_interval_minutes = minutes
+            self.config["walking_interval_minutes"] = minutes
+            self.save_config()
+            logging.info("Walking interval set to %s minutes", minutes)
+            if self.icon:
+                self.icon.title = (
+                    f"Reminders Active - Blink: {self.interval_minutes}min, Walk: {self.walking_interval_minutes}min"
                 )
 
         return _set
@@ -226,10 +308,15 @@ class BlinkReminderApp:
             self.icon.stop()
         logging.info("Application closed")
 
-    def test_notification(self):
-        """Trigger a test notification immediately."""
-        logging.info("User requested test notification")
-        self.show_notification()
+    def test_blink_notification(self):
+        """Trigger a test blink notification immediately."""
+        logging.info("User requested test blink notification")
+        self.show_blink_notification()
+
+    def test_walking_notification(self):
+        """Trigger a test walking notification immediately."""
+        logging.info("User requested test walking notification")
+        self.show_walking_notification()
 
     def create_menu(self):
         """Create the system tray menu."""
@@ -239,10 +326,16 @@ class BlinkReminderApp:
             MenuItem("Resume", self.resume_reminders),
             MenuItem("Snooze (5 min)", self.snooze_reminder),
             Menu.SEPARATOR,
-            MenuItem("Test Notification", self.test_notification),
+            MenuItem(
+                "Test Notifications",
+                Menu(
+                    MenuItem("Test Blink", self.test_blink_notification),
+                    MenuItem("Test Walking", self.test_walking_notification),
+                ),
+            ),
             Menu.SEPARATOR,
             MenuItem(
-                "Set Interval",
+                "Blink Interval",
                 Menu(
                     MenuItem("10 minutes", self.set_interval(10)),
                     MenuItem("15 minutes", self.set_interval(15)),
@@ -250,6 +343,16 @@ class BlinkReminderApp:
                     MenuItem("30 minutes", self.set_interval(30)),
                     MenuItem("45 minutes", self.set_interval(45)),
                     MenuItem("60 minutes", self.set_interval(60)),
+                ),
+            ),
+            MenuItem(
+                "Walking Interval",
+                Menu(
+                    MenuItem("30 minutes", self.set_walking_interval(30)),
+                    MenuItem("45 minutes", self.set_walking_interval(45)),
+                    MenuItem("60 minutes", self.set_walking_interval(60)),
+                    MenuItem("90 minutes", self.set_walking_interval(90)),
+                    MenuItem("120 minutes", self.set_walking_interval(120)),
                 ),
             ),
             Menu.SEPARATOR,
@@ -261,9 +364,9 @@ class BlinkReminderApp:
         # Create the icon
         icon_image = self.create_icon_image()
         self.icon = Icon(
-            "Eye Blink Reminder",
+            "NotifyMe",
             icon_image,
-            "Eye Blink Reminder",
+            "NotifyMe",
             menu=self.create_menu(),
         )
 
@@ -271,15 +374,28 @@ class BlinkReminderApp:
         if self.config.get("auto_start", False):
             self.start_reminders()
 
-        # Run the icon (this blocks until quit)
-        logging.info("Eye Blink Reminder is running in the system tray")
-        logging.info("Default interval: %s minutes", self.interval_minutes)
-        self.icon.run()
+        # Run the icon in a separate thread so main thread can handle signals
+        logging.info("NotifyMe is running in the system tray")
+        logging.info("Blink interval: %s minutes, Walking interval: %s minutes",
+                     self.interval_minutes, self.walking_interval_minutes)
+        print("NotifyMe is running. Press Ctrl+C to quit.")
+
+        self.icon.run_detached()
+
+        # Main thread waits for Ctrl+C
+        try:
+            while self.icon.visible:
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            print("\nShutting down...")
+            logging.info("Received Ctrl+C, shutting down...")
+        finally:
+            self.quit_app()
 
 
 def main():
     """Main entry point for the application."""
-    app = BlinkReminderApp()
+    app = NotifyMeApp()
     app.run()
 
 

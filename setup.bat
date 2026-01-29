@@ -1,8 +1,8 @@
 @echo off
-REM Eye Blink Reminder - Setup Script (using UV)
+REM NotifyMe - Setup Script (using UV)
 
 echo ========================================
-echo Eye Blink Reminder - Setup
+echo NotifyMe - Setup
 echo ========================================
 echo.
 

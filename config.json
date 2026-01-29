@@ -1,5 +1,6 @@
 {
   "interval_minutes": 20,
+  "walking_interval_minutes": 60,
   "sound_enabled": false,
   "auto_start": false,
   "last_run": null
