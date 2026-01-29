@@ -66,6 +66,16 @@ class NotifyMeApp:
         "🌞 Walk around for 5 minutes - refresh your mind and body!",
     ]
 
+    # Water drinking reminder messages (randomized for variety)
+    WATER_MESSAGES = [
+        "💧 Time to hydrate! Drink a glass of water.",
+        "🚰 Water break: Stay hydrated for better health!",
+        "💦 Don't forget to drink water - your body needs it!",
+        "🌊 Hydration reminder: Drink some water now.",
+        "💙 Keep yourself hydrated - drink water regularly!",
+        "🥤 Water time! Drink at least 250ml now.",
+    ]
+
     def __init__(self):
         """Initialize the NotifyMe Reminder application."""
         self.config_file = Path(__file__).parent / "config.json"
@@ -79,17 +89,23 @@ class NotifyMeApp:
         self.config = self.load_config()
         self.interval_minutes: int = self.config.get("interval_minutes") or 20
         self.walking_interval_minutes: int = self.config.get("walking_interval_minutes") or 60
+        self.water_interval_minutes: int = self.config.get("water_interval_minutes") or 30
 
         # Application state
         self.is_running = False
         self.is_paused = False
+        self.is_blink_paused = False
+        self.is_walking_paused = False
+        self.is_water_paused = False
         self.timer_thread = None
         self.walking_timer_thread = None
+        self.water_timer_thread = None
         self.icon = None
 
         # Timer tracking
         self.next_reminder_time = None
         self.next_walking_reminder_time = None
+        self.next_water_reminder_time = None
 
         logging.info("Application initialized")
 
@@ -119,6 +135,7 @@ class NotifyMeApp:
         return {
             "interval_minutes": 20,
             "walking_interval_minutes": 60,
+            "water_interval_minutes": 30,
             "sound_enabled": False,
             "auto_start": False,
             "last_run": None,
@@ -190,10 +207,14 @@ class NotifyMeApp:
         """Display a walking reminder notification."""
         self.show_notification("Walking Reminder", self.WALKING_MESSAGES)
 
+    def show_water_notification(self):
+        """Display a water drinking reminder notification."""
+        self.show_notification("Water Reminder", self.WATER_MESSAGES)
+
     def timer_worker(self):
         """Background worker that triggers blink reminders at intervals."""
         while self.is_running:
-            if not self.is_paused:
+            if not self.is_paused and not self.is_blink_paused:
                 # Calculate next reminder time
                 self.next_reminder_time = time.time() + (self.interval_minutes * 60)
 
@@ -201,7 +222,7 @@ class NotifyMeApp:
                 time.sleep(self.interval_minutes * 60)
 
                 # Show notification if still running and not paused
-                if self.is_running and not self.is_paused:
+                if self.is_running and not self.is_paused and not self.is_blink_paused:
                     self.show_blink_notification()
             else:
                 # If paused, check every second
@@ -210,7 +231,7 @@ class NotifyMeApp:
     def walking_timer_worker(self):
         """Background worker that triggers walking reminders at intervals."""
         while self.is_running:
-            if not self.is_paused:
+            if not self.is_paused and not self.is_walking_paused:
                 # Calculate next walking reminder time
                 self.next_walking_reminder_time = time.time() + (self.walking_interval_minutes * 60)
 
@@ -218,8 +239,25 @@ class NotifyMeApp:
                 time.sleep(self.walking_interval_minutes * 60)
 
                 # Show notification if still running and not paused
-                if self.is_running and not self.is_paused:
+                if self.is_running and not self.is_paused and not self.is_walking_paused:
                     self.show_walking_notification()
+            else:
+                # If paused, check every second
+                time.sleep(1)
+
+    def water_timer_worker(self):
+        """Background worker that triggers water reminders at intervals."""
+        while self.is_running:
+            if not self.is_paused and not self.is_water_paused:
+                # Calculate next water reminder time
+                self.next_water_reminder_time = time.time() + (self.water_interval_minutes * 60)
+
+                # Wait for the interval
+                time.sleep(self.water_interval_minutes * 60)
+
+                # Show notification if still running and not paused
+                if self.is_running and not self.is_paused and not self.is_water_paused:
+                    self.show_water_notification()
             else:
                 # If paused, check every second
                 time.sleep(1)
@@ -229,32 +267,64 @@ class NotifyMeApp:
         if not self.is_running:
             self.is_running = True
             self.is_paused = False
+            self.is_blink_paused = False
+            self.is_walking_paused = False
+            self.is_water_paused = False
             self.timer_thread = threading.Thread(target=self.timer_worker, daemon=True)
             self.timer_thread.start()
             self.walking_timer_thread = threading.Thread(target=self.walking_timer_worker, daemon=True)
             self.walking_timer_thread.start()
+            self.water_timer_thread = threading.Thread(target=self.water_timer_worker, daemon=True)
+            self.water_timer_thread.start()
             logging.info("Reminders started")
-            if self.icon:
-                self.icon.title = (
-                    f"Reminders Active - Blink: {self.interval_minutes}min, Walk: {self.walking_interval_minutes}min"
-                )
+            self.update_icon_title()
 
     def pause_reminders(self):
-        """Pause the reminder timer."""
+        """Pause all reminder timers."""
         self.is_paused = True
-        logging.info("Reminders paused")
-        if self.icon:
-            self.icon.title = "NotifyMe - Paused"
+        logging.info("All reminders paused")
+        self.update_icon_title()
 
     def resume_reminders(self):
-        """Resume the reminder timer."""
+        """Resume all reminder timers."""
         if self.is_running:
             self.is_paused = False
-            logging.info("Reminders resumed")
-            if self.icon:
-                self.icon.title = (
-                    f"Reminders Active - Blink: {self.interval_minutes}min, Walk: {self.walking_interval_minutes}min"
-                )
+            logging.info("All reminders resumed")
+            self.update_icon_title()
+
+    def toggle_blink_pause(self):
+        """Toggle pause state for blink reminders."""
+        self.is_blink_paused = not self.is_blink_paused
+        logging.info("Blink reminders %s", "paused" if self.is_blink_paused else "resumed")
+        self.update_icon_title()
+
+    def toggle_walking_pause(self):
+        """Toggle pause state for walking reminders."""
+        self.is_walking_paused = not self.is_walking_paused
+        logging.info("Walking reminders %s", "paused" if self.is_walking_paused else "resumed")
+        self.update_icon_title()
+
+    def toggle_water_pause(self):
+        """Toggle pause state for water reminders."""
+        self.is_water_paused = not self.is_water_paused
+        logging.info("Water reminders %s", "paused" if self.is_water_paused else "resumed")
+        self.update_icon_title()
+
+    def update_icon_title(self):
+        """Update the system tray icon title based on current state."""
+        if not self.icon:
+            return
+
+        if self.is_paused:
+            self.icon.title = "NotifyMe - All Paused"
+            return
+
+        # Build status for each reminder type
+        blink_status = "⏸" if self.is_blink_paused else f"{self.interval_minutes}min"
+        walk_status = "⏸" if self.is_walking_paused else f"{self.walking_interval_minutes}min"
+        water_status = "⏸" if self.is_water_paused else f"{self.water_interval_minutes}min"
+
+        self.icon.title = f"Blink: {blink_status}, Walk: {walk_status}, Water: {water_status}"
 
     def stop_reminders(self):
         """Stop the reminder timer."""
@@ -279,10 +349,7 @@ class NotifyMeApp:
             self.config["interval_minutes"] = minutes
             self.save_config()
             logging.info("Blink interval set to %s minutes", minutes)
-            if self.icon:
-                self.icon.title = (
-                    f"Reminders Active - Blink: {self.interval_minutes}min, Walk: {self.walking_interval_minutes}min"
-                )
+            self.update_icon_title()
 
         return _set
 
@@ -294,10 +361,19 @@ class NotifyMeApp:
             self.config["walking_interval_minutes"] = minutes
             self.save_config()
             logging.info("Walking interval set to %s minutes", minutes)
-            if self.icon:
-                self.icon.title = (
-                    f"Reminders Active - Blink: {self.interval_minutes}min, Walk: {self.walking_interval_minutes}min"
-                )
+            self.update_icon_title()
+
+        return _set
+
+    def set_water_interval(self, minutes):
+        """Set a new water reminder interval."""
+
+        def _set():
+            self.water_interval_minutes = minutes
+            self.config["water_interval_minutes"] = minutes
+            self.save_config()
+            logging.info("Water interval set to %s minutes", minutes)
+            self.update_icon_title()
 
         return _set
 
@@ -318,12 +394,17 @@ class NotifyMeApp:
         logging.info("User requested test walking notification")
         self.show_walking_notification()
 
+    def test_water_notification(self):
+        """Trigger a test water notification immediately."""
+        logging.info("User requested test water notification")
+        self.show_water_notification()
+
     def create_menu(self):
         """Create the system tray menu."""
         return Menu(
             MenuItem("Start", self.start_reminders, default=True),
-            MenuItem("Pause", self.pause_reminders),
-            MenuItem("Resume", self.resume_reminders),
+            MenuItem("Pause All", self.pause_reminders),
+            MenuItem("Resume All", self.resume_reminders),
             MenuItem("Snooze (5 min)", self.snooze_reminder),
             Menu.SEPARATOR,
             MenuItem(
@@ -331,28 +412,45 @@ class NotifyMeApp:
                 Menu(
                     MenuItem("Test Blink", self.test_blink_notification),
                     MenuItem("Test Walking", self.test_walking_notification),
+                    MenuItem("Test Water", self.test_water_notification),
                 ),
             ),
             Menu.SEPARATOR,
             MenuItem(
-                "Blink Interval",
+                "Blink Reminder",
                 Menu(
-                    MenuItem("10 minutes", self.set_interval(10)),
-                    MenuItem("15 minutes", self.set_interval(15)),
-                    MenuItem("20 minutes", self.set_interval(20)),
-                    MenuItem("30 minutes", self.set_interval(30)),
-                    MenuItem("45 minutes", self.set_interval(45)),
-                    MenuItem("60 minutes", self.set_interval(60)),
+                    MenuItem("Pause/Resume", self.toggle_blink_pause, checked=lambda _: self.is_blink_paused),
+                    Menu.SEPARATOR,
+                    MenuItem("10 minutes", self.set_interval(10), checked=lambda _: self.interval_minutes == 10),
+                    MenuItem("15 minutes", self.set_interval(15), checked=lambda _: self.interval_minutes == 15),
+                    MenuItem("20 minutes", self.set_interval(20), checked=lambda _: self.interval_minutes == 20),
+                    MenuItem("30 minutes", self.set_interval(30), checked=lambda _: self.interval_minutes == 30),
+                    MenuItem("45 minutes", self.set_interval(45), checked=lambda _: self.interval_minutes == 45),
+                    MenuItem("60 minutes", self.set_interval(60), checked=lambda _: self.interval_minutes == 60),
                 ),
             ),
             MenuItem(
-                "Walking Interval",
+                "Walking Reminder",
                 Menu(
-                    MenuItem("30 minutes", self.set_walking_interval(30)),
-                    MenuItem("45 minutes", self.set_walking_interval(45)),
-                    MenuItem("60 minutes", self.set_walking_interval(60)),
-                    MenuItem("90 minutes", self.set_walking_interval(90)),
-                    MenuItem("120 minutes", self.set_walking_interval(120)),
+                    MenuItem("Pause/Resume", self.toggle_walking_pause, checked=lambda _: self.is_walking_paused),
+                    Menu.SEPARATOR,
+                    MenuItem("30 minutes", self.set_walking_interval(30), checked=lambda _: self.walking_interval_minutes == 30),
+                    MenuItem("45 minutes", self.set_walking_interval(45), checked=lambda _: self.walking_interval_minutes == 45),
+                    MenuItem("60 minutes", self.set_walking_interval(60), checked=lambda _: self.walking_interval_minutes == 60),
+                    MenuItem("90 minutes", self.set_walking_interval(90), checked=lambda _: self.walking_interval_minutes == 90),
+                    MenuItem("120 minutes", self.set_walking_interval(120), checked=lambda _: self.walking_interval_minutes == 120),
+                ),
+            ),
+            MenuItem(
+                "Water Reminder",
+                Menu(
+                    MenuItem("Pause/Resume", self.toggle_water_pause, checked=lambda _: self.is_water_paused),
+                    Menu.SEPARATOR,
+                    MenuItem("20 minutes", self.set_water_interval(20), checked=lambda _: self.water_interval_minutes == 20),
+                    MenuItem("30 minutes", self.set_water_interval(30), checked=lambda _: self.water_interval_minutes == 30),
+                    MenuItem("45 minutes", self.set_water_interval(45), checked=lambda _: self.water_interval_minutes == 45),
+                    MenuItem("60 minutes", self.set_water_interval(60), checked=lambda _: self.water_interval_minutes == 60),
+                    MenuItem("90 minutes", self.set_water_interval(90), checked=lambda _: self.water_interval_minutes == 90),
                 ),
             ),
             Menu.SEPARATOR,
@@ -376,8 +474,8 @@ class NotifyMeApp:
 
         # Run the icon in a separate thread so main thread can handle signals
         logging.info("NotifyMe is running in the system tray")
-        logging.info("Blink interval: %s minutes, Walking interval: %s minutes",
-                     self.interval_minutes, self.walking_interval_minutes)
+        logging.info("Blink interval: %s minutes, Walking interval: %s minutes, Water interval: %s minutes",
+                     self.interval_minutes, self.walking_interval_minutes, self.water_interval_minutes)
         print("NotifyMe is running. Press Ctrl+C to quit.")
 
         self.icon.run_detached()

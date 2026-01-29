@@ -1,16 +1,19 @@
-# � NotifyMe
+# 💧 NotifyMe
 
-A modern Windows desktop application that helps you stay healthy by reminding you to blink your eyes and take walking breaks at regular intervals.
+A modern Windows desktop application that helps you stay healthy by reminding you to blink your eyes, take walking breaks, and stay hydrated at regular intervals.
 
 ![NotifyMe Icon](icon.png)
 
 ## ✨ Features
 
-- **Dual Reminders**: Eye blink reminders (default: 20 min) and walking reminders (default: 60 min)
+- **Triple Reminders**: Eye blink reminders (default: 20 min), walking reminders (default: 60 min), and water drinking reminders (default: 30 min)
 - **Background Operation**: Runs silently in the system tray
 - **Windows Toast Notifications**: Native Windows 10/11 notifications
-- **Customizable Intervals**: Set blink reminders from 10-60 minutes, walking reminders from 30-120 minutes
-- **Pause/Resume**: Full control over when reminders appear
+- **Customizable Intervals**:
+  - Blink reminders: 10-60 minutes
+  - Walking reminders: 30-120 minutes
+  - Water reminders: 20-90 minutes
+- **Flexible Pause/Resume**: Pause all reminders at once, or pause each reminder type individually
 - **Snooze Function**: Delay the next reminder by 5 minutes
 - **Randomized Messages**: Variety of friendly reminder messages
 - **Persistent Settings**: Your preferences are saved between sessions
@@ -42,7 +45,7 @@ A modern Windows desktop application that helps you stay healthy by reminding yo
    Or manually:
 
    ```bash
-   uv run blink_reminder.py
+   uv run notifyme.py
    ```
 
 The application will appear in your system tray (look for the icon in the bottom-right corner of your screen).
@@ -53,26 +56,36 @@ The application will appear in your system tray (look for the icon in the bottom
 
 1. Right-click the icon in the system tray
 2. Click **"Start"** to begin receiving reminders
-3. You'll receive blink reminders every 20 minutes and walking reminders every 60 minutes (defaults)
+3. You'll receive blink reminders every 20 minutes, walking reminders every 60 minutes, and water reminders every 30 minutes (defaults)
 
 ### Customizing the Intervals
 
 1. Right-click the system tray icon
-2. Hover over **"Blink Interval"** or **"Walking Interval"**
+2. Hover over **"Blink Reminder"**, **"Walking Reminder"**, or **"Water Reminder"**
 3. Choose your preferred interval:
    - Blink: 10, 15, 20, 30, 45, or 60 minutes
    - Walking: 30, 45, 60, 90, or 120 minutes
+   - Water: 20, 30, 45, 60, or 90 minutes
 
 ### Testing Notifications
 
 1. Right-click the system tray icon
 2. Hover over **"Test Notifications"**
-3. Click **"Test Blink"** or **"Test Walking"** to preview notifications
+3. Click **"Test Blink"**, **"Test Walking"**, or **"Test Water"** to preview notifications
 
 ### Pausing and Resuming
 
-- Click **"Pause"** to temporarily stop reminders
-- Click **"Resume"** to continue receiving reminders
+**Pause/Resume All:**
+
+- Click **"Pause All"** to temporarily stop all reminders
+- Click **"Resume All"** to continue receiving all reminders
+
+**Pause/Resume Individual Reminders:**
+
+1. Hover over **"Blink Reminder"**, **"Walking Reminder"**, or **"Water Reminder"**
+2. Click **"Pause/Resume"** to toggle that specific reminder
+3. A checkmark (✓) indicates the reminder is currently paused
+4. The system tray icon shows ⏸ next to paused reminders
 
 ### Snoozing a Reminder
 
@@ -83,7 +96,9 @@ The application will appear in your system tray (look for the icon in the bottom
 - Right-click the system tray icon
 - Click **"Quit"**
 
-## 🎯 Why Blink?
+## 🎯 Why These Reminders?
+
+### Eye Blinking
 
 When we focus on screens, we blink less frequently, which can lead to:
 
@@ -92,7 +107,24 @@ When we focus on screens, we blink less frequently, which can lead to:
 - Blurred vision
 - Headaches
 
-This app helps you maintain healthy blinking habits by providing gentle, regular reminders.
+### Walking Breaks
+
+Prolonged sitting can cause:
+
+- Poor circulation
+- Muscle stiffness
+- Increased health risks
+- Reduced productivity
+
+### Water Hydration
+
+Staying hydrated is essential for:
+
+- Brain function and focus
+- Energy levels
+- Healthy skin
+- Proper digestion
+- Overall health
 
 ## 🔧 Configuration
 
@@ -102,6 +134,7 @@ The app stores your preferences in `config.json`:
 {
   "interval_minutes": 20,
   "walking_interval_minutes": 60,
+  "water_interval_minutes": 30,
   "sound_enabled": false,
   "auto_start": false,
   "last_run": null
@@ -113,6 +146,7 @@ You can manually edit this file to:
 - Set `auto_start` to `true` to automatically start reminders when the app launches
 - Adjust the default `interval_minutes` for blink reminders
 - Adjust the default `walking_interval_minutes` for walking reminders
+- Adjust the default `water_interval_minutes` for water reminders
 
 ## 📋 Reminder Messages
 
@@ -135,6 +169,15 @@ The app randomly selects from these friendly messages:
 - 💪 Stand up and walk for a few minutes!
 - 🚶‍♂️ Sitting too long? Time for a walking break!
 - 🌞 Walk around for 5 minutes - refresh your mind and body!
+
+### Water Reminders
+
+- 💧 Time to hydrate! Drink a glass of water.
+- 🚰 Water break: Stay hydrated for better health!
+- 💦 Don't forget to drink water - your body needs it!
+- 🌊 Hydration reminder: Drink some water now.
+- 💙 Keep yourself hydrated - drink water regularly!
+- 🥤 Water time! Drink at least 250ml now.
 
 ## 🛠️ Technical Details
 
@@ -160,8 +203,9 @@ Feel free to submit issues or pull requests to improve the application!
 - **Adjust screen brightness**: Match your screen brightness to your surroundings
 - **Use proper lighting**: Avoid glare and ensure adequate ambient lighting
 - **Take regular breaks**: Stand up and move around every hour
-- **Stay hydrated**: Drink water throughout the day
+- **Stay hydrated**: Drink at least 8 glasses (2 liters) of water throughout the day
+- **Set a hydration goal**: Track your water intake to ensure you're drinking enough
 
 ---
 
-**Stay healthy! 👁️🚶✨**
+## Stay healthy! 👁️🚶💧✨
