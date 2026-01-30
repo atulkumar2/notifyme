@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NotifyMe - User Guide (Offline)</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background: white;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        color: #667eea;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 10px;
+      }
+
+      .subtitle {
+        color: #666;
+        font-size: 1.1em;
+        margin-bottom: 30px;
+      }
+
+      h2 {
+        color: #667eea;
+        font-size: 1.8em;
+        margin-top: 40px;
+        margin-bottom: 15px;
+      }
+
+      h3 {
+        color: #333;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      p {
+        margin-bottom: 15px;
+        line-height: 1.8;
+      }
+
+      ul,
+      ol {
+        margin: 15px 0 15px 30px;
+      }
+
+      li {
+        margin: 8px 0;
+      }
+
+      code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: "Courier New", monospace;
+        color: #d63384;
+      }
+
+      .section {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border-left: 4px solid #667eea;
+      }
+
+      .info-box {
+        background: #e7f3ff;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+        border-left: 4px solid #0066cc;
+      }
+
+      .warning {
+        background: #fff3cd;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+        border-left: 4px solid #ff9800;
+      }
+
+      .success {
+        background: #d4edda;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+        border-left: 4px solid #28a745;
+      }
+
+      strong {
+        font-weight: 600;
+      }
+
+      a {
+        color: #667eea;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .toc {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border: 2px solid #667eea;
+      }
+
+      .toc h3 {
+        margin-top: 0;
+        color: #667eea;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .feature-card {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+      }
+
+      .footer {
+        margin-top: 50px;
+        padding-top: 20px;
+        border-top: 2px solid #eee;
+        text-align: center;
+        color: #666;
+        font-size: 0.9em;
+      }
+
+      .version {
+        background: #f0f0f0;
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-size: 0.85em;
+        color: #666;
+        margin-left: 10px;
+      }
+
+      kbd {
+        background: #333;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 0.9em;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>💧 NotifyMe User Guide</h1>
+      <p class="subtitle">
+        Stay healthy with eye, movement, and hydration reminders
+      </p>
+
+      <div class="toc">
+        <h3>📑 Quick Navigation</h3>
+        <ul style="margin: 10px 0 0 30px">
+          <li><a href="#getting-started">Getting Started</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#why-matters">Why These Reminders Matter</a></li>
+          <li><a href="#menu-guide">Menu Guide</a></li>
+          <li><a href="#configuration">Configuration</a></li>
+          <li><a href="#troubleshooting">Troubleshooting</a></li>
+        </ul>
+      </div>
+
+      <h2 id="getting-started">🚀 Getting Started</h2>
+
+      <ol>
+        <li>Launch NotifyMe</li>
+        <li>Look for the icon in your system tray (bottom-right corner)</li>
+        <li>Right-click to access the menu</li>
+        <li>Select "⚙ Controls" → "▶ Start" to begin</li>
+      </ol>
+
+      <h2 id="features">✨ Features</h2>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <strong>👁️ Eye Blink Reminders</strong>
+          <p>Default: 20 minutes. Customizable from 10-60 minutes.</p>
+        </div>
+        <div class="feature-card">
+          <strong>🚶 Walking Reminders</strong>
+          <p>Default: 60 minutes. Customizable from 30-120 minutes.</p>
+        </div>
+        <div class="feature-card">
+          <strong>💧 Water Reminders</strong>
+          <p>Default: 30 minutes. Customizable from 20-90 minutes.</p>
+        </div>
+        <div class="feature-card">
+          <strong>🎯 Individual Control</strong>
+          <p>Pause/resume each reminder type independently.</p>
+        </div>
+        <div class="feature-card">
+          <strong>💤 Snooze Function</strong>
+          <p>Delay next reminder by 5 minutes.</p>
+        </div>
+        <div class="feature-card">
+          <strong>⚙️ Auto-save Settings</strong>
+          <p>Your preferences persist across sessions.</p>
+        </div>
+      </div>
+
+      <h2 id="why-matters">❓ Why These Reminders Matter</h2>
+
+      <div class="section">
+        <h3>👁️ Blink Reminders</h3>
+        <p>
+          <strong>The Problem:</strong> When staring at screens, people blink
+          66% less, causing <strong>digital eye strain</strong>, dry eyes, and
+          fatigue.
+        </p>
+        <ul>
+          <li>Reduced tear production leads to eye discomfort</li>
+          <li>Eye muscles become fatigued from continuous focus</li>
+          <li>Can cause long-term vision problems</li>
+        </ul>
+        <p>
+          <strong>The Solution:</strong> Regular blinking refreshes eyes with
+          natural tears, reduces strain, and prevents vision degradation.
+          Following the 20-20-20 rule (every 20 minutes, look 20 feet away for
+          20 seconds) is recommended by optometrists.
+        </p>
+      </div>
+
+      <div class="section">
+        <h3>🚶 Walking Reminders</h3>
+        <p>
+          <strong>The Problem:</strong> Prolonged sitting restricts blood flow,
+          weakens muscles, and increases health risks.
+        </p>
+        <ul>
+          <li>Poor blood circulation increases heart disease and clot risks</li>
+          <li>Muscle weakness and metabolic slowdown</li>
+          <li>Postural problems leading to back and neck pain</li>
+          <li>Mental health impact: reduced mood and increased stress</li>
+        </ul>
+        <p>
+          <strong>The Solution:</strong> Even brief 5-minute walking breaks
+          improve circulation, strengthen muscles, improve posture, boost mood,
+          and increase productivity. Short movement breaks can reduce health
+          risks by up to 30%.
+        </p>
+      </div>
+
+      <div class="section">
+        <h3>💧 Hydration Reminders</h3>
+        <p>
+          <strong>The Problem:</strong> Even mild dehydration (2% fluid loss)
+          significantly impairs cognitive function.
+        </p>
+        <ul>
+          <li>Reduced concentration and memory (your brain is 75% water)</li>
+          <li>Fatigue and reduced physical performance</li>
+          <li>Common cause of workplace headaches</li>
+          <li>Affects kidney function and digestion</li>
+        </ul>
+        <p>
+          <strong>The Solution:</strong> Regular water intake maintains optimal
+          brain function, improves energy levels, prevents headaches, and
+          supports overall health. The recommended intake is 8-10 glasses daily.
+        </p>
+      </div>
+
+      <h2 id="menu-guide">📋 Menu Guide</h2>
+
+      <h3>⚙ Controls</h3>
+      <ul>
+        <li><strong>▶ Start:</strong> Begin all reminders</li>
+        <li><strong>⏸ Pause All:</strong> Pause all reminders temporarily</li>
+        <li><strong>▶ Resume All:</strong> Resume all paused reminders</li>
+      </ul>
+
+      <h3>👁 Blink Reminder</h3>
+      <ul>
+        <li><strong>⏸ Pause/Resume:</strong> Toggle blink reminders on/off</li>
+        <li><strong>10-60 minutes:</strong> Choose your interval</li>
+      </ul>
+
+      <h3>🚶 Walking Reminder</h3>
+      <ul>
+        <li>
+          <strong>⏸ Pause/Resume:</strong> Toggle walking reminders on/off
+        </li>
+        <li><strong>30-120 minutes:</strong> Choose your interval</li>
+      </ul>
+
+      <h3>💧 Water Reminder</h3>
+      <ul>
+        <li><strong>⏸ Pause/Resume:</strong> Toggle water reminders on/off</li>
+        <li><strong>20-90 minutes:</strong> Choose your interval</li>
+      </ul>
+
+      <h3>💤 Snooze (5 min)</h3>
+      <p>Delay the next reminder by 5 minutes</p>
+
+      <h3>🔔 Test Notifications</h3>
+      <p>Test each notification type to verify they work properly</p>
+
+      <h3>📂 Open Locations</h3>
+      <ul>
+        <li><strong>📄 Log Location:</strong> View application logs</li>
+        <li><strong>⚙ Config Location:</strong> Edit configuration file</li>
+        <li><strong>📦 App Location:</strong> Find application files</li>
+      </ul>
+
+      <h2 id="configuration">⚙️ Configuration</h2>
+
+      <p>
+        Your settings are stored in: <code>%APPDATA%\NotifyMe\config.json</code>
+      </p>
+
+      <p>
+        Access it by right-clicking the tray icon → "📂 Open Locations" → "⚙
+        Config Location"
+      </p>
+
+      <div class="success">
+        <strong>💡 Tip:</strong> Use the tray menu to configure intervals
+        (easiest method). Manual JSON editing is available for advanced users.
+      </div>
+
+      <h3>Configuration Options</h3>
+      <ul>
+        <li><code>interval_minutes</code> - Blink reminder interval (10-60)</li>
+        <li>
+          <code>walking_interval_minutes</code> - Walking reminder interval
+          (30-120)
+        </li>
+        <li>
+          <code>water_interval_minutes</code> - Water reminder interval (20-90)
+        </li>
+        <li>
+          <code>sound_enabled</code> - Enable/disable notification sounds
+          (true/false)
+        </li>
+        <li>
+          <code>auto_start</code> - Automatically start reminders on launch
+          (true/false)
+        </li>
+      </ul>
+
+      <h2 id="troubleshooting">🆘 Troubleshooting</h2>
+
+      <h3>Notifications Not Appearing</h3>
+      <div class="info-box">
+        <strong>Step 1:</strong> Check Windows Notification Settings
+        <ol style="margin-top: 10px">
+          <li>Open Settings (<kbd>Win</kbd> + <kbd>I</kbd>)</li>
+          <li>Go to "System" → "Notifications"</li>
+          <li>Enable notifications for NotifyMe</li>
+        </ol>
+        <p style="margin-top: 10px">
+          <strong>Step 2:</strong> Test Notifications
+        </p>
+        <ol style="margin-top: 10px">
+          <li>Right-click NotifyMe icon → "🔔 Test Notifications"</li>
+          <li>Choose a test type</li>
+          <li>Notification should appear immediately</li>
+        </ol>
+      </div>
+
+      <h3>Application Won't Start</h3>
+      <div class="info-box">
+        <strong>If running from source:</strong>
+        <ol style="margin-top: 10px">
+          <li>Ensure Python 3.8+ is installed</li>
+          <li>Run <code>setup.bat</code> to install dependencies</li>
+        </ol>
+        <p style="margin-top: 10px"><strong>Check logs:</strong></p>
+        <ol style="margin-top: 10px">
+          <li>
+            Right-click tray icon → "📂 Open Locations" → "📄 Log Location"
+          </li>
+          <li>Open <code>notifyme.log</code> in a text editor</li>
+          <li>Look for error messages</li>
+        </ol>
+      </div>
+
+      <h3>Settings Not Saving</h3>
+      <div class="warning">
+        <strong>Solution 1:</strong> Check file permissions on
+        <code>%APPDATA%\NotifyMe\</code>
+        <p style="margin-top: 10px">
+          <strong>Solution 2:</strong> Reset config file
+        </p>
+        <ol style="margin-top: 10px">
+          <li>Close NotifyMe</li>
+          <li>Delete <code>%APPDATA%\NotifyMe\config.json</code></li>
+          <li>Restart NotifyMe (will create fresh config)</li>
+        </ol>
+      </div>
+
+      <h3>Reminders Not Triggering</h3>
+      <div class="info-box">
+        <ol>
+          <li>Verify reminders are started ("▶ Start" selected)</li>
+          <li>Check that reminder types aren't paused (⏸ symbol)</li>
+          <li>Verify intervals are reasonable (not too long)</li>
+          <li>Check logs for any error messages</li>
+        </ol>
+      </div>
+
+      <h2>💡 Tips & Tricks</h2>
+
+      <ul>
+        <li>
+          <strong>Individual Control:</strong> Pause each reminder type
+          independently
+        </li>
+        <li>
+          <strong>Custom Intervals:</strong> Adjust based on your work schedule
+        </li>
+        <li>
+          <strong>Test First:</strong> Use Test Notifications to verify they
+          work
+        </li>
+        <li>
+          <strong>Auto-Start:</strong> Enable in config to start reminders
+          automatically
+        </li>
+        <li><strong>View Logs:</strong> Track reminder history in the logs</li>
+      </ul>
+
+      <h2>📱 System Requirements</h2>
+
+      <ul>
+        <li>Windows 10 or Windows 11</li>
+        <li>Python 3.8+ (if running from source)</li>
+        <li>No internet required for offline use</li>
+        <li>Minimal disk space and RAM usage</li>
+      </ul>
+
+      <div class="footer">
+        <p>NotifyMe User Guide (Offline Version)</p>
+        <p>
+          For online documentation and updates, visit:
+          <a href="https://atulkumar2.github.io/notifyme/" target="_blank"
+            >https://atulkumar2.github.io/notifyme/</a
+          >
+        </p>
+        <p style="margin-top: 20px; color: #999">
+          Made with ❤️ to help you stay healthy and productive
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

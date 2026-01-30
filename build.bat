@@ -10,7 +10,7 @@ if not exist icon.ico (
 
 REM Build the executable
 echo Running PyInstaller...
-uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." notifyme.py
+uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." --add-data "help;help" notifyme.py
 
 echo.
 if exist dist\NotifyMe.exe (

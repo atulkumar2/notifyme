@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NotifyMe User Guide</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #f5f5f5;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background: white;
+        min-height: 100vh;
+      }
+
+      h1 {
+        color: #0066cc;
+        margin: 30px 0 20px 0;
+        font-size: 2.5em;
+        border-bottom: 3px solid #0066cc;
+        padding-bottom: 10px;
+      }
+
+      h2 {
+        color: #0066cc;
+        margin: 25px 0 15px 0;
+        font-size: 1.8em;
+      }
+
+      h3 {
+        color: #333;
+        margin: 20px 0 10px 0;
+        font-size: 1.3em;
+      }
+
+      p {
+        margin: 10px 0 15px 0;
+      }
+
+      ul,
+      ol {
+        margin: 15px 0 15px 30px;
+      }
+
+      li {
+        margin: 8px 0;
+      }
+
+      code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: "Courier New", monospace;
+        font-size: 0.95em;
+      }
+
+      pre {
+        background: #f4f4f4;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+        margin: 15px 0;
+        border-left: 4px solid #0066cc;
+      }
+
+      pre code {
+        background: none;
+        padding: 0;
+      }
+
+      .feature-list {
+        list-style: none;
+        margin: 15px 0;
+      }
+
+      .feature-list li {
+        padding: 8px 0;
+        padding-left: 30px;
+        position: relative;
+      }
+
+      .feature-list li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #0066cc;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+
+      .section {
+        margin: 30px 0;
+      }
+
+      a {
+        color: #0066cc;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      strong {
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>💧 NotifyMe</h1>
+
+      <p style="font-size: 1.1em; color: #666">
+        A modern Windows desktop application that helps you stay healthy by
+        reminding you to blink your eyes, take walking breaks, and stay hydrated
+        at regular intervals.
+      </p>
+
+      <h2 style="margin-top: 40px">✨ Features</h2>
+
+      <ul class="feature-list">
+        <li>
+          <strong>Triple Reminders:</strong> Eye blink reminders (default: 20
+          min), walking reminders (default: 60 min), and water drinking
+          reminders (default: 30 min)
+        </li>
+        <li>
+          <strong>Background Operation:</strong> Runs silently in the system
+          tray
+        </li>
+        <li>
+          <strong>Windows Toast Notifications:</strong> Native Windows 10/11
+          notifications
+        </li>
+        <li>
+          <strong>Customizable Intervals:</strong>
+          <ul style="margin-top: 8px">
+            <li>Blink reminders: 10-60 minutes</li>
+            <li>Walking reminders: 30-120 minutes</li>
+            <li>Water reminders: 20-90 minutes</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Flexible Pause/Resume:</strong> Pause all reminders at once,
+          or pause each reminder type individually
+        </li>
+        <li>
+          <strong>Snooze Function:</strong> Delay the next reminder by 5 minutes
+        </li>
+        <li>
+          <strong>Randomized Messages:</strong> Variety of friendly reminder
+          messages
+        </li>
+        <li>
+          <strong>Persistent Settings:</strong> Your preferences are saved
+          between sessions
+        </li>
+        <li>
+          <strong>Rolling Logs:</strong> Log files automatically rotate to
+          prevent disk space issues
+        </li>
+        <li>
+          <strong>Easy Access:</strong> Quickly open log, config, and app
+          locations from the system tray menu
+        </li>
+        <li>
+          <strong>Visual Menu Icons:</strong> Emoji icons for easy navigation of
+          menu options
+        </li>
+      </ul>
+
+      <h2>❓ Why These Reminders Matter</h2>
+
+      <div
+        style="
+          background: #f0f8ff;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        "
+      >
+        <h3>👁️ Eye Blink Reminders</h3>
+        <p><strong>What happens when you don't blink enough?</strong></p>
+        <ul>
+          <li>
+            <strong>Digital Eye Strain (Computer Vision Syndrome):</strong> When
+            focused on screens, people blink 66% less. This causes dry, tired,
+            and irritated eyes.
+          </li>
+          <li>
+            <strong>Reduced Tear Production:</strong> Blinking spreads tears
+            across your eyes. Fewer blinks mean less moisture, leading to
+            discomfort and vision problems.
+          </li>
+          <li>
+            <strong>Eye Fatigue:</strong> Continuous focus on a single distance
+            strains the eye muscles, causing headaches and fatigue.
+          </li>
+          <li>
+            <strong>Long-term Damage:</strong> Chronic dry eyes can lead to
+            corneal abrasion and vision quality degradation.
+          </li>
+        </ul>
+        <p>
+          <strong>How blinking helps:</strong> Regular blinking refreshes your
+          eyes with natural tears, reduces strain, and gives your eye muscles a
+          brief rest. Following the 20-20-20 rule (every 20 minutes, look at
+          something 20 feet away for 20 seconds) is highly recommended by
+          optometrists.
+        </p>
+      </div>
+
+      <div
+        style="
+          background: #f0fff0;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        "
+      >
+        <h3>🚶 Walking Reminders</h3>
+        <p><strong>What happens when you sit too long?</strong></p>
+        <ul>
+          <li>
+            <strong>Poor Blood Circulation:</strong> Prolonged sitting restricts
+            blood flow, increasing risk of blood clots, varicose veins, and
+            cardiovascular issues.
+          </li>
+          <li>
+            <strong>Muscle Weakness:</strong> Sedentary behavior weakens
+            muscles, reduces metabolism, and can lead to weight gain and muscle
+            atrophy.
+          </li>
+          <li>
+            <strong>Postural Problems:</strong> Sitting for extended periods
+            causes poor posture, leading to back pain, neck strain, and spinal
+            issues.
+          </li>
+          <li>
+            <strong>Mental Health Impact:</strong> Lack of movement decreases
+            endorphins and increases stress and anxiety. Movement improves mood
+            and mental clarity.
+          </li>
+          <li>
+            <strong>Increased Health Risks:</strong> Studies show that sitting
+            more than 8 hours daily significantly increases risk of heart
+            disease, diabetes, and early mortality.
+          </li>
+        </ul>
+        <p>
+          <strong>How walking helps:</strong> Even brief walking breaks (5-10
+          minutes) improve circulation, strengthen muscles, improve posture,
+          boost mood, and increase productivity. Short movement breaks every
+          hour can reduce health risks by up to 30%.
+        </p>
+      </div>
+
+      <div
+        style="
+          background: #fffaf0;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        "
+      >
+        <h3>💧 Water Hydration Reminders</h3>
+        <p><strong>What happens when you're dehydrated?</strong></p>
+        <ul>
+          <li>
+            <strong>Brain Function Decline:</strong> Even mild dehydration (2%
+            loss) impairs concentration, memory, and decision-making abilities.
+            Your brain is 75% water!
+          </li>
+          <li>
+            <strong>Energy Loss:</strong> Dehydration reduces oxygen delivery to
+            cells, causing fatigue, weakness, and reduced physical performance.
+          </li>
+          <li>
+            <strong>Headaches:</strong> One of the most common causes of
+            workplace headaches is insufficient water intake.
+          </li>
+          <li>
+            <strong>Physical Performance:</strong> Dehydration affects muscle
+            function, coordination, and endurance during any physical activity.
+          </li>
+          <li>
+            <strong>Kidney and Digestive Issues:</strong> Inadequate water
+            intake can lead to kidney stones, constipation, and urinary tract
+            infections.
+          </li>
+          <li>
+            <strong>Temperature Regulation:</strong> Your body uses water to
+            regulate temperature. Dehydration can lead to overheating and
+            heat-related illness.
+          </li>
+        </ul>
+        <p>
+          <strong>How hydration helps:</strong> Regular water intake maintains
+          optimal body function, improves cognitive performance, boosts energy
+          levels, aids digestion, and supports overall health. The recommended
+          intake is 8-10 glasses daily, but needs vary based on activity and
+          climate.
+        </p>
+      </div>
+
+      <h2>🚀 Quick Start</h2>
+
+      <h3>Option 1: Running the Application</h3>
+      <ol>
+        <li>
+          Look for the NotifyMe icon in your system tray (bottom-right corner of
+          your screen)
+        </li>
+        <li>Right-click the icon to access the menu</li>
+        <li>Click "⚙ Controls" → "▶ Start" to begin receiving reminders</li>
+      </ol>
+
+      <h3>Option 2: Configuring Reminders</h3>
+      <p>
+        Right-click the NotifyMe icon and customize your reminder intervals:
+      </p>
+      <ul>
+        <li>
+          <strong>👁 Blink Reminder:</strong> Choose interval from 10 to 60
+          minutes
+        </li>
+        <li>
+          <strong>🚶 Walking Reminder:</strong> Choose interval from 30 to 120
+          minutes
+        </li>
+        <li>
+          <strong>💧 Water Reminder:</strong> Choose interval from 20 to 90
+          minutes
+        </li>
+      </ul>
+
+      <h3>Option 3: Testing Notifications</h3>
+      <p>
+        Before starting the app, test notifications by right-clicking the icon
+        and selecting "🔔 Test Notifications"
+      </p>
+
+      <h2>📋 Menu Guide</h2>
+
+      <div class="section">
+        <h3>⚙ Controls</h3>
+        <ul>
+          <li><strong>▶ Start:</strong> Begin all reminders</li>
+          <li><strong>⏸ Pause All:</strong> Temporarily pause all reminders</li>
+          <li><strong>▶ Resume All:</strong> Resume paused reminders</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>💤 Snooze (5 min)</h3>
+        <p>Delay the next reminder by 5 minutes</p>
+      </div>
+
+      <div class="section">
+        <h3>🔔 Test Notifications</h3>
+        <ul>
+          <li><strong>👁 Test Blink:</strong> Display a test blink reminder</li>
+          <li>
+            <strong>🚶 Test Walking:</strong> Display a test walking reminder
+          </li>
+          <li><strong>💧 Test Water:</strong> Display a test water reminder</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>👁 Blink Reminder</h3>
+        <ul>
+          <li>
+            <strong>⏸ Pause/Resume:</strong> Toggle blink reminders on/off
+          </li>
+          <li>
+            <strong>Intervals:</strong> Set custom interval (10, 15, 20, 30, 45,
+            or 60 minutes)
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>🚶 Walking Reminder</h3>
+        <ul>
+          <li>
+            <strong>⏸ Pause/Resume:</strong> Toggle walking reminders on/off
+          </li>
+          <li>
+            <strong>Intervals:</strong> Set custom interval (30, 45, 60, 90, or
+            120 minutes)
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>💧 Water Reminder</h3>
+        <ul>
+          <li>
+            <strong>⏸ Pause/Resume:</strong> Toggle water reminders on/off
+          </li>
+          <li>
+            <strong>Intervals:</strong> Set custom interval (20, 30, 45, 60, or
+            90 minutes)
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>📂 Open Locations</h3>
+        <ul>
+          <li><strong>📄 Log Location:</strong> View application logs</li>
+          <li>
+            <strong>⚙ Config Location:</strong> View/edit configuration file
+          </li>
+          <li><strong>📦 App Location:</strong> View application files</li>
+        </ul>
+      </div>
+
+      <h2>⚙️ Configuration</h2>
+      <p>
+        Your preferences are stored in a JSON configuration file. You can edit
+        it directly or use the menu to configure settings. The config file is
+        located at:
+      </p>
+      <pre><code>%APPDATA%\NotifyMe\config.json</code></pre>
+
+      <h2>📝 Logs</h2>
+      <p>
+        NotifyMe keeps detailed logs of all events. Log files are automatically
+        rotated to prevent disk space issues. View your logs at:
+      </p>
+      <pre><code>%APPDATA%\NotifyMe\notifyme.log</code></pre>
+
+      <h2>💡 Tips</h2>
+      <ul>
+        <li>
+          <strong>Auto-start:</strong> Add NotifyMe to your Windows startup
+          folder for automatic launching
+        </li>
+        <li>
+          <strong>Multiple Pauses:</strong> You can pause individual reminder
+          types while keeping others active
+        </li>
+        <li>
+          <strong>Snooze Power:</strong> Use snooze when you're in the middle of
+          something and need a 5-minute extension
+        </li>
+        <li>
+          <strong>Custom Intervals:</strong> Adjust reminder intervals based on
+          your work schedule and habits
+        </li>
+        <li>
+          <strong>Notifications:</strong> Windows notifications appear on top of
+          all windows, so they'll catch your attention
+        </li>
+      </ul>
+
+      <h2>❓ Troubleshooting</h2>
+
+      <div class="section">
+        <h3>Notifications not appearing?</h3>
+        <ul>
+          <li>Check Windows notification settings for NotifyMe</li>
+          <li>Use "🔔 Test Notifications" to verify notifications work</li>
+          <li>
+            Ensure NotifyMe has permission to send notifications (Windows
+            Settings → Notifications)
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>Application not starting?</h3>
+        <ul>
+          <li>
+            Check the log file at <code>%APPDATA%\NotifyMe\notifyme.log</code>
+          </li>
+          <li>
+            Ensure you have Python 3.8+ installed (if running from source)
+          </li>
+          <li>
+            Try running from the source directory:
+            <code>uv run notifyme.py</code>
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>Settings not saving?</h3>
+        <ul>
+          <li>Verify the config file location is writable</li>
+          <li>Check file permissions at <code>%APPDATA%\NotifyMe\</code></li>
+          <li>Check the log file for any error messages</li>
+        </ul>
+      </div>
+
+      <h2>🎯 Getting Started Checklist</h2>
+      <ul class="feature-list">
+        <li>Launch NotifyMe.exe</li>
+        <li>Look for the app icon in the system tray</li>
+        <li>Test notifications via "🔔 Test Notifications" menu</li>
+        <li>Configure your preferred reminder intervals</li>
+        <li>Click "▶ Start" to begin</li>
+        <li>Optionally add to Windows startup for auto-launch</li>
+      </ul>
+
+      <hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd" />
+
+      <p
+        style="
+          text-align: center;
+          color: #666;
+          font-size: 0.9em;
+          margin-top: 40px;
+        "
+      >
+        Made with ❤️ to help you stay healthy and productive
+      </p>
+    </div>
+  </body>
+</html>

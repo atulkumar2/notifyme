@@ -203,14 +203,13 @@ class TestNotifyMeApp(unittest.TestCase):
     @patch("notifyme.webbrowser.open")
     def test_open_user_guide(self, mock_open):
         """Test opening the user guide in browser."""
-        readme_path = Path(self.temp_dir) / "README.md"
-        readme_path.write_text("# NotifyMe\n\nTest guide content.", encoding="utf-8")
-        with patch("notifyme.get_resource_path", return_value=readme_path):
-            with patch("notifyme.APP_DATA_DIR", Path(self.temp_dir)):
-                self.app.open_user_guide()
+        help_dir = Path(self.temp_dir) / "help"
+        help_dir.mkdir(exist_ok=True)
+        help_path = help_dir / "index.html"
+        help_path.write_text("<html><body>User Guide</body></html>", encoding="utf-8")
+        with patch("notifyme.get_resource_path", return_value=help_dir):
+            self.app.open_help()
 
-        guide_path = Path(self.temp_dir) / "notifyme-guide.html"
-        self.assertTrue(guide_path.exists())
         mock_open.assert_called_once()
 
     def test_update_icon_title_paused(self):

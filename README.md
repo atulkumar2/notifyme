@@ -72,7 +72,7 @@ You can create a portable `.exe` file that doesn't require Python:
    Or manually:
 
    ```bash
-   uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." --add-data "README.md;." notifyme.py
+   uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." --add-data "help.html;." notifyme.py
    ```
 
 2. **Find your executable** at `dist/NotifyMe.exe`

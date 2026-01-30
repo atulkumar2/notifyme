@@ -5,7 +5,7 @@ a = Analysis(
     ['notifyme.py'],
     pathex=[],
     binaries=[],
-    datas=[('icon.png', '.'), ('icon.ico', '.')],
+    datas=[('icon.png', '.'), ('icon.ico', '.'), ('help', 'help')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

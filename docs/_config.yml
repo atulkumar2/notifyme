@@ -1,0 +1,7 @@
+theme: jekyll-theme-cayman
+title: NotifyMe User Guide
+description: Stay healthy with eye, movement, and hydration reminders
+show_downloads: false
+github:
+  is_project_page: true
+  repository_url: https://github.com/atulkumar2/notifyme
