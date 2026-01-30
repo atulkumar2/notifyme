@@ -94,10 +94,37 @@ If running from source:
 2. Confirm selected interval is reasonable
 3. Intervals are counted from last trigger, not elapsed
 
+## File Locations Reference
+
+### Log File
+
+**Path:** `%APPDATA%\NotifyMe\notifyme.log`
+
+**Quick Access:** Right-click tray icon → "📂 Open Locations" → "📄 Log Location"
+
+**What's Inside:**
+
+- Application startup/shutdown events
+- Reminder triggers and notifications
+- Configuration changes
+- Error messages and warnings
+
+**Log Rotation:** 5 MB per file, up to 5 backups (notifyme.log.1, .2, .3, .4, .5)
+
+### Config File
+
+**Path:** `%APPDATA%\NotifyMe\config.json`
+
+**Quick Access:** Right-click tray icon → "📂 Open Locations" → "⚙ Config Location"
+
+### Application Files
+
+**Quick Access:** Right-click tray icon → "📂 Open Locations" → "📦 App Location"
+
 ## Still Need Help?
 
-1. **Check the logs**: Open via tray menu → "📂 Open Locations" → "📄 Log Location"
-2. **Review configuration**: "📂 Open Locations" → "⚙ Config Location"
+1. **Check the logs**: Review `%APPDATA%\NotifyMe\notifyme.log` for error messages
+2. **Review configuration**: Verify settings in `%APPDATA%\NotifyMe\config.json`
 3. **Reset to defaults**: Delete config.json and restart (recreates with defaults)
 4. **Reinstall**: Try the latest version from GitHub Releases
 

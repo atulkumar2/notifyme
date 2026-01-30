@@ -565,6 +565,15 @@ class NotifyMeApp:
         except Exception as e:
             logging.error("Failed to open GitHub repository: %s", e)
 
+    def open_github_pages(self):
+        """Open the GitHub Pages documentation in the default browser."""
+        github_pages_url = "https://atulkumar2.github.io/notifyme/"
+        try:
+            webbrowser.open(github_pages_url)
+            logging.info("Opened GitHub Pages documentation")
+        except Exception as e:
+            logging.error("Failed to open GitHub Pages documentation: %s", e)
+
     def create_menu(self):
         """Create the system tray menu."""
         return Menu(
@@ -708,7 +717,8 @@ class NotifyMeApp:
                 "❓ Help",
                 Menu(
                     MenuItem("🌐 User Guide", self.open_help),
-                    MenuItem("🐙 GitHub Repository", self.open_github),
+                    MenuItem("� Online Documentation", self.open_github_pages),
+                    MenuItem("�🐙 GitHub Repository", self.open_github),
                 ),
             ),
             Menu.SEPARATOR,

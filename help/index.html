@@ -195,6 +195,7 @@
           <li><a href="#menu-guide">Menu Guide</a></li>
           <li><a href="#configuration">Configuration</a></li>
           <li><a href="#troubleshooting">Troubleshooting</a></li>
+          <li><a href="#file-locations">File Locations Reference</a></li>
         </ul>
       </div>
 
@@ -465,6 +466,51 @@
         <li>No internet required for offline use</li>
         <li>Minimal disk space and RAM usage</li>
       </ul>
+
+      <h2 id="file-locations">📂 File Locations Reference</h2>
+
+      <div class="section">
+        <h3>Log File</h3>
+        <p>
+          <strong>Path:</strong>
+          <code>%APPDATA%\NotifyMe\notifyme.log</code>
+        </p>
+        <p>
+          <strong>Quick Access:</strong> Right-click tray icon → "📂 Open
+          Locations" → "📄 Log Location"
+        </p>
+        <p><strong>What's Inside:</strong></p>
+        <ul>
+          <li>Application startup/shutdown events</li>
+          <li>Reminder triggers and notifications</li>
+          <li>Configuration changes</li>
+          <li>Error messages and warnings</li>
+        </ul>
+        <p>
+          <strong>Log Rotation:</strong> 5 MB per file, up to 5 backups
+          (notifyme.log.1, .2, .3, .4, .5)
+        </p>
+      </div>
+
+      <div class="section">
+        <h3>Config File</h3>
+        <p>
+          <strong>Path:</strong>
+          <code>%APPDATA%\NotifyMe\config.json</code>
+        </p>
+        <p>
+          <strong>Quick Access:</strong> Right-click tray icon → "📂 Open
+          Locations" → "⚙️ Config Location"
+        </p>
+      </div>
+
+      <div class="section">
+        <h3>Application Files</h3>
+        <p>
+          <strong>Quick Access:</strong> Right-click tray icon → "📂 Open
+          Locations" → "📦 App Location"
+        </p>
+      </div>
 
       <div class="footer">
         <p>NotifyMe User Guide (Offline Version)</p>
