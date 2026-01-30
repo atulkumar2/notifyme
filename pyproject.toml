@@ -22,4 +22,6 @@ py-modules = ["blink_reminder"]
 [dependency-groups]
 dev = [
     "pyinstaller>=6.18.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
 ]

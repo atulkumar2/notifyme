@@ -18,6 +18,8 @@ A modern Windows desktop application that helps you stay healthy by reminding yo
 - **Randomized Messages**: Variety of friendly reminder messages
 - **Persistent Settings**: Your preferences are saved between sessions
 - **Rolling Logs**: Log files automatically rotate to prevent disk space issues
+- **Easy Access**: Quickly open log, config, and app locations from the system tray menu
+- **Visual Menu Icons**: Emoji icons for easy navigation of menu options
 
 ## 🚀 Quick Start
 
@@ -70,10 +72,41 @@ You can create a portable `.exe` file that doesn't require Python:
    Or manually:
 
    ```bash
-   uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." notifyme.py
+   uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." --add-data "README.md;." notifyme.py
    ```
 
 2. **Find your executable** at `dist/NotifyMe.exe`
+
+### Running Tests (For Developers)
+
+The project includes comprehensive unit tests to ensure reliability:
+
+1. **Run all tests**:
+   Double-click `run_tests.bat`
+
+   Or manually:
+
+   ```bash
+   uv run python -m pytest tests/test_notifyme.py -v
+   ```
+
+2. **Run tests with coverage**:
+
+   ```bash
+   uv run python -m pytest tests/test_notifyme.py --cov=notifyme --cov-report=html
+   ```
+
+3. **View coverage report**: Open `htmlcov/index.html` in your browser
+
+The test suite covers:
+
+- Configuration management
+- Reminder intervals and timing
+- Pause/resume functionality
+- Menu creation and actions
+- File location helpers
+- Notification display
+- System tray integration
 
 ## 📁 Data Storage
 
@@ -83,15 +116,19 @@ NotifyMe stores its configuration and logs in your user data folder:
   - `config.json` - Your preferences
   - `notifyme.log` - Application logs
 
-To open this folder: Press `Win + R`, type `%APPDATA%\NotifyMe`, press Enter.
+To open this folder:
+
+- **Via System Tray**: Right-click the NotifyMe icon → **"📂 Open Locations"** → **"📄 Log Location"** or **"⚙ Config Location"**
+- **Via Windows**: Press `Win + R`, type `%APPDATA%\NotifyMe`, press Enter
 
 ## 📖 How to Use
 
 ### Starting Reminders
 
 1. Right-click the icon in the system tray
-2. Click **"Start"** to begin receiving reminders
+2. Open **"⚙ Controls"** and click **"▶ Start"** to begin receiving reminders
 3. You'll receive blink reminders every 20 minutes, walking reminders every 60 minutes, and water reminders every 30 minutes (defaults)
+4. Hover over the system tray icon to see the current status of all reminders
 
 ### Customizing the Intervals
 
@@ -112,8 +149,8 @@ To open this folder: Press `Win + R`, type `%APPDATA%\NotifyMe`, press Enter.
 
 **Pause/Resume All:**
 
-- Click **"Pause All"** to temporarily stop all reminders
-- Click **"Resume All"** to continue receiving all reminders
+- Open **"⚙ Controls"** and click **"⏸ Pause All"** to temporarily stop all reminders
+- Open **"⚙ Controls"** and click **"▶ Resume All"** to continue receiving all reminders
 
 **Pause/Resume Individual Reminders:**
 
@@ -124,12 +161,23 @@ To open this folder: Press `Win + R`, type `%APPDATA%\NotifyMe`, press Enter.
 
 ### Snoozing a Reminder
 
-- Click **"Snooze (5 min)"** to delay the next reminder by 5 minutes
+- Click **"💤 Snooze (5 min)"** to delay the next reminder by 5 minutes
+
+### Accessing Locations
+
+Quickly access important files and folders:
+
+1. Right-click the system tray icon
+2. Hover over **"📂 Open Locations"**
+3. Select:
+   - **"📄 Log Location"** - Opens the folder containing application logs
+   - **"⚙ Config Location"** - Opens the folder containing config.json
+   - **"📦 App Location"** - Opens the folder containing the executable or script
 
 ### Quitting the Application
 
 - Right-click the system tray icon
-- Click **"Quit"**
+- Click **"❌ Quit"**
 
 ## 🎯 Why These Reminders?
 
