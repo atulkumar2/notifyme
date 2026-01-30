@@ -325,6 +325,7 @@ class NotifyMeApp:
         self.is_paused = True
         logging.info("All reminders paused")
         self.update_icon_title()
+        self.update_menu()
 
     def resume_reminders(self):
         """Resume all reminder timers."""
@@ -332,6 +333,7 @@ class NotifyMeApp:
             self.is_paused = False
             logging.info("All reminders resumed")
             self.update_icon_title()
+            self.update_menu()
 
     def toggle_blink_pause(self):
         """Toggle pause state for blink reminders."""
@@ -609,37 +611,37 @@ class NotifyMeApp:
                         "10 minutes",
                         self.set_interval(10),
                         checked=lambda _: self.interval_minutes == 10,
-                        enabled=not self.is_blink_paused,
+                        enabled=not self.is_blink_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "15 minutes",
                         self.set_interval(15),
                         checked=lambda _: self.interval_minutes == 15,
-                        enabled=not self.is_blink_paused,
+                        enabled=not self.is_blink_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "20 minutes",
                         self.set_interval(20),
                         checked=lambda _: self.interval_minutes == 20,
-                        enabled=not self.is_blink_paused,
+                        enabled=not self.is_blink_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "30 minutes",
                         self.set_interval(30),
                         checked=lambda _: self.interval_minutes == 30,
-                        enabled=not self.is_blink_paused,
+                        enabled=not self.is_blink_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "45 minutes",
                         self.set_interval(45),
                         checked=lambda _: self.interval_minutes == 45,
-                        enabled=not self.is_blink_paused,
+                        enabled=not self.is_blink_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "60 minutes",
                         self.set_interval(60),
                         checked=lambda _: self.interval_minutes == 60,
-                        enabled=not self.is_blink_paused,
+                        enabled=not self.is_blink_paused and not self.is_paused,
                     ),
                 ),
             ),
@@ -656,31 +658,31 @@ class NotifyMeApp:
                         "30 minutes",
                         self.set_walking_interval(30),
                         checked=lambda _: self.walking_interval_minutes == 30,
-                        enabled=not self.is_walking_paused,
+                        enabled=not self.is_walking_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "45 minutes",
                         self.set_walking_interval(45),
                         checked=lambda _: self.walking_interval_minutes == 45,
-                        enabled=not self.is_walking_paused,
+                        enabled=not self.is_walking_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "60 minutes",
                         self.set_walking_interval(60),
                         checked=lambda _: self.walking_interval_minutes == 60,
-                        enabled=not self.is_walking_paused,
+                        enabled=not self.is_walking_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "90 minutes",
                         self.set_walking_interval(90),
                         checked=lambda _: self.walking_interval_minutes == 90,
-                        enabled=not self.is_walking_paused,
+                        enabled=not self.is_walking_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "120 minutes",
                         self.set_walking_interval(120),
                         checked=lambda _: self.walking_interval_minutes == 120,
-                        enabled=not self.is_walking_paused,
+                        enabled=not self.is_walking_paused and not self.is_paused,
                     ),
                 ),
             ),
@@ -697,31 +699,31 @@ class NotifyMeApp:
                         "20 minutes",
                         self.set_water_interval(20),
                         checked=lambda _: self.water_interval_minutes == 20,
-                        enabled=not self.is_water_paused,
+                        enabled=not self.is_water_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "30 minutes",
                         self.set_water_interval(30),
                         checked=lambda _: self.water_interval_minutes == 30,
-                        enabled=not self.is_water_paused,
+                        enabled=not self.is_water_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "45 minutes",
                         self.set_water_interval(45),
                         checked=lambda _: self.water_interval_minutes == 45,
-                        enabled=not self.is_water_paused,
+                        enabled=not self.is_water_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "60 minutes",
                         self.set_water_interval(60),
                         checked=lambda _: self.water_interval_minutes == 60,
-                        enabled=not self.is_water_paused,
+                        enabled=not self.is_water_paused and not self.is_paused,
                     ),
                     MenuItem(
                         "90 minutes",
                         self.set_water_interval(90),
                         checked=lambda _: self.water_interval_minutes == 90,
-                        enabled=not self.is_water_paused,
+                        enabled=not self.is_water_paused and not self.is_paused,
                     ),
                 ),
             ),
