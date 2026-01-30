@@ -330,11 +330,13 @@ class NotifyMeApp:
 
     def resume_reminders(self):
         """Resume all reminder timers."""
-        if self.is_running:
-            self.is_paused = False
-            logging.info("All reminders resumed")
-            self.update_icon_title()
-            self.update_menu()
+        self.is_paused = False
+        self.is_blink_paused = False
+        self.is_walking_paused = False
+        self.is_water_paused = False
+        logging.info("All reminders resumed")
+        self.update_icon_title()
+        self.update_menu()
 
     def toggle_blink_pause(self):
         """Toggle pause state for blink reminders."""

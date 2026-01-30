@@ -135,15 +135,27 @@ class TestNotifyMeApp(unittest.TestCase):
     def test_pause_reminders(self):
         """Test pausing all reminders."""
         self.app.is_running = True
+        self.app.is_blink_paused = True
+        self.app.is_walking_paused = False
+        self.app.is_water_paused = True
         self.app.pause_reminders()
         self.assertTrue(self.app.is_paused)
+        self.assertTrue(self.app.is_blink_paused)
+        self.assertFalse(self.app.is_walking_paused)
+        self.assertTrue(self.app.is_water_paused)
 
     def test_resume_reminders(self):
-        """Test resuming all reminders."""
-        self.app.is_running = True
+        """Test resuming all reminders clears all pause states."""
+        self.app.is_running = False
         self.app.is_paused = True
+        self.app.is_blink_paused = True
+        self.app.is_walking_paused = True
+        self.app.is_water_paused = True
         self.app.resume_reminders()
         self.assertFalse(self.app.is_paused)
+        self.assertFalse(self.app.is_blink_paused)
+        self.assertFalse(self.app.is_walking_paused)
+        self.assertFalse(self.app.is_water_paused)
 
     def test_toggle_blink_pause(self):
         """Test toggling blink reminder pause."""
