@@ -340,6 +340,7 @@ class NotifyMeApp:
             "Blink reminders %s", "paused" if self.is_blink_paused else "resumed"
         )
         self.update_icon_title()
+        self.update_menu()
 
     def toggle_walking_pause(self):
         """Toggle pause state for walking reminders."""
@@ -348,6 +349,7 @@ class NotifyMeApp:
             "Walking reminders %s", "paused" if self.is_walking_paused else "resumed"
         )
         self.update_icon_title()
+        self.update_menu()
 
     def toggle_water_pause(self):
         """Toggle pause state for water reminders."""
@@ -356,6 +358,12 @@ class NotifyMeApp:
             "Water reminders %s", "paused" if self.is_water_paused else "resumed"
         )
         self.update_icon_title()
+        self.update_menu()
+
+    def update_menu(self):
+        """Update the system tray menu to reflect pause states."""
+        if self.icon:
+            self.icon.menu = self.create_menu()
 
     def update_icon_title(self):
         """Update the system tray icon title based on current state."""
@@ -619,6 +627,7 @@ class NotifyMeApp:
                         checked=lambda _: self.interval_minutes == 60,
                     ),
                 ),
+                enabled=lambda _: not self.is_blink_paused,
             ),
             MenuItem(
                 "🚶 Walking Reminder",
@@ -655,6 +664,7 @@ class NotifyMeApp:
                         checked=lambda _: self.walking_interval_minutes == 120,
                     ),
                 ),
+                enabled=lambda _: not self.is_walking_paused,
             ),
             MenuItem(
                 "💧 Water Reminder",
@@ -691,6 +701,7 @@ class NotifyMeApp:
                         checked=lambda _: self.water_interval_minutes == 90,
                     ),
                 ),
+                enabled=lambda _: not self.is_water_paused,
             ),
             Menu.SEPARATOR,
             MenuItem(

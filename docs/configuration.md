@@ -12,87 +12,116 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 
 ## Configuration Options
 
-### interval_minutes
+### 👁️ interval_minutes
 
-**Type:** Integer
-**Default:** 20
-**Range:** 10-60 minutes
-**Purpose:** Time between blink reminders
+- **Type:** Integer
+- **Default:** 20 minutes
+- **Range:** 10-60 minutes
+- **Purpose:** Time between blink reminders
+- **Recommended:** 15-20 min for screen work, 30+ min for mixed tasks
 
 ```json
 "interval_minutes": 20
 ```
 
-### walking_interval_minutes
+### 🚶 walking_interval_minutes
 
-**Type:** Integer
-**Default:** 60
-**Range:** 30-120 minutes
-**Purpose:** Time between walking reminders
+- **Type:** Integer
+- **Default:** 60 minutes
+- **Range:** 30-120 minutes
+- **Purpose:** Time between walking reminders
+- **Recommended:** 45-60 min for desk jobs, 90-120 min for active roles
 
 ```json
 "walking_interval_minutes": 60
 ```
 
-### water_interval_minutes
+### 💧 water_interval_minutes
 
-**Type:** Integer
-**Default:** 30
-**Range:** 20-90 minutes
-**Purpose:** Time between water reminders
+- **Type:** Integer
+- **Default:** 30 minutes
+- **Range:** 20-90 minutes
+- **Purpose:** Time between water reminders
+- **Recommended:** 20-30 min to build hydration habit, adjust to comfort
 
 ```json
 "water_interval_minutes": 30
 ```
 
-### sound_enabled
+### 🔊 sound_enabled
 
-**Type:** Boolean
-**Default:** false
-**Purpose:** Enable/disable notification sounds
+- **Type:** Boolean
+- **Default:** false
+- **Purpose:** Enable/disable notification sounds
+- **When to enable:** If you often miss visual notifications
 
 ```json
 "sound_enabled": false
 ```
 
-### auto_start
+### ▶️ auto_start
 
-**Type:** Boolean
-**Default:** false
-**Purpose:** Automatically start reminders when app launches
+- **Type:** Boolean
+- **Default:** false
+- **Purpose:** Automatically start reminders when app launches
+- **When to enable:** If you want reminders active immediately on startup
 
 ```json
 "auto_start": false
 ```
 
-## Example Configuration
+## Example Configurations
+
+### 📺 Heavy Screen Work (Coding, Design, Writing)
 
 ```json
 {
-  "interval_minutes": 20,
+  "interval_minutes": 15,
+  "walking_interval_minutes": 45,
+  "water_interval_minutes": 20,
+  "sound_enabled": true,
+  "auto_start": true
+}
+```
+
+### 🏢 Office Work (Meetings, Mixed Tasks)
+
+```json
+{
+  "interval_minutes": 25,
   "walking_interval_minutes": 60,
   "water_interval_minutes": 30,
   "sound_enabled": false,
-  "auto_start": true,
-  "last_run": "2026-01-30T14:00:00"
+  "auto_start": false
+}
+```
+
+### 🎯 Focus Sessions (Pomodoro Style)
+
+```json
+{
+  "interval_minutes": 25,
+  "walking_interval_minutes": 50,
+  "water_interval_minutes": 25,
+  "sound_enabled": true,
+  "auto_start": false
 }
 ```
 
 ## Modifying Configuration
 
-### Method 1: Using the Tray Menu (Easiest)
+**Method 1: Through the App (Easiest)**
 
-1. Right-click the NotifyMe icon
-2. Select the reminder type (Blink, Walking, or Water)
-3. Choose your desired interval
-4. Settings are saved automatically
+1. Right-click tray icon → "📂 Open Locations" → "⚙️ Config Location"
+2. Edit the values in `config.json`
+3. Changes apply automatically on next reminder
 
-### Method 2: Editing the JSON File
+**Method 2: Direct JSON Edit**
 
 1. Open `%APPDATA%\NotifyMe\config.json` in a text editor
-2. Modify the values
+2. Modify the values (keep JSON syntax valid)
 3. Save the file
-4. Restart NotifyMe for changes to take effect
+4. Restart NotifyMe for changes to apply
 
 ## Default Configuration
 

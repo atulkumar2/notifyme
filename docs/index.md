@@ -4,24 +4,34 @@ A modern Windows desktop application that helps you stay healthy by reminding yo
 
 ## Features
 
-✨ **Triple Reminders**
+### 👁️ Eye Blink Reminders
 
-- Eye blink reminders (default: 20 min)
-- Walking reminders (default: 60 min)
-- Water drinking reminders (default: 30 min)
+**Default:** 20 minutes | **Range:** 10-60 minutes
+Reduce digital eye strain with regular blink reminders following the science-backed 20-20-20 rule.
 
-🔧 **Customizable**
+### 🚶 Walking Reminders
 
-- Adjustable intervals for each reminder type
-- Individual pause/resume for each reminder
-- Persistent settings saved between sessions
+**Default:** 60 minutes | **Range:** 30-120 minutes
+Take movement breaks to improve circulation, strengthen muscles, and boost productivity by up to 30%.
 
-🎯 **Smart & Lightweight**
+### 💧 Water Reminders
 
-- Runs silently in the system tray
-- Native Windows 10/11 toast notifications
-- Minimal resource usage
-- No dependencies required
+**Default:** 30 minutes | **Range:** 20-90 minutes
+Stay hydrated to maintain optimal brain function and energy levels throughout the day.
+
+### ⚙️ Smart Control
+
+- Individually pause/resume each reminder type
+- Persistent settings saved automatically
+- Snooze function (delay 5 minutes)
+- Test notifications for verification
+
+### 🎯 Lightweight & Reliable
+
+- Runs in system tray (minimal footprint)
+- Native Windows toast notifications
+- No external dependencies
+- Cross-compatible (Windows 10/11)
 
 ## Quick Navigation
 
@@ -32,17 +42,47 @@ A modern Windows desktop application that helps you stay healthy by reminding yo
 
 ## Why These Reminders Matter
 
-### 👁️ Blink Reminders
+### 👁️ Eye Blink Reminders - Prevent Digital Eye Strain
 
-When staring at screens, people blink 66% less, causing **digital eye strain**, dry eyes, and fatigue. Regular blinking refreshes eyes with natural tears and reduces strain.
+**The Problem:** Screen work reduces blinking by 66%, causing:
 
-### 🚶 Walking Reminders
+- Reduced tear production → dry, uncomfortable eyes
+- Continuous eye muscle focus → fatigue and strain
+- Long-term vision degradation and eye health issues
 
-Sitting for extended periods restricts blood flow, weakens muscles, and increases health risks. Even brief 5-minute walking breaks improve circulation, mood, and productivity by up to 30%.
+**The Solution:** Regular blinking refreshes eyes with natural tears and prevents strain. Ophthalmologists recommend the **20-20-20 rule**: every 20 minutes, look 20 feet away for 20 seconds.
 
-### 💧 Hydration Reminders
+### 🚶 Walking Reminders - Combat Sedentary Health Risks
 
-Even mild dehydration (2%) impairs concentration, memory, and decision-making. Your brain is 75% water! Regular hydration maintains optimal body function and energy levels.
+**The Problem:** Prolonged sitting causes:
+
+- Restricted blood flow → increased heart disease and clot risks
+- Muscle weakness and metabolic slowdown
+- Postural problems → back and neck pain
+- Mental health impact: reduced mood and increased stress
+
+**The Solution:** Even 5-minute movement breaks:
+
+- Improve blood circulation and strengthen muscles
+- Enhance posture and reduce pain
+- Boost mood, energy, and mental clarity
+- Can reduce health risks by up to **30%**
+
+### 💧 Hydration Reminders - Maintain Cognitive Function
+
+**The Problem:** Even 2% dehydration impairs:
+
+- Brain concentration and memory (brain is 75% water)
+- Physical performance and energy levels
+- Causes workplace headaches and fatigue
+- Affects kidney function and digestion
+
+**The Solution:** Regular water intake:
+
+- Maintains optimal brain function and focus
+- Improves energy and prevents headaches
+- Supports overall health and wellbeing
+- Recommended: 8-10 glasses daily
 
 ## Getting Started
 
