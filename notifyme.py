@@ -13,6 +13,7 @@ import os
 import random
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import webbrowser
@@ -535,8 +536,6 @@ class NotifyMeApp:
             logging.error("Failed to open GitHub Pages help: %s", e)
             # Final fallback: show error
             try:
-                import tempfile
-
                 error_html = """
                 <html>
                 <head><title>Help Not Available</title></head>
