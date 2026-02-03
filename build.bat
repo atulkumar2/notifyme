@@ -10,13 +10,17 @@ if not exist icon.ico (
 
 REM Build the executable
 echo Running PyInstaller...
-uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." --add-data "help;help" notifyme.py
+uv run pyinstaller NotifyMe.spec
 
 echo.
 if exist dist\NotifyMe.exe (
     echo Build successful!
     echo.
     echo Executable created at: dist\NotifyMe.exe
+    echo.
+    echo Generating SHA256 hash...
+    uv run python -c "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); open(r'dist\SHA256SUMS.txt', 'w').write(f'{h}  NotifyMe.exe\n')"
+    echo SHA256 hash created at: dist\SHA256SUMS.txt
     echo.
     echo You can now:
     echo   1. Run dist\NotifyMe.exe directly

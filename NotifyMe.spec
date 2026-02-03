@@ -3,7 +3,7 @@
 
 a = Analysis(
     ['notifyme.py'],
-    pathex=[],
+    pathex=['.'],
     binaries=[],
     datas=[('icon.png', '.'), ('icon.ico', '.'), ('help', 'help')],
     hiddenimports=[],
@@ -26,7 +26,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
