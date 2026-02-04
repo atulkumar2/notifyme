@@ -1,0 +1,7 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check-version
+        name: check version sync and latest release
+        entry: python scripts/check_version.py
+        language: system

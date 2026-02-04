@@ -1,12 +1,12 @@
 """
-Reminder app - Windows Desktop Application
-    Reminds users to blink their eyes at regular intervals to reduce eye strain.
-    Uses system tray icon and Windows toast notifications.
-    Remind intervals and settings are configurable via a JSON file.
-    Remind user to walk at longer intervals.
-    Logs events to a rolling log file.
+NotifyMe reminder app for Windows.
+
+Provides system-tray controls and toast notifications for periodic reminders
+to blink, walk, hydrate, and practice pranayama. Intervals and preferences are
+stored in a JSON config file, and activity is logged to rotating log files.
 """
 
+import ctypes
 import json
 import logging
 import os
@@ -17,23 +17,75 @@ import tempfile
 import threading
 import time
 import webbrowser
+from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from urllib.request import Request, urlopen
 
 from PIL import Image, ImageDraw
 from pystray import Icon, Menu, MenuItem
+from ctypes import wintypes
+
 from winotify import Notification, audio
+
+# Reminder types
+REMINDER_BLINK = "blink"
+REMINDER_WALKING = "walking"
+REMINDER_WATER = "water"
+REMINDER_PRANAYAMA = "pranayama"
+
+# Default intervals (minutes)
+DEFAULT_BLINK_INTERVAL_MIN = 20
+DEFAULT_WALKING_INTERVAL_MIN = 60
+DEFAULT_WATER_INTERVAL_MIN = 30
+DEFAULT_PRANAYAMA_INTERVAL_MIN = 120
+
+# Reminder titles
+TITLE_BLINK = "Eye Blink Reminder"
+TITLE_WALKING = "Walking Reminder"
+TITLE_WATER = "Water Reminder"
+TITLE_PRANAYAMA = "Pranayama Reminder"
+
+# Initial stagger offsets (seconds) to avoid simultaneous notifications
+DEFAULT_OFFSETS_SECONDS = {
+    REMINDER_BLINK: 30,
+    REMINDER_WATER: 10,
+    REMINDER_WALKING: 50,
+    REMINDER_PRANAYAMA: 20,
+}
+
+# Versioning and update checks
+APP_VERSION = "2.1.0"
+GITHUB_REPO_URL = "https://github.com/atulkumar2/notifyme"
+GITHUB_RELEASES_URL = f"{GITHUB_REPO_URL}/releases/latest"
+GITHUB_RELEASES_API_URL = (
+    "https://api.github.com/repos/atulkumar2/notifyme/releases/latest"
+)
+GITHUB_PAGES_URL = "https://atulkumar2.github.io/notifyme/"
+UPDATE_CHECK_TIMEOUT_SECONDS = 5
+
+HELP_ERROR_HTML = """
+<html>
+<head><title>Help Not Available</title></head>
+<body style="font-family: Arial, sans-serif; margin: 40px; color: #666;">
+    <h1>❌ Help Not Available</h1>
+    <p>Could not open offline help or GitHub Pages.</p>
+    <p>Please visit: <a href="{url}">{url}</a></p>
+    <p>Or check the offline help at: help/index.html</p>
+</body>
+</html>
+"""
 
 
 def get_app_data_dir() -> Path:
-    """Get the application data directory for storing config and logs."""
+    """Return the per-user app data directory for config and logs."""
     app_data = Path(os.environ.get("APPDATA", Path.home())) / "NotifyMe"
     app_data.mkdir(parents=True, exist_ok=True)
     return app_data
 
 
 def get_resource_path(filename: str) -> Path:
-    """Get path to bundled resource (for PyInstaller support)."""
+    """Return path to a bundled or local resource (PyInstaller compatible)."""
     if getattr(sys, "frozen", False):
         # Running as compiled executable
         base_path = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
@@ -68,9 +120,31 @@ handler.setFormatter(formatter)
 # Add handler to logger
 logger.addHandler(handler)
 
+class LASTINPUTINFO(ctypes.Structure):
+    _fields_ = [
+        ("cbSize", wintypes.UINT),
+        ("dwTime", wintypes.DWORD),
+    ]
+
+
+def get_idle_seconds() -> float | None:
+    """Return system idle time in seconds, or None if unavailable."""
+    try:
+        info = LASTINPUTINFO()
+        info.cbSize = ctypes.sizeof(LASTINPUTINFO)
+        if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(info)):
+            return None
+        tick_ms = ctypes.windll.kernel32.GetTickCount64()
+        idle_ms = int(tick_ms) - int(info.dwTime)
+        if idle_ms < 0:
+            return None
+        return idle_ms / 1000.0
+    except Exception:
+        return None
+
 
 class NotifyMeApp:
-    """Main application class for the NotifyMe Reminder."""
+    """Main application class for the NotifyMe reminder system."""
 
     # Blink reminder messages (randomized for variety)
     BLINK_MESSAGES = [
@@ -102,8 +176,18 @@ class NotifyMeApp:
         "🥤 Water time! Drink at least 250ml now.",
     ]
 
+    # Pranayama (breathing) reminder messages (randomized for variety)
+    PRANAYAMA_MESSAGES = [
+        "🧘 Pranayama break: Slow, deep breathing for 2-3 minutes.",
+        "🌬️ Breathing reminder: Inhale 4, hold 4, exhale 6.",
+        "🫁 Reset with pranayama: Calm breath, clear mind.",
+        "🧘‍♀️ Pause and breathe: Gentle pranayama now.",
+        "🌿 Take a breathing break: Relax your shoulders and breathe.",
+        "🧘‍♂️ Pranayama time: Smooth, steady breaths.",
+    ]
+
     def __init__(self):
-        """Initialize the NotifyMe Reminder application."""
+        """Initialize the NotifyMe reminder application."""
         self.config_file = APP_DATA_DIR / "config.json"
         self.icon_file = get_resource_path("icon.png")
         self.icon_file_ico = get_resource_path("icon.ico")
@@ -113,12 +197,19 @@ class NotifyMeApp:
 
         # Load configuration
         self.config = self.load_config()
-        self.interval_minutes: int = self.config.get("interval_minutes") or 20
+        self.interval_minutes: int = (
+            self.config.get("interval_minutes") or DEFAULT_BLINK_INTERVAL_MIN
+        )
         self.walking_interval_minutes: int = (
-            self.config.get("walking_interval_minutes") or 60
+            self.config.get("walking_interval_minutes")
+            or DEFAULT_WALKING_INTERVAL_MIN
         )
         self.water_interval_minutes: int = (
-            self.config.get("water_interval_minutes") or 30
+            self.config.get("water_interval_minutes") or DEFAULT_WATER_INTERVAL_MIN
+        )
+        self.pranayama_interval_minutes: int = (
+            self.config.get("pranayama_interval_minutes")
+            or DEFAULT_PRANAYAMA_INTERVAL_MIN
         )
 
         # Application state
@@ -127,20 +218,38 @@ class NotifyMeApp:
         self.is_blink_paused = False
         self.is_walking_paused = False
         self.is_water_paused = False
+        self.is_pranayama_paused = False
         self.timer_thread = None
         self.walking_timer_thread = None
         self.water_timer_thread = None
+        self.pranayama_timer_thread = None
         self.icon = None
 
         # Timer tracking
         self.next_reminder_time = None
         self.next_walking_reminder_time = None
         self.next_water_reminder_time = None
+        self.next_pranayama_reminder_time = None
+        self.blink_offset_seconds = DEFAULT_OFFSETS_SECONDS[REMINDER_BLINK]
+        self.water_offset_seconds = DEFAULT_OFFSETS_SECONDS[REMINDER_WATER]
+        self.walking_offset_seconds = DEFAULT_OFFSETS_SECONDS[REMINDER_WALKING]
+        self.pranayama_offset_seconds = DEFAULT_OFFSETS_SECONDS[REMINDER_PRANAYAMA]
+        self.last_blink_shown_at = None
+        self.last_walking_shown_at = None
+        self.last_water_shown_at = None
+        self.last_pranayama_shown_at = None
+        self._blink_idle_suppressed = False
+        self._walking_idle_suppressed = False
+        self._water_idle_suppressed = False
+        self._pranayama_idle_suppressed = False
+        self.update_available = False
+        self.latest_version = None
+        self.last_update_check_at = None
 
         logging.info("Application initialized")
 
     def ensure_ico_exists(self):
-        """Ensure an .ico version of the icon exists for notifications."""
+        """Ensure an .ico icon exists for toast notifications."""
         if not self.icon_file_ico.exists() and self.icon_file.exists():
             try:
                 img = Image.open(self.icon_file)
@@ -150,7 +259,7 @@ class NotifyMeApp:
                 logging.error("Failed to create .ico file: %s", e)
 
     def load_config(self):
-        """Load configuration from JSON file."""
+        """Load configuration from the JSON config file."""
         if self.config_file.exists():
             try:
                 with open(self.config_file, encoding="utf-8") as f:
@@ -163,16 +272,16 @@ class NotifyMeApp:
     def get_default_config(self):
         """Return default configuration."""
         return {
-            "interval_minutes": 20,
-            "walking_interval_minutes": 60,
-            "water_interval_minutes": 30,
+            "interval_minutes": DEFAULT_BLINK_INTERVAL_MIN,
+            "walking_interval_minutes": DEFAULT_WALKING_INTERVAL_MIN,
+            "water_interval_minutes": DEFAULT_WATER_INTERVAL_MIN,
+            "pranayama_interval_minutes": DEFAULT_PRANAYAMA_INTERVAL_MIN,
             "sound_enabled": False,
-            "auto_start": False,
             "last_run": None,
         }
 
     def save_config(self):
-        """Save current configuration to JSON file."""
+        """Persist current configuration to the JSON config file."""
         try:
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=4)
@@ -180,7 +289,7 @@ class NotifyMeApp:
             logging.error("Error saving config: %s", e)
 
     def create_icon_image(self):
-        """Create or load the system tray icon."""
+        """Create or load the system tray icon image."""
         if self.icon_file.exists():
             try:
                 return Image.open(self.icon_file)
@@ -200,11 +309,16 @@ class NotifyMeApp:
 
         return image
 
-    def show_notification(self, title="Eye Blink Reminder", messages=None):
-        """Display a Windows toast notification."""
+    def show_notification(
+        self, title=TITLE_BLINK, messages=None, last_shown_at=None
+    ):
+        """Display a Windows toast notification for a reminder."""
         if messages is None:
             messages = self.BLINK_MESSAGES
         message = random.choice(messages)  # noqa: S311
+        if last_shown_at:
+            elapsed = max(0, time.time() - last_shown_at)
+            message = f"{message}\nLast reminder: {self.format_elapsed(elapsed)} ago."
         try:
             # Get icon path for notification
             icon_path = (
@@ -229,31 +343,112 @@ class NotifyMeApp:
         except Exception as e:
             logging.error("Error showing notification: %s", e)
 
+    def show_update_notification(self, latest_version: str):
+        """Show a toast notification for an available app update."""
+        try:
+            message = (
+                f"NotifyMe {latest_version} is available. "
+                "Open the tray menu to update."
+            )
+            toast = Notification(
+                app_id="NotifyMe Reminder",
+                title="Update Available",
+                msg=message,
+            )
+            toast.set_audio(audio.Default, loop=False)
+            toast.show()
+        except Exception as e:
+            logging.error("Error showing update notification: %s", e)
     def show_blink_notification(self):
         """Display a blink reminder notification."""
-        self.show_notification("Eye Blink Reminder", self.BLINK_MESSAGES)
+        self.show_notification(
+            TITLE_BLINK, self.BLINK_MESSAGES, self.last_blink_shown_at
+        )
+        self.last_blink_shown_at = time.time()
 
     def show_walking_notification(self):
         """Display a walking reminder notification."""
-        self.show_notification("Walking Reminder", self.WALKING_MESSAGES)
+        self.show_notification(
+            TITLE_WALKING, self.WALKING_MESSAGES, self.last_walking_shown_at
+        )
+        self.last_walking_shown_at = time.time()
 
     def show_water_notification(self):
         """Display a water drinking reminder notification."""
-        self.show_notification("Water Reminder", self.WATER_MESSAGES)
+        self.show_notification(
+            TITLE_WATER, self.WATER_MESSAGES, self.last_water_shown_at
+        )
+        self.last_water_shown_at = time.time()
+
+    def show_pranayama_notification(self):
+        """Display a pranayama reminder notification."""
+        self.show_notification(
+            TITLE_PRANAYAMA,
+            self.PRANAYAMA_MESSAGES,
+            self.last_pranayama_shown_at,
+        )
+        self.last_pranayama_shown_at = time.time()
+
+    @staticmethod
+    def format_elapsed(seconds: float) -> str:
+        """Format elapsed time in a short, human-readable form."""
+        minutes = int(round(seconds / 60))
+        if minutes <= 1:
+            return "1 min"
+        if minutes < 60:
+            return f"{minutes} mins"
+        hours = minutes // 60
+        rem_minutes = minutes % 60
+        if rem_minutes == 0:
+            return f"{hours}h"
+        return f"{hours}h {rem_minutes}m"
+
+    def should_reset_due_to_idle(self, interval_seconds: int, reminder_type: str) -> bool:
+        """Return True if idle time exceeds interval and the timer should reset."""
+        idle_seconds = get_idle_seconds()
+        if idle_seconds is None:
+            return False
+        if idle_seconds >= interval_seconds:
+            if reminder_type == REMINDER_BLINK and not self._blink_idle_suppressed:
+                logging.info("Blink reminder reset due to user idle/lock")
+            if (
+                reminder_type == REMINDER_WALKING
+                and not self._walking_idle_suppressed
+            ):
+                logging.info("Walking reminder reset due to user idle/lock")
+            if reminder_type == REMINDER_WATER and not self._water_idle_suppressed:
+                logging.info("Water reminder reset due to user idle/lock")
+            if (
+                reminder_type == REMINDER_PRANAYAMA
+                and not self._pranayama_idle_suppressed
+            ):
+                logging.info("Pranayama reminder reset due to user idle/lock")
+            return True
+        return False
 
     def timer_worker(self):
         """Background worker that triggers blink reminders at intervals."""
         while self.is_running:
             if not self.is_paused and not self.is_blink_paused:
-                # Calculate next reminder time
-                self.next_reminder_time = time.time() + (self.interval_minutes * 60)
+                interval_seconds = self.interval_minutes * 60
+                now = time.time()
 
-                # Wait for the interval
-                time.sleep(self.interval_minutes * 60)
+                if self.should_reset_due_to_idle(interval_seconds, REMINDER_BLINK):
+                    self._blink_idle_suppressed = True
+                    self.next_reminder_time = now + interval_seconds
+                    time.sleep(1)
+                    continue
 
-                # Show notification if still running and not paused
-                if self.is_running and not self.is_paused and not self.is_blink_paused:
+                if self._blink_idle_suppressed:
+                    self._blink_idle_suppressed = False
+
+                if self.next_reminder_time is None:
+                    self.next_reminder_time = now + interval_seconds + self.blink_offset_seconds
+
+                if now >= self.next_reminder_time:
                     self.show_blink_notification()
+                    self.next_reminder_time = now + interval_seconds
+                time.sleep(1)
             else:
                 # If paused, check every second
                 time.sleep(1)
@@ -262,21 +457,27 @@ class NotifyMeApp:
         """Background worker that triggers walking reminders at intervals."""
         while self.is_running:
             if not self.is_paused and not self.is_walking_paused:
-                # Calculate next walking reminder time
-                self.next_walking_reminder_time = time.time() + (
-                    self.walking_interval_minutes * 60
-                )
+                interval_seconds = self.walking_interval_minutes * 60
+                now = time.time()
 
-                # Wait for the interval
-                time.sleep(self.walking_interval_minutes * 60)
+                if self.should_reset_due_to_idle(interval_seconds, REMINDER_WALKING):
+                    self._walking_idle_suppressed = True
+                    self.next_walking_reminder_time = now + interval_seconds
+                    time.sleep(1)
+                    continue
 
-                # Show notification if still running and not paused
-                if (
-                    self.is_running
-                    and not self.is_paused
-                    and not self.is_walking_paused
-                ):
+                if self._walking_idle_suppressed:
+                    self._walking_idle_suppressed = False
+
+                if self.next_walking_reminder_time is None:
+                    self.next_walking_reminder_time = (
+                        now + interval_seconds + self.walking_offset_seconds
+                    )
+
+                if now >= self.next_walking_reminder_time:
                     self.show_walking_notification()
+                    self.next_walking_reminder_time = now + interval_seconds
+                time.sleep(1)
             else:
                 # If paused, check every second
                 time.sleep(1)
@@ -285,29 +486,71 @@ class NotifyMeApp:
         """Background worker that triggers water reminders at intervals."""
         while self.is_running:
             if not self.is_paused and not self.is_water_paused:
-                # Calculate next water reminder time
-                self.next_water_reminder_time = time.time() + (
-                    self.water_interval_minutes * 60
-                )
+                interval_seconds = self.water_interval_minutes * 60
+                now = time.time()
 
-                # Wait for the interval
-                time.sleep(self.water_interval_minutes * 60)
+                if self.should_reset_due_to_idle(interval_seconds, REMINDER_WATER):
+                    self._water_idle_suppressed = True
+                    self.next_water_reminder_time = now + interval_seconds
+                    time.sleep(1)
+                    continue
 
-                # Show notification if still running and not paused
-                if self.is_running and not self.is_paused and not self.is_water_paused:
+                if self._water_idle_suppressed:
+                    self._water_idle_suppressed = False
+
+                if self.next_water_reminder_time is None:
+                    self.next_water_reminder_time = (
+                        now + interval_seconds + self.water_offset_seconds
+                    )
+
+                if now >= self.next_water_reminder_time:
                     self.show_water_notification()
+                    self.next_water_reminder_time = now + interval_seconds
+                time.sleep(1)
+            else:
+                # If paused, check every second
+                time.sleep(1)
+
+    def pranayama_timer_worker(self):
+        """Background worker that triggers pranayama reminders at intervals."""
+        while self.is_running:
+            if not self.is_paused and not self.is_pranayama_paused:
+                interval_seconds = self.pranayama_interval_minutes * 60
+                now = time.time()
+
+                if self.should_reset_due_to_idle(
+                    interval_seconds, REMINDER_PRANAYAMA
+                ):
+                    self._pranayama_idle_suppressed = True
+                    self.next_pranayama_reminder_time = now + interval_seconds
+                    time.sleep(1)
+                    continue
+
+                if self._pranayama_idle_suppressed:
+                    self._pranayama_idle_suppressed = False
+
+                if self.next_pranayama_reminder_time is None:
+                    self.next_pranayama_reminder_time = (
+                        now + interval_seconds + self.pranayama_offset_seconds
+                    )
+
+                if now >= self.next_pranayama_reminder_time:
+                    self.show_pranayama_notification()
+                    self.next_pranayama_reminder_time = now + interval_seconds
+                time.sleep(1)
             else:
                 # If paused, check every second
                 time.sleep(1)
 
     def start_reminders(self):
-        """Start the reminder timers."""
+        """Start all reminder timers."""
         if not self.is_running:
             self.is_running = True
             self.is_paused = False
             self.is_blink_paused = False
             self.is_walking_paused = False
             self.is_water_paused = False
+            self.is_pranayama_paused = False
             self.timer_thread = threading.Thread(target=self.timer_worker, daemon=True)
             self.timer_thread.start()
             self.walking_timer_thread = threading.Thread(
@@ -318,22 +561,27 @@ class NotifyMeApp:
                 target=self.water_timer_worker, daemon=True
             )
             self.water_timer_thread.start()
+            self.pranayama_timer_thread = threading.Thread(
+                target=self.pranayama_timer_worker, daemon=True
+            )
+            self.pranayama_timer_thread.start()
             logging.info("Reminders started")
             self.update_icon_title()
 
     def pause_reminders(self):
-        """Pause all reminder timers."""
+        """Pause all reminders."""
         self.is_paused = True
         logging.info("All reminders paused")
         self.update_icon_title()
         self.update_menu()
 
     def resume_reminders(self):
-        """Resume all reminder timers."""
+        """Resume all reminders and clear pause states."""
         self.is_paused = False
         self.is_blink_paused = False
         self.is_walking_paused = False
         self.is_water_paused = False
+        self.is_pranayama_paused = False
         logging.info("All reminders resumed")
         self.update_icon_title()
         self.update_menu()
@@ -365,6 +613,16 @@ class NotifyMeApp:
         self.update_icon_title()
         self.update_menu()
 
+    def toggle_pranayama_pause(self):
+        """Toggle pause state for pranayama reminders."""
+        self.is_pranayama_paused = not self.is_pranayama_paused
+        logging.info(
+            "Pranayama reminders %s",
+            "paused" if self.is_pranayama_paused else "resumed",
+        )
+        self.update_icon_title()
+        self.update_menu()
+
     def update_menu(self):
         """Update the system tray menu to reflect pause states."""
         if self.icon:
@@ -387,9 +645,19 @@ class NotifyMeApp:
         water_status = (
             "⏸" if self.is_water_paused else f"{self.water_interval_minutes}min"
         )
+        pranayama_status = (
+            "⏸"
+            if self.is_pranayama_paused
+            else f"{self.pranayama_interval_minutes}min"
+        )
 
         self.icon.title = (
-            f"Blink: {blink_status}, Walk: {walk_status}, Water: {water_status}"
+            "Blink: {blink}, Walk: {walk}, Water: {water}, Pranayama: {pranayama}"
+        ).format(
+            blink=blink_status,
+            walk=walk_status,
+            water=water_status,
+            pranayama=pranayama_status,
         )
 
     def stop_reminders(self):
@@ -443,6 +711,18 @@ class NotifyMeApp:
 
         return _set
 
+    def set_pranayama_interval(self, minutes):
+        """Set a new pranayama reminder interval."""
+
+        def _set():
+            self.pranayama_interval_minutes = minutes
+            self.config["pranayama_interval_minutes"] = minutes
+            self.save_config()
+            logging.info("Pranayama interval set to %s minutes", minutes)
+            self.update_icon_title()
+
+        return _set
+
     def quit_app(self):
         """Quit the application."""
         self.stop_reminders()
@@ -464,6 +744,11 @@ class NotifyMeApp:
         """Trigger a test water notification immediately."""
         logging.info("User requested test water notification")
         self.show_water_notification()
+
+    def test_pranayama_notification(self):
+        """Trigger a test pranayama notification immediately."""
+        logging.info("User requested test pranayama notification")
+        self.show_pranayama_notification()
 
     def open_log_location(self):
         """Open the log file location in Explorer."""
@@ -529,26 +814,14 @@ class NotifyMeApp:
                 except Exception as e:
                     logging.error("Failed to open offline help: %s", e)
 
-        # Fallback to GitHub Pages URL
-        github_url = "https://atulkumar2.github.io/notifyme/"
         try:
-            webbrowser.open(github_url)
-            logging.info("Opened GitHub Pages help: %s", github_url)
+            webbrowser.open(GITHUB_PAGES_URL)
+            logging.info("Opened GitHub Pages help: %s", GITHUB_PAGES_URL)
         except Exception as e:
             logging.error("Failed to open GitHub Pages help: %s", e)
             # Final fallback: show error
             try:
-                error_html = """
-                <html>
-                <head><title>Help Not Available</title></head>
-                <body style="font-family: Arial, sans-serif; margin: 40px; color: #666;">
-                    <h1>❌ Help Not Available</h1>
-                    <p>Could not open offline help or GitHub Pages.</p>
-                    <p>Please visit: <a href="https://atulkumar2.github.io/notifyme/">https://atulkumar2.github.io/notifyme/</a></p>
-                    <p>Or check the offline help at: help/index.html</p>
-                </body>
-                </html>
-                """
+                error_html = HELP_ERROR_HTML.format(url=GITHUB_PAGES_URL)
                 with tempfile.NamedTemporaryFile(
                     mode="w", suffix=".html", delete=False, encoding="utf-8"
                 ) as f:
@@ -561,25 +834,97 @@ class NotifyMeApp:
 
     def open_github(self):
         """Open the GitHub repository in the default browser."""
-        github_url = "https://github.com/atulkumar2/notifyme"
         try:
-            webbrowser.open(github_url)
+            webbrowser.open(GITHUB_REPO_URL)
             logging.info("Opened GitHub repository")
         except Exception as e:
             logging.error("Failed to open GitHub repository: %s", e)
 
+    def open_github_releases(self):
+        """Open the GitHub releases page in the default browser."""
+        try:
+            webbrowser.open(GITHUB_RELEASES_URL)
+            logging.info("Opened GitHub releases")
+        except Exception as e:
+            logging.error("Failed to open GitHub releases: %s", e)
+
     def open_github_pages(self):
         """Open the GitHub Pages documentation in the default browser."""
-        github_pages_url = "https://atulkumar2.github.io/notifyme/"
         try:
-            webbrowser.open(github_pages_url)
+            webbrowser.open(GITHUB_PAGES_URL)
             logging.info("Opened GitHub Pages documentation")
         except Exception as e:
             logging.error("Failed to open GitHub Pages documentation: %s", e)
 
+    def get_current_version(self) -> str:
+        """Return the current application version string."""
+        return APP_VERSION
+
+    @staticmethod
+    def parse_version(version: str) -> tuple[int, int, int]:
+        """Parse a version string into a numeric tuple (major, minor, patch)."""
+        cleaned = version.strip().lower().lstrip("v")
+        parts = cleaned.split(".")
+        nums = []
+        for part in parts[:3]:
+            num = ""
+            for ch in part:
+                if ch.isdigit():
+                    num += ch
+                else:
+                    break
+            nums.append(int(num or 0))
+        while len(nums) < 3:
+            nums.append(0)
+        return tuple(nums[:3])
+
+    def check_for_updates(self):
+        """Check GitHub releases to see if a newer version is available."""
+        try:
+            req = Request(
+                GITHUB_RELEASES_API_URL,
+                headers={"User-Agent": "NotifyMe"},
+            )
+            with urlopen(req, timeout=UPDATE_CHECK_TIMEOUT_SECONDS) as resp:
+                payload = resp.read().decode("utf-8")
+            data = json.loads(payload)
+            tag = data.get("tag_name") or data.get("name")
+            if not tag:
+                return
+            latest = str(tag).strip().lstrip("v")
+            current = self.get_current_version()
+            if self.parse_version(latest) > self.parse_version(current):
+                self.update_available = True
+                self.latest_version = latest
+                logging.info("Update available: %s (current: %s)", latest, current)
+                self.show_update_notification(latest)
+            else:
+                self.update_available = False
+                self.latest_version = latest
+                logging.info("No update available (current: %s)", current)
+        except Exception as e:
+            logging.error("Failed to check for updates: %s", e)
+        finally:
+            self.last_update_check_at = datetime.now(timezone.utc)
+            self.update_menu()
+
+    def check_for_updates_async(self):
+        """Run update check in a background thread."""
+        thread = threading.Thread(target=self.check_for_updates, daemon=True)
+        thread.start()
+
     def create_menu(self):
         """Create the system tray menu."""
+        if self.update_available and self.latest_version:
+            update_label = f"⬆ Update available: v{self.latest_version}"
+            update_item = MenuItem(update_label, self.open_github_releases)
+        else:
+            update_item = MenuItem("✅ Up to date", None, enabled=False)
+
         return Menu(
+            update_item,
+            MenuItem("🔄 Check for Updates", self.check_for_updates_async),
+            Menu.SEPARATOR,
             MenuItem(
                 "⚙ Controls",
                 Menu(
@@ -596,6 +941,7 @@ class NotifyMeApp:
                     MenuItem("👁 Test Blink", self.test_blink_notification),
                     MenuItem("🚶 Test Walking", self.test_walking_notification),
                     MenuItem("💧 Test Water", self.test_water_notification),
+                    MenuItem("🧘 Test Pranayama", self.test_pranayama_notification),
                 ),
             ),
             Menu.SEPARATOR,
@@ -728,6 +1074,47 @@ class NotifyMeApp:
                     ),
                 ),
             ),
+            MenuItem(
+                "🧘 Pranayama Reminder",
+                Menu(
+                    MenuItem(
+                        "⏸ Pause/Resume",
+                        self.toggle_pranayama_pause,
+                        checked=lambda _: self.is_pranayama_paused,
+                    ),
+                    Menu.SEPARATOR,
+                    MenuItem(
+                        "60 minutes",
+                        self.set_pranayama_interval(60),
+                        checked=lambda _: self.pranayama_interval_minutes == 60,
+                        enabled=not self.is_pranayama_paused and not self.is_paused,
+                    ),
+                    MenuItem(
+                        "90 minutes",
+                        self.set_pranayama_interval(90),
+                        checked=lambda _: self.pranayama_interval_minutes == 90,
+                        enabled=not self.is_pranayama_paused and not self.is_paused,
+                    ),
+                    MenuItem(
+                        "120 minutes",
+                        self.set_pranayama_interval(120),
+                        checked=lambda _: self.pranayama_interval_minutes == 120,
+                        enabled=not self.is_pranayama_paused and not self.is_paused,
+                    ),
+                    MenuItem(
+                        "180 minutes",
+                        self.set_pranayama_interval(180),
+                        checked=lambda _: self.pranayama_interval_minutes == 180,
+                        enabled=not self.is_pranayama_paused and not self.is_paused,
+                    ),
+                    MenuItem(
+                        "240 minutes",
+                        self.set_pranayama_interval(240),
+                        checked=lambda _: self.pranayama_interval_minutes == 240,
+                        enabled=not self.is_pranayama_paused and not self.is_paused,
+                    ),
+                ),
+            ),
             Menu.SEPARATOR,
             MenuItem(
                 "❓ Help",
@@ -735,6 +1122,7 @@ class NotifyMeApp:
                     MenuItem("🌐 User Guide", self.open_help),
                     MenuItem("� Online Documentation", self.open_github_pages),
                     MenuItem("�🐙 GitHub Repository", self.open_github),
+                    MenuItem("⬆ Releases", self.open_github_releases),
                 ),
             ),
             Menu.SEPARATOR,
@@ -752,17 +1140,21 @@ class NotifyMeApp:
 
     def get_initial_title(self):
         """Get the initial title for the system tray icon."""
-        if self.config.get("auto_start", False):
-            # Will be auto-started, show intervals
-            blink_status = f"{self.interval_minutes}min"
-            walk_status = f"{self.walking_interval_minutes}min"
-            water_status = f"{self.water_interval_minutes}min"
-            return f"Blink: {blink_status}, Walk: {walk_status}, Water: {water_status}"
-        else:
-            return "NotifyMe - Click 'Start' to begin"
+        blink_status = f"{self.interval_minutes}min"
+        walk_status = f"{self.walking_interval_minutes}min"
+        water_status = f"{self.water_interval_minutes}min"
+        pranayama_status = f"{self.pranayama_interval_minutes}min"
+        return (
+            "Blink: {blink}, Walk: {walk}, Water: {water}, Pranayama: {pranayama}"
+        ).format(
+            blink=blink_status,
+            walk=walk_status,
+            water=water_status,
+            pranayama=pranayama_status,
+        )
 
     def run(self):
-        """Run the application with system tray icon."""
+        """Run the application with system tray icon and timers."""
         # Create the icon
         icon_image = self.create_icon_image()
         self.icon = Icon(
@@ -772,25 +1164,30 @@ class NotifyMeApp:
             menu=self.create_menu(),
         )
 
-        # Auto-start if configured
-        if self.config.get("auto_start", False):
-            self.start_reminders()
+        self.check_for_updates_async()
+
+        # Always start reminders on launch
+        self.start_reminders()
 
         # Run the icon in a separate thread so main thread can handle signals
         logging.info("NotifyMe is running in the system tray")
         logging.info(
-            "Blink interval: %s minutes, Walking interval: %s minutes, Water interval: %s minutes",
+            "Blink interval: %s minutes, Walking interval: %s minutes, Water interval: %s minutes, Pranayama interval: %s minutes",
             self.interval_minutes,
             self.walking_interval_minutes,
             self.water_interval_minutes,
+            self.pranayama_interval_minutes,
         )
+        logging.info("NotifyMe version: %s", self.get_current_version())
         print("NotifyMe is running. Press Ctrl+C to quit.")
 
         self.icon.run_detached()
 
-        # Main thread waits for Ctrl+C
+        # Main thread waits for Ctrl+C or explicit quit
         try:
-            while self.icon.visible:
+            while True:
+                if not self.is_running and (not self.icon or not self.icon.visible):
+                    break
                 time.sleep(0.5)
         except KeyboardInterrupt:
             print("\nShutting down...")

@@ -48,6 +48,18 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 "water_interval_minutes": 30
 ```
 
+### 🧘 pranayama_interval_minutes
+
+- **Type:** Integer
+- **Default:** 120 minutes
+- **Range:** 60-240 minutes
+- **Purpose:** Time between pranayama reminders
+- **Recommended:** 120 min for steady work blocks, 180-240 min for lighter days
+
+```json
+"pranayama_interval_minutes": 120
+```
+
 ### 🔊 sound_enabled
 
 - **Type:** Boolean
@@ -59,17 +71,6 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 "sound_enabled": false
 ```
 
-### ▶️ auto_start
-
-- **Type:** Boolean
-- **Default:** false
-- **Purpose:** Automatically start reminders when app launches
-- **When to enable:** If you want reminders active immediately on startup
-
-```json
-"auto_start": false
-```
-
 ## Example Configurations
 
 ### 📺 Heavy Screen Work (Coding, Design, Writing)
@@ -79,8 +80,8 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
   "interval_minutes": 15,
   "walking_interval_minutes": 45,
   "water_interval_minutes": 20,
+  "pranayama_interval_minutes": 120,
   "sound_enabled": true,
-  "auto_start": true
 }
 ```
 
@@ -91,8 +92,8 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
   "interval_minutes": 25,
   "walking_interval_minutes": 60,
   "water_interval_minutes": 30,
+  "pranayama_interval_minutes": 120,
   "sound_enabled": false,
-  "auto_start": false
 }
 ```
 
@@ -103,8 +104,8 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
   "interval_minutes": 25,
   "walking_interval_minutes": 50,
   "water_interval_minutes": 25,
+  "pranayama_interval_minutes": 120,
   "sound_enabled": true,
-  "auto_start": false
 }
 ```
 

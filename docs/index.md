@@ -1,6 +1,6 @@
 # NotifyMe - Stay Healthy, Stay Productive
 
-A modern Windows desktop application that helps you stay healthy by reminding you to **blink your eyes**, **take walking breaks**, and **stay hydrated** at regular intervals.
+A modern Windows desktop application that helps you stay healthy by reminding you to **blink your eyes**, **take walking breaks**, **stay hydrated**, and **practice pranayama** at regular intervals.
 
 ## Features
 
@@ -18,6 +18,11 @@ Take movement breaks to improve circulation, strengthen muscles, and boost produ
 
 **Default:** 30 minutes | **Range:** 20-90 minutes
 Stay hydrated to maintain optimal brain function and energy levels throughout the day.
+
+### 🧘 Pranayama Reminders
+
+**Default:** 120 minutes | **Range:** 60-240 minutes
+Take short breathing breaks to reset focus, reduce stress, and improve calm productivity.
 
 ### ⚙️ Smart Control
 
@@ -84,6 +89,17 @@ Stay hydrated to maintain optimal brain function and energy levels throughout th
 - Supports overall health and wellbeing
 - Recommended: 8-10 glasses daily
 
+### 🧘 Pranayama Reminders - Restore Calm Focus
+
+**The Problem:** Long stretches of focused work can lead to shallow breathing and stress buildup, reducing clarity.
+
+**The Solution:** Short pranayama breaks:
+
+- Promote calm focus and reduce tension
+- Improve breath depth and oxygen intake
+- Offer a mental reset every couple of hours
+- Learn more: [NirogYoga Knowledge Base](https://www.nirogyoga.in/knowledge-base)
+
 ## Getting Started
 
 1. [Download and install NotifyMe](installation.md)
@@ -96,6 +112,38 @@ Stay hydrated to maintain optimal brain function and energy levels throughout th
 - Check [troubleshooting tips](troubleshooting.md)
 - Review [configuration options](configuration.md)
 - Open the help page from the tray menu
+
+## Pre-commit Version Check
+
+This repo includes a pre-commit hook that verifies:
+
+- `APP_VERSION` in `notifyme.py` matches the `version` in `pyproject.toml`
+- The local version is **not older** than the latest GitHub release
+
+To enable the hook locally:
+
+```
+python -m pip install pre-commit
+pre-commit install
+```
+
+If you're offline, you can skip the GitHub check by setting:
+
+```
+SKIP_GITHUB_VERSION_CHECK=1
+```
+
+## 🔗 Connect
+
+- [X (Twitter)](https://x.com/_AtulKumar2_)
+- [LinkedIn](https://www.linkedin.com/in/atulkumar88/)
+
+## 📚 Learn More
+
+- [20-20-20 rule (American Optometric Association)](https://www.aoa.org/healthy-eyes/eye-and-vision-conditions/computer-vision-syndrome)
+- [Sitting and sedentary behavior (CDC)](https://www.cdc.gov/physicalactivity/basics/sitting-health/index.htm)
+- [Water intake and hydration basics (NHS)](https://www.nhs.uk/live-well/eat-well/water-drinks-nutrition/)
+- [Breathing and stress basics (NHS)](https://www.nhs.uk/mental-health/self-help/guides-tools-and-activities/breathing-exercises-for-stress/)
 
 ---
 

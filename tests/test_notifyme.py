@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from notifyme import NotifyMeApp, get_app_data_dir, get_resource_path
+from notifyme import NotifyMeApp, get_app_data_dir, get_resource_path, APP_VERSION
 
 
 class TestGetAppDataDir(unittest.TestCase):
@@ -81,8 +81,21 @@ class TestNotifyMeApp(unittest.TestCase):
         self.assertEqual(self.app.interval_minutes, 20)
         self.assertEqual(self.app.walking_interval_minutes, 60)
         self.assertEqual(self.app.water_interval_minutes, 30)
+        self.assertEqual(self.app.pranayama_interval_minutes, 120)
         self.assertFalse(self.app.is_running)
         self.assertFalse(self.app.is_paused)
+
+    def test_version_matches_pyproject(self):
+        """Ensure APP_VERSION matches pyproject.toml version."""
+        pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+        content = pyproject_path.read_text(encoding="utf-8")
+        version_line = next(
+            (line for line in content.splitlines() if line.strip().startswith("version")),
+            "",
+        )
+        _, value = version_line.split("=", 1)
+        pyproject_version = value.strip().strip('"').strip("'")
+        self.assertEqual(APP_VERSION, pyproject_version)
 
     def test_get_default_config(self):
         """Test default configuration values."""
@@ -90,19 +103,21 @@ class TestNotifyMeApp(unittest.TestCase):
         self.assertEqual(config["interval_minutes"], 20)
         self.assertEqual(config["walking_interval_minutes"], 60)
         self.assertEqual(config["water_interval_minutes"], 30)
+        self.assertEqual(config["pranayama_interval_minutes"], 120)
         self.assertFalse(config["sound_enabled"])
-        self.assertFalse(config["auto_start"])
 
     def test_save_and_load_config(self):
         """Test saving and loading configuration."""
         self.app.config["interval_minutes"] = 30
         self.app.config["walking_interval_minutes"] = 90
+        self.app.config["pranayama_interval_minutes"] = 180
         self.app.save_config()
 
         # Load config in a new instance
         loaded_config = self.app.load_config()
         self.assertEqual(loaded_config["interval_minutes"], 30)
         self.assertEqual(loaded_config["walking_interval_minutes"], 90)
+        self.assertEqual(loaded_config["pranayama_interval_minutes"], 180)
 
     def test_set_interval(self):
         """Test setting blink reminder interval."""
@@ -125,6 +140,13 @@ class TestNotifyMeApp(unittest.TestCase):
         self.assertEqual(self.app.water_interval_minutes, 45)
         self.assertEqual(self.app.config["water_interval_minutes"], 45)
 
+    def test_set_pranayama_interval(self):
+        """Test setting pranayama reminder interval."""
+        set_func = self.app.set_pranayama_interval(180)
+        set_func()
+        self.assertEqual(self.app.pranayama_interval_minutes, 180)
+        self.assertEqual(self.app.config["pranayama_interval_minutes"], 180)
+
     def test_start_reminders(self):
         """Test starting reminders."""
         with patch("threading.Thread"):
@@ -138,11 +160,13 @@ class TestNotifyMeApp(unittest.TestCase):
         self.app.is_blink_paused = True
         self.app.is_walking_paused = False
         self.app.is_water_paused = True
+        self.app.is_pranayama_paused = True
         self.app.pause_reminders()
         self.assertTrue(self.app.is_paused)
         self.assertTrue(self.app.is_blink_paused)
         self.assertFalse(self.app.is_walking_paused)
         self.assertTrue(self.app.is_water_paused)
+        self.assertTrue(self.app.is_pranayama_paused)
 
     def test_resume_reminders(self):
         """Test resuming all reminders clears all pause states."""
@@ -151,11 +175,13 @@ class TestNotifyMeApp(unittest.TestCase):
         self.app.is_blink_paused = True
         self.app.is_walking_paused = True
         self.app.is_water_paused = True
+        self.app.is_pranayama_paused = True
         self.app.resume_reminders()
         self.assertFalse(self.app.is_paused)
         self.assertFalse(self.app.is_blink_paused)
         self.assertFalse(self.app.is_walking_paused)
         self.assertFalse(self.app.is_water_paused)
+        self.assertFalse(self.app.is_pranayama_paused)
 
     def test_toggle_blink_pause(self):
         """Test toggling blink reminder pause."""
@@ -176,6 +202,12 @@ class TestNotifyMeApp(unittest.TestCase):
         initial_state = self.app.is_water_paused
         self.app.toggle_water_pause()
         self.assertEqual(self.app.is_water_paused, not initial_state)
+
+    def test_toggle_pranayama_pause(self):
+        """Test toggling pranayama reminder pause."""
+        initial_state = self.app.is_pranayama_paused
+        self.app.toggle_pranayama_pause()
+        self.assertEqual(self.app.is_pranayama_paused, not initial_state)
 
     def test_stop_reminders(self):
         """Test stopping reminders."""
@@ -238,10 +270,12 @@ class TestNotifyMeApp(unittest.TestCase):
         self.app.interval_minutes = 20
         self.app.walking_interval_minutes = 60
         self.app.water_interval_minutes = 30
+        self.app.pranayama_interval_minutes = 120
         self.app.update_icon_title()
         self.assertIn("20min", self.app.icon.title)
         self.assertIn("60min", self.app.icon.title)
         self.assertIn("30min", self.app.icon.title)
+        self.assertIn("120min", self.app.icon.title)
 
     def test_update_icon_title_individual_paused(self):
         """Test icon title when individual reminders are paused."""
@@ -251,22 +285,17 @@ class TestNotifyMeApp(unittest.TestCase):
         self.app.update_icon_title()
         self.assertIn("⏸", self.app.icon.title)
 
-    def test_get_initial_title_auto_start(self):
-        """Test initial title when auto_start is enabled."""
-        self.app.config["auto_start"] = True
+    def test_get_initial_title(self):
+        """Test initial title shows reminder intervals."""
         self.app.interval_minutes = 20
         self.app.walking_interval_minutes = 60
         self.app.water_interval_minutes = 30
+        self.app.pranayama_interval_minutes = 120
         title = self.app.get_initial_title()
         self.assertIn("20min", title)
         self.assertIn("60min", title)
         self.assertIn("30min", title)
-
-    def test_get_initial_title_no_auto_start(self):
-        """Test initial title when auto_start is disabled."""
-        self.app.config["auto_start"] = False
-        title = self.app.get_initial_title()
-        self.assertIn("Click 'Start' to begin", title)
+        self.assertIn("120min", title)
 
     @patch("notifyme.Notification")
     def test_show_notification(self, mock_notification):
@@ -313,6 +342,17 @@ class TestNotifyMeApp(unittest.TestCase):
         call_args = mock_notification.call_args[1]
         self.assertEqual(call_args["title"], "Water Reminder")
 
+    @patch("notifyme.Notification")
+    def test_show_pranayama_notification(self, mock_notification):
+        """Test showing a pranayama notification."""
+        mock_toast = MagicMock()
+        mock_notification.return_value = mock_toast
+
+        self.app.show_pranayama_notification()
+
+        call_args = mock_notification.call_args[1]
+        self.assertEqual(call_args["title"], "Pranayama Reminder")
+
     def test_create_icon_image(self):
         """Test creating icon image."""
         image = self.app.create_icon_image()
@@ -345,13 +385,18 @@ class TestTimerWorkers(unittest.TestCase):
                 img.save(Path(self.temp_dir) / "icon.png")
                 self.app.icon_file = Path(self.temp_dir) / "icon.png"
 
+    @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
     @patch("notifyme.time.time")
-    def test_timer_worker_runs_when_not_paused(self, mock_time, mock_sleep):
+    def test_timer_worker_runs_when_not_paused(
+        self, mock_time, mock_sleep, mock_idle
+    ):
         """Test that timer worker runs when not paused."""
         mock_time.return_value = 1000.0
+        mock_idle.return_value = None
         self.app.is_running = True
         self.app.interval_minutes = 1  # 1 minute for quick test
+        self.app.blink_offset_seconds = 0
 
         # Mock to stop after first iteration
         def stop_after_first(*args):
@@ -362,6 +407,204 @@ class TestTimerWorkers(unittest.TestCase):
         with patch.object(self.app, "show_blink_notification"):
             self.app.timer_worker()
             self.assertIsNotNone(self.app.next_reminder_time)
+
+    @patch("notifyme.get_idle_seconds")
+    @patch("notifyme.time.sleep")
+    @patch("notifyme.time.time")
+    def test_timer_worker_resets_on_idle(self, mock_time, mock_sleep, mock_idle):
+        """Test that idle time resets the timer without showing a reminder."""
+        mock_time.return_value = 1000.0
+        mock_idle.return_value = 60.0
+        self.app.is_running = True
+        self.app.interval_minutes = 1
+        self.app.blink_offset_seconds = 0
+
+        def stop_after_first(*args):
+            self.app.is_running = False
+
+        mock_sleep.side_effect = stop_after_first
+
+        with patch.object(self.app, "show_blink_notification") as mock_show:
+            self.app.timer_worker()
+            mock_show.assert_not_called()
+            self.assertEqual(self.app.next_reminder_time, 1060.0)
+            self.assertTrue(self.app._blink_idle_suppressed)
+
+    @patch("notifyme.get_idle_seconds")
+    @patch("notifyme.time.sleep")
+    @patch("notifyme.time.time")
+    def test_timer_worker_fires_after_idle_clears(
+        self, mock_time, mock_sleep, mock_idle
+    ):
+        """Test that a reminder fires once idle clears and time elapses."""
+        mock_time.side_effect = [1000.0, 1061.0]
+        mock_idle.side_effect = [60.0, 0.0]
+        self.app.is_running = True
+        self.app.interval_minutes = 1
+        self.app.blink_offset_seconds = 0
+
+        call_count = {"count": 0}
+
+        def stop_after_second(*args):
+            call_count["count"] += 1
+            if call_count["count"] >= 2:
+                self.app.is_running = False
+
+        mock_sleep.side_effect = stop_after_second
+
+        with patch.object(self.app, "show_blink_notification") as mock_show:
+            self.app.timer_worker()
+            mock_show.assert_called_once()
+
+    @patch("notifyme.get_idle_seconds")
+    @patch("notifyme.time.sleep")
+    @patch("notifyme.time.time")
+    def test_walking_timer_worker_resets_on_idle(
+        self, mock_time, mock_sleep, mock_idle
+    ):
+        """Test that walking idle time resets the timer without showing a reminder."""
+        mock_time.return_value = 2000.0
+        mock_idle.return_value = 60.0
+        self.app.is_running = True
+        self.app.walking_interval_minutes = 1
+        self.app.walking_offset_seconds = 0
+
+        def stop_after_first(*args):
+            self.app.is_running = False
+
+        mock_sleep.side_effect = stop_after_first
+
+        with patch.object(self.app, "show_walking_notification") as mock_show:
+            self.app.walking_timer_worker()
+            mock_show.assert_not_called()
+            self.assertEqual(self.app.next_walking_reminder_time, 2060.0)
+            self.assertTrue(self.app._walking_idle_suppressed)
+
+    @patch("notifyme.get_idle_seconds")
+    @patch("notifyme.time.sleep")
+    @patch("notifyme.time.time")
+    def test_walking_timer_worker_fires_after_idle_clears(
+        self, mock_time, mock_sleep, mock_idle
+    ):
+        """Test that walking reminder fires once idle clears and time elapses."""
+        mock_time.side_effect = [2000.0, 2061.0]
+        mock_idle.side_effect = [60.0, 0.0]
+        self.app.is_running = True
+        self.app.walking_interval_minutes = 1
+        self.app.walking_offset_seconds = 0
+
+        call_count = {"count": 0}
+
+        def stop_after_second(*args):
+            call_count["count"] += 1
+            if call_count["count"] >= 2:
+                self.app.is_running = False
+
+        mock_sleep.side_effect = stop_after_second
+
+        with patch.object(self.app, "show_walking_notification") as mock_show:
+            self.app.walking_timer_worker()
+            mock_show.assert_called_once()
+
+    @patch("notifyme.get_idle_seconds")
+    @patch("notifyme.time.sleep")
+    @patch("notifyme.time.time")
+    def test_water_timer_worker_resets_on_idle(
+        self, mock_time, mock_sleep, mock_idle
+    ):
+        """Test that water idle time resets the timer without showing a reminder."""
+        mock_time.return_value = 3000.0
+        mock_idle.return_value = 60.0
+        self.app.is_running = True
+        self.app.water_interval_minutes = 1
+        self.app.water_offset_seconds = 0
+
+        def stop_after_first(*args):
+            self.app.is_running = False
+
+        mock_sleep.side_effect = stop_after_first
+
+        with patch.object(self.app, "show_water_notification") as mock_show:
+            self.app.water_timer_worker()
+            mock_show.assert_not_called()
+            self.assertEqual(self.app.next_water_reminder_time, 3060.0)
+            self.assertTrue(self.app._water_idle_suppressed)
+
+    @patch("notifyme.get_idle_seconds")
+    @patch("notifyme.time.sleep")
+    @patch("notifyme.time.time")
+    def test_water_timer_worker_fires_after_idle_clears(
+        self, mock_time, mock_sleep, mock_idle
+    ):
+        """Test that water reminder fires once idle clears and time elapses."""
+        mock_time.side_effect = [3000.0, 3061.0]
+        mock_idle.side_effect = [60.0, 0.0]
+        self.app.is_running = True
+        self.app.water_interval_minutes = 1
+        self.app.water_offset_seconds = 0
+
+        call_count = {"count": 0}
+
+        def stop_after_second(*args):
+            call_count["count"] += 1
+            if call_count["count"] >= 2:
+                self.app.is_running = False
+
+        mock_sleep.side_effect = stop_after_second
+
+        with patch.object(self.app, "show_water_notification") as mock_show:
+            self.app.water_timer_worker()
+            mock_show.assert_called_once()
+
+    @patch("notifyme.get_idle_seconds")
+    @patch("notifyme.time.sleep")
+    @patch("notifyme.time.time")
+    def test_pranayama_timer_worker_resets_on_idle(
+        self, mock_time, mock_sleep, mock_idle
+    ):
+        """Test that pranayama idle time resets the timer without showing a reminder."""
+        mock_time.return_value = 4000.0
+        mock_idle.return_value = 120.0
+        self.app.is_running = True
+        self.app.pranayama_interval_minutes = 2
+        self.app.pranayama_offset_seconds = 0
+
+        def stop_after_first(*args):
+            self.app.is_running = False
+
+        mock_sleep.side_effect = stop_after_first
+
+        with patch.object(self.app, "show_pranayama_notification") as mock_show:
+            self.app.pranayama_timer_worker()
+            mock_show.assert_not_called()
+            self.assertEqual(self.app.next_pranayama_reminder_time, 4120.0)
+            self.assertTrue(self.app._pranayama_idle_suppressed)
+
+    @patch("notifyme.get_idle_seconds")
+    @patch("notifyme.time.sleep")
+    @patch("notifyme.time.time")
+    def test_pranayama_timer_worker_fires_after_idle_clears(
+        self, mock_time, mock_sleep, mock_idle
+    ):
+        """Test that pranayama reminder fires once idle clears and time elapses."""
+        mock_time.side_effect = [4000.0, 4121.0]
+        mock_idle.side_effect = [120.0, 0.0]
+        self.app.is_running = True
+        self.app.pranayama_interval_minutes = 2
+        self.app.pranayama_offset_seconds = 0
+
+        call_count = {"count": 0}
+
+        def stop_after_second(*args):
+            call_count["count"] += 1
+            if call_count["count"] >= 2:
+                self.app.is_running = False
+
+        mock_sleep.side_effect = stop_after_second
+
+        with patch.object(self.app, "show_pranayama_notification") as mock_show:
+            self.app.pranayama_timer_worker()
+            mock_show.assert_called_once()
 
     @patch("notifyme.time.sleep")
     def test_timer_worker_checks_when_paused(self, mock_sleep):

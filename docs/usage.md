@@ -12,7 +12,7 @@
 
 ### ⚙ Controls - Global Control
 
-- **▶ Start** - Begin all reminders (blink, walking, water)
+- **▶ Start** - Begin all reminders (blink, walking, water, pranayama)
 - **⏸ Pause All** - Pause all reminders without stopping them
 - **▶ Resume All** - Resume all paused reminders
 - **❓ Help** - Open user guide (local or online)
@@ -39,6 +39,13 @@
   - 20, 30 (recommended), 45, 60, or 90 minutes
 - ℹ️ **Ideal for:** All-day work, mental fatigue prevention
 
+### 🧘 Pranayama Reminder - Breathing & Calm
+
+- **⏸ Pause/Resume** - Toggle pranayama reminders on/off independently
+- **Intervals** - Choose from:
+  - 60, 90, 120 (recommended), 180, or 240 minutes
+- ℹ️ **Ideal for:** Long focus sessions, stress reset, calm productivity
+
 ### 💤 Snooze (5 min)
 
 Delay the next reminder by 5 minutes. Useful when you're in the middle of something.
@@ -50,6 +57,7 @@ Verify notifications work correctly before relying on reminders:
 - **👁️ Test Blink** - Sends test blink reminder
 - **🚶 Test Walking** - Sends test walking reminder
 - **💧 Test Water** - Sends test water reminder
+- **🧘 Test Pranayama** - Sends test pranayama reminder
 
 ### 📂 Open Locations
 
@@ -64,12 +72,14 @@ Verify notifications work correctly before relying on reminders:
 - Pause reminders during meetings, calls, or focused tasks
 - Use **Snooze** when you're 2 minutes away from a break
 - Test notifications before a meeting to avoid surprises
+- Take a 2-3 minute pranayama reset every couple of hours for calm focus
 
 **⏱️ Interval Strategy:**
 
 - **Blink:** 15-20 minutes for intense screen work, 30 min for mixed tasks
 - **Walking:** 45-60 minutes for desk work, 90-120 min for movement-intensive jobs
 - **Water:** 20-30 minutes to build hydration habit, adjust to comfort level
+- **Pranayama:** 120 minutes for steady work blocks, 180-240 for less intense days
 
 **📊 Tracking:**
 

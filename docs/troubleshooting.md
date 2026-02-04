@@ -13,7 +13,7 @@
 
 1. Right-click NotifyMe icon
 2. Select "🔔 Test Notifications"
-3. Choose a test type (Blink, Walking, or Water)
+3. Choose a test type (Blink, Walking, Water, or Pranayama)
 4. A notification should appear immediately
 
 ### App Not in Notification List
@@ -79,12 +79,12 @@ If running from source:
 
 1. Right-click tray icon
 2. Check that "⚙ Controls" → "▶ Start" shows the app is running
-3. Icon title should show intervals like "Blink: 20min"
+3. Icon title should show intervals like "Blink: 20min, Pranayama: 120min"
 
 ### Check Individual Pause States
 
 1. Right-click tray icon
-2. Select each reminder (Blink, Walking, Water)
+2. Select each reminder (Blink, Walking, Water, Pranayama)
 3. Ensure they're not showing "⏸" (paused)
 4. Un-pause if needed
 
