@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 echo Building NotifyMe executable...
-echo.
+REM echo .
 
 REM Ensure running app is closed so dist\NotifyMe.exe is not locked
 tasklist /fi "imagename eq NotifyMe.exe" 2>NUL | findstr /i /c:"NotifyMe.exe" >NUL
@@ -19,7 +19,7 @@ if exist dist\NotifyMe.exe (
         timeout /t 1 >NUL
     )
     if exist dist\NotifyMe.exe (
-        echo Failed to remove dist\NotifyMe.exe (file is locked).
+        echo Failed to remove dist\NotifyMe.exe (file is locked)
         goto :build_failed
     )
 )
@@ -40,14 +40,14 @@ if !errorlevel! neq 0 goto :build_failed
 echo.
 if exist dist\NotifyMe.exe (
     echo Build successful!
-    echo.
+    echo .
     echo Executable created at: dist\NotifyMe.exe
-    echo.
+    echo .
     echo Generating SHA256 hash...
     uv run python -c "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); open(r'dist\SHA256SUMS.txt', 'w').write(f'{h}  NotifyMe.exe\n')"
     if !errorlevel! neq 0 goto :build_failed
     echo SHA256 hash created at: dist\SHA256SUMS.txt
-    echo.
+    echo .
     echo You can now:
     echo   1. Run dist\NotifyMe.exe directly
     echo   2. Create a shortcut on your desktop
@@ -56,10 +56,10 @@ if exist dist\NotifyMe.exe (
 )
 
 :build_failed
-echo.
+echo .
 echo Build failed! Check the output above for errors.
 exit /b 1
 
 :build_done
-echo.
+echo .
 pause
