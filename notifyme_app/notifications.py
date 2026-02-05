@@ -1,0 +1,168 @@
+"""
+Notification management for the NotifyMe application.
+
+This module handles displaying Windows toast notifications for different
+reminder types with appropriate messages and sound settings.
+"""
+
+import logging
+import random
+import time
+from typing import List, Optional
+
+from winotify import Notification, audio
+
+from notifyme_app.constants import (
+    TITLE_BLINK,
+    TITLE_WALKING,
+    TITLE_WATER,
+    TITLE_PRANAYAMA,
+    BLINK_MESSAGES,
+    WALKING_MESSAGES,
+    WATER_MESSAGES,
+    PRANAYAMA_MESSAGES,
+)
+from notifyme_app.utils import get_resource_path, format_elapsed
+
+
+class NotificationManager:
+    """Manages toast notifications for reminders."""
+
+    def __init__(self):
+        """Initialize the notification manager."""
+        self.icon_file = get_resource_path("icon.png")
+        self.icon_file_ico = get_resource_path("icon.ico")
+        self._ensure_ico_exists()
+
+    def _ensure_ico_exists(self) -> None:
+        """Ensure an .ico icon exists for toast notifications."""
+        if not self.icon_file_ico.exists() and self.icon_file.exists():
+            try:
+                from PIL import Image
+                img = Image.open(self.icon_file)
+                img.save(self.icon_file_ico, format="ICO")
+                logging.info("Created icon.ico from %s", self.icon_file.name)
+            except Exception as e:
+                logging.error("Failed to create .ico file: %s", e)
+
+    def _get_icon_path(self) -> Optional[str]:
+        """Get the path to the notification icon."""
+        if self.icon_file_ico.exists():
+            return str(self.icon_file_ico)
+        elif self.icon_file.exists():
+            return str(self.icon_file)
+        return None
+
+    def show_notification(
+        self,
+        title: str,
+        messages: List[str],
+        last_shown_at: Optional[float] = None,
+        sound_enabled: bool = False,
+    ) -> None:
+        """Display a Windows toast notification for a reminder."""
+        message = random.choice(messages)  # noqa: S311
+        if last_shown_at:
+            elapsed = max(0, time.time() - last_shown_at)
+            message = f"{message}\nLast reminder: {format_elapsed(elapsed)} ago."
+
+        try:
+            icon_path = self._get_icon_path()
+            logging.info("Showing notification: %s", message)
+
+            # Create notification using winotify
+            toast_args = {
+                "app_id": "NotifyMe Reminder",
+                "title": title,
+                "msg": message,
+            }
+            if icon_path:
+                toast_args["icon"] = icon_path
+
+            toast = Notification(**toast_args)
+
+            # Set audio based on sound settings
+            if sound_enabled:
+                toast.set_audio(audio.Default, loop=False)
+            else:
+                toast.set_audio(audio.Silent, loop=False)
+
+            toast.show()
+        except Exception as e:
+            logging.error("Error showing notification: %s", e)
+
+    def show_blink_notification(
+        self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
+    ) -> None:
+        """Display a blink reminder notification."""
+        self.show_notification(
+            TITLE_BLINK, BLINK_MESSAGES, last_shown_at, sound_enabled
+        )
+
+    def show_walking_notification(
+        self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
+    ) -> None:
+        """Display a walking reminder notification."""
+        self.show_notification(
+            TITLE_WALKING, WALKING_MESSAGES, last_shown_at, sound_enabled
+        )
+
+    def show_water_notification(
+        self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
+    ) -> None:
+        """Display a water drinking reminder notification."""
+        self.show_notification(
+            TITLE_WATER, WATER_MESSAGES, last_shown_at, sound_enabled
+        )
+
+    def show_pranayama_notification(
+        self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
+    ) -> None:
+        """Display a pranayama reminder notification."""
+        self.show_notification(
+            TITLE_PRANAYAMA, PRANAYAMA_MESSAGES, last_shown_at, sound_enabled
+        )
+
+    def show_update_notification(self, latest_version: str) -> None:
+        """Show a toast notification for an available app update."""
+        try:
+            message = (
+                f"NotifyMe {latest_version} is available. "
+                "Open the tray menu to update."
+            )
+            toast = Notification(
+                app_id="NotifyMe Reminder",
+                title="Update Available",
+                msg=message,
+            )
+            toast.set_audio(audio.Default, loop=False)
+            toast.show()
+        except Exception as e:
+            logging.error("Error showing update notification: %s", e)
+
+    def show_welcome_notification(self) -> None:
+        """Show a welcome notification when the app starts."""
+        try:
+            icon_path = self._get_icon_path()
+
+            message = (
+                "NotifyMe is now installed and running in your system tray!\n"
+                "Right-click the tray icon to access controls and settings.\n"
+                "Reminders are enabled and ready to help you stay healthy."
+            )
+
+            toast_args = {
+                "app_id": "NotifyMe Reminder",
+                "title": "🎉 Welcome to NotifyMe!",
+                "msg": message,
+            }
+            if icon_path:
+                toast_args["icon"] = icon_path
+
+            toast = Notification(**toast_args)
+            toast.set_audio(audio.Default, loop=False)
+            toast.show()
+
+            logging.info("Showed welcome notification")
+        except Exception as e:
+            logging.error("Error showing welcome notification: %s", e)

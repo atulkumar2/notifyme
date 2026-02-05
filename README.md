@@ -10,6 +10,7 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
 
 - [Features](#features)
 - [Quick Start](#quick-start)
+- [New Modular Architecture](#new-modular-architecture)
 - [Data Storage](#data-storage)
 - [How to Use](#how-to-use)
 - [Why These Reminders?](#why-these-reminders)
@@ -26,19 +27,29 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
 
 - **Quad Reminders**: Eye blink reminders (default: 20 min), walking reminders (default: 60 min), water drinking reminders (default: 30 min), and pranayama reminders (default: 120 min)
 - **Background Operation**: Runs silently in the system tray
-- **Windows Toast Notifications**: Native Windows 10/11 notifications
+- **Windows Toast Notifications**: Native Windows 10/11 notifications with sound control
 - **Customizable Intervals**:
   - Blink reminders: 10-60 minutes
   - Walking reminders: 30-120 minutes
   - Water reminders: 20-90 minutes
   - Pranayama reminders: 60-240 minutes
-- **Flexible Pause/Resume**: Pause all reminders at once, or pause each reminder type individually
-- **Snooze Function**: Delay the next reminder by 5 minutes
-- **Randomized Messages**: Variety of friendly reminder messages
-- **Persistent Settings**: Your preferences are saved between sessions
-- **Rolling Logs**: Log files automatically rotate to prevent disk space issues
-- **Easy Access**: Quickly open log, config, and app locations from the system tray menu
-- **Visual Menu Icons**: Emoji icons for easy navigation of menu options
+- **Advanced Controls**:
+  - **Global Sound Control**: Enable/disable sounds for all notifications
+  - **Per-Reminder Sound Control**: Individual sound settings for each reminder type
+  - **Hide/Show Reminders**: Hide specific reminder types from the menu while keeping them active
+  - **Flexible Pause/Resume**: Pause all reminders at once, or pause each reminder type individually
+- **Smart Features**:
+  - **Startup Help**: Automatically opens help page when first launched
+  - **Welcome Notification**: Friendly introduction when app starts
+  - **Snooze Function**: Delay the next reminder by 5 minutes
+  - **Idle Detection**: Pauses reminders when system is idle or locked
+- **User Experience**:
+  - **Randomized Messages**: Variety of friendly reminder messages
+  - **Persistent Settings**: Your preferences are saved between sessions
+  - **Dynamic Menu**: Menu adapts based on your visibility and sound preferences
+  - **Rolling Logs**: Log files automatically rotate to prevent disk space issues
+  - **Easy Access**: Quickly open log, config, and app locations from the system tray menu
+  - **Visual Menu Icons**: Emoji icons for easy navigation of menu options
 
 ## Quick Start
 
@@ -71,15 +82,47 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
    ```
 
 3. **Run the application**:
-   Double-click `run.bat`
-
-   Or manually:
-
+   
    ```bash
-   uv run notifyme.py
+   python notifyme.py
    ```
 
 The application will appear in your system tray (look for the icon in the bottom-right corner of your screen).
+
+## New Modular Architecture
+
+NotifyMe has been refactored into a clean, modular architecture for better maintainability and extensibility. The application is now organized into focused modules:
+
+### Module Structure
+
+```
+notifyme_app/
+├── __init__.py          # Package initialization
+├── app.py              # Main application coordinator
+├── config.py           # Configuration management
+├── constants.py        # Constants and messages
+├── menu.py             # System tray menu management
+├── notifications.py    # Toast notification system
+├── system.py           # System integration
+├── timers.py           # Background timer management
+├── updater.py          # Update checking
+├── utils.py            # Utility functions
+└── README.md           # Module documentation
+```
+
+### Benefits of the New Architecture
+
+- **🔧 Maintainability**: Each module has a single, clear responsibility
+- **🧪 Testability**: Components can be tested in isolation
+- **📈 Extensibility**: Easy to add new features without affecting existing code
+- **♻️ Reusability**: Components can be reused in different contexts
+- **📚 Documentation**: Each module is well-documented with clear interfaces
+
+### Migration
+
+- **For Users**: No changes needed - all functionality remains the same
+- **For Developers**: See [MIGRATION.md](MIGRATION.md) for detailed migration guide
+- **Entry Point**: `python notifyme.py` (now uses the new modular architecture)
 
 ### Building a Standalone Executable (For Developers)
 
@@ -91,7 +134,7 @@ You can create a portable `.exe` file that doesn't require Python:
    Or manually:
 
    ```bash
-   uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." --add-data "help.html;." notifyme.py
+   uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." --add-data "help.html;." notifyme_new.py
    ```
 
 2. **Find your executable** at `dist/NotifyMe.exe`
@@ -142,12 +185,45 @@ To open this folder:
 
 ## How to Use
 
+### First Launch
+
+When you first run NotifyMe:
+1. **Help Page Opens**: The application automatically opens the online help page
+2. **Welcome Notification**: A friendly notification explains that the app is running in your system tray
+3. **Ready to Use**: All reminders are enabled by default
+
 ### Starting Reminders
 
 1. Right-click the icon in the system tray
 2. Open **"⚙ Controls"** and click **"▶ Start"** to begin receiving reminders
 3. You'll receive blink reminders every 20 minutes, walking reminders every 60 minutes, water reminders every 30 minutes, and pranayama reminders every 120 minutes (defaults)
 4. Hover over the system tray icon to see the current status of all reminders
+
+### Sound Controls
+
+**Global Sound Control:**
+1. Right-click the system tray icon
+2. Open **"⚙ Controls"**
+3. Click **"🔊 Global Sound"** to toggle sounds for all notifications
+
+**Per-Reminder Sound Control:**
+1. Right-click the system tray icon
+2. Hover over any reminder type (e.g., **"👁 Blink Reminder"**)
+3. Click **"🔊 Sound"** to toggle sound for that specific reminder type
+4. A checkmark (✓) indicates sound is enabled for that reminder
+
+### Hiding/Showing Reminders
+
+**Hide a Reminder:**
+1. Right-click the system tray icon
+2. Hover over the reminder you want to hide
+3. Click **"🙈 Hide Reminder"**
+4. The reminder will disappear from the main menu but continue running
+
+**Show Hidden Reminders:**
+1. Right-click the system tray icon
+2. Look for **"👁 Hidden Reminders"** menu (appears when any reminders are hidden)
+3. Click on the reminder you want to show again
 
 ### Customizing the Intervals
 
@@ -162,7 +238,7 @@ To open this folder:
 ### Testing Notifications
 
 1. Right-click the system tray icon
-2. Hover over **"Test Notifications"**
+2. Hover over **"🔔 Test Notifications"**
 3. Click **"Test Blink"**, **"Test Walking"**, **"Test Water"**, or **"Test Pranayama"** to preview notifications
 
 ### Pausing and Resuming
@@ -175,8 +251,8 @@ To open this folder:
 **Pause/Resume Individual Reminders:**
 
 1. Hover over **"Blink Reminder"**, **"Walking Reminder"**, **"Water Reminder"**, or **"Pranayama Reminder"**
-2. Click **"Pause/Resume"** to toggle that specific reminder
-3. A checkmark (✓) indicates the reminder is currently paused
+2. Click **"⏸ Pause/Resume"** to toggle that specific reminder
+3. A checkmark (✓) indicates the reminder is currently running
 4. The system tray icon shows ⏸ next to paused reminders
 
 ### Snoozing a Reminder
@@ -193,6 +269,18 @@ Quickly access important files and folders:
    - **"📄 Log Location"** - Opens the folder containing application logs
    - **"⚙ Config Location"** - Opens the folder containing config.json
    - **"📦 App Location"** - Opens the folder containing the executable or script
+
+### Getting Help
+
+1. Right-click the system tray icon
+2. Hover over **"❓ Help"**
+3. Select:
+   - **"🌐 User Guide"** - Opens the comprehensive help page (online with offline fallback)
+   - **"📖 Online Documentation"** - Opens the GitHub Pages documentation
+   - **"🔄 Check for Updates"** - Manually check for application updates
+   - **"ℹ️ About NotifyMe"** - Shows application information and version
+   - **"🐙 GitHub Repository"** - Opens the project repository
+   - **"⬆ Releases"** - Opens the releases page for updates
 
 ### Quitting the Application
 
@@ -249,16 +337,36 @@ The app stores your preferences in `config.json`:
   "water_interval_minutes": 30,
   "pranayama_interval_minutes": 120,
   "sound_enabled": false,
+  "blink_sound_enabled": true,
+  "walking_sound_enabled": true,
+  "water_sound_enabled": true,
+  "pranayama_sound_enabled": true,
+  "blink_hidden": false,
+  "walking_hidden": false,
+  "water_hidden": false,
+  "pranayama_hidden": false,
   "last_run": null
 }
 ```
 
-You can manually edit this file to:
+### Configuration Options
 
-- Adjust the default `interval_minutes` for blink reminders
-- Adjust the default `walking_interval_minutes` for walking reminders
-- Adjust the default `water_interval_minutes` for water reminders
-- Adjust the default `pranayama_interval_minutes` for pranayama reminders
+- **Reminder Intervals**: Adjust the default intervals for each reminder type
+- **Sound Controls**: 
+  - `sound_enabled`: Global sound toggle for all notifications
+  - `[type]_sound_enabled`: Individual sound controls for each reminder type
+- **Visibility Controls**:
+  - `[type]_hidden`: Hide specific reminder types from the menu while keeping them active
+- **System**: `last_run` tracks the last application run time
+
+### Advanced Configuration
+
+You can manually edit the config file to:
+
+- Set custom intervals beyond the menu options
+- Enable/disable sounds globally or per reminder type
+- Hide reminder types you don't want to see in the menu
+- The "Hidden Reminders" menu will appear when any reminders are hidden
 
 ## Reminder Messages
 
@@ -321,7 +429,7 @@ Feel free to submit issues or pull requests to improve the application!
 
 This repo includes a pre-commit hook that verifies:
 
-- `APP_VERSION` in `notifyme.py` matches the `version` in `pyproject.toml`
+- `APP_VERSION` in `notifyme_app/constants.py` matches the `version` in `pyproject.toml`
 - The local version is **not older** than the latest GitHub release
 
 To enable the hook locally:

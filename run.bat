@@ -1,9 +1,9 @@
 @echo off
 REM NotifyMe - Run Script
 
-echo Starting NotifyMe...
+echo Starting NotifyMe (Modular Version)...
 
-REM Run the app using uv
+REM Run the new modular app using uv
 uv run notifyme.py
 if %errorlevel% neq 0 (
     REM Fallback to local path if simple command fails

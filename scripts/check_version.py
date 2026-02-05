@@ -8,7 +8,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT_PATH = ROOT / "pyproject.toml"
-APP_MODULE_PATH = ROOT / "notifyme.py"
+APP_MODULE_PATH = ROOT / "notifyme_app" / "constants.py"
 GITHUB_RELEASES_API_URL = (
     "https://api.github.com/repos/atulkumar2/notifyme/releases/latest"
 )
@@ -44,7 +44,7 @@ def read_app_version() -> str:
     content = APP_MODULE_PATH.read_text(encoding="utf-8")
     match = re.search(r'^\s*APP_VERSION\s*=\s*"(.*?)"\s*$', content, re.MULTILINE)
     if not match:
-        raise RuntimeError("Could not find APP_VERSION in notifyme.py")
+        raise RuntimeError("Could not find APP_VERSION in constants.py")
     return match.group(1).strip()
 
 
@@ -66,7 +66,7 @@ def main() -> int:
     if pyproject_version != app_version:
         print(
             "Version mismatch: pyproject.toml has "
-            f"{pyproject_version}, notifyme.py has {app_version}"
+            f"{pyproject_version}, constants.py has {app_version}"
         )
         return 1
 

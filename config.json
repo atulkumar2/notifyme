@@ -4,5 +4,13 @@
   "water_interval_minutes": 30,
   "pranayama_interval_minutes": 120,
   "sound_enabled": false,
+  "blink_sound_enabled": true,
+  "walking_sound_enabled": true,
+  "water_sound_enabled": true,
+  "pranayama_sound_enabled": true,
+  "blink_hidden": false,
+  "walking_hidden": false,
+  "water_hidden": false,
+  "pranayama_hidden": false,
   "last_run": null
 }

@@ -117,7 +117,7 @@ Take short breathing breaks to reset focus, reduce stress, and improve calm prod
 
 This repo includes a pre-commit hook that verifies:
 
-- `APP_VERSION` in `notifyme.py` matches the `version` in `pyproject.toml`
+- `APP_VERSION` in `notifyme_app/constants.py` matches the `version` in `pyproject.toml`
 - The local version is **not older** than the latest GitHub release
 
 To enable the hook locally:
