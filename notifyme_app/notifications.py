@@ -8,6 +8,7 @@ reminder types with appropriate messages and sound settings.
 import logging
 import random
 import time
+from PIL import Image
 from typing import List, Optional
 
 from winotify import Notification, audio
@@ -38,7 +39,6 @@ class NotificationManager:
         """Ensure an .ico icon exists for toast notifications."""
         if not self.icon_file_ico.exists() and self.icon_file.exists():
             try:
-                from PIL import Image
                 img = Image.open(self.icon_file)
                 img.save(self.icon_file_ico, format="ICO")
                 logging.info("Created icon.ico from %s", self.icon_file.name)
@@ -81,11 +81,9 @@ class NotificationManager:
 
             toast = Notification(**toast_args)
 
-            # Set audio based on sound settings
+            # Set audio based on sound settings. Default is silent.
             if sound_enabled:
                 toast.set_audio(audio.Default, loop=False)
-            else:
-                toast.set_audio(audio.Silent, loop=False)
 
             toast.show()
         except Exception as e:

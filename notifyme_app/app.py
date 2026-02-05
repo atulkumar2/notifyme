@@ -11,7 +11,7 @@ import time
 from typing import Optional
 
 from pystray import Icon
-from winotify import Notification, audio
+from winotify import Notification
 
 from notifyme_app.config import ConfigManager
 from notifyme_app.constants import (
@@ -328,7 +328,7 @@ class NotifyMeApp:
         logging.info("User requested test blink notification")
         try:
             sound_enabled = self.config.sound_enabled and self.config.blink_sound_enabled
-            self.notifications.show_blink_notification(sound_enabled=sound_enabled)
+            self.notifications.show_blink_notification(None, sound_enabled)  # Pass None for last_shown_at
             logging.info("Test blink notification displayed successfully")
         except Exception as e:
             logging.error("Failed to show test blink notification: %s", e)
@@ -338,7 +338,7 @@ class NotifyMeApp:
         logging.info("User requested test walking notification")
         try:
             sound_enabled = self.config.sound_enabled and self.config.walking_sound_enabled
-            self.notifications.show_walking_notification(sound_enabled=sound_enabled)
+            self.notifications.show_walking_notification(None, sound_enabled)  # Pass None for last_shown_at
             logging.info("Test walking notification displayed successfully")
         except Exception as e:
             logging.error("Failed to show test walking notification: %s", e)
@@ -348,7 +348,7 @@ class NotifyMeApp:
         logging.info("User requested test water notification")
         try:
             sound_enabled = self.config.sound_enabled and self.config.water_sound_enabled
-            self.notifications.show_water_notification(sound_enabled=sound_enabled)
+            self.notifications.show_water_notification(None, sound_enabled)  # Pass None for last_shown_at
             logging.info("Test water notification displayed successfully")
         except Exception as e:
             logging.error("Failed to show test water notification: %s", e)
@@ -358,7 +358,7 @@ class NotifyMeApp:
         logging.info("User requested test pranayama notification")
         try:
             sound_enabled = self.config.sound_enabled and self.config.pranayama_sound_enabled
-            self.notifications.show_pranayama_notification(sound_enabled=sound_enabled)
+            self.notifications.show_pranayama_notification(None, sound_enabled)  # Pass None for last_shown_at
             logging.info("Test pranayama notification displayed successfully")
         except Exception as e:
             logging.error("Failed to show test pranayama notification: %s", e)
@@ -389,7 +389,6 @@ class NotifyMeApp:
                 toast_args["icon"] = icon_path
 
             toast = Notification(**toast_args)
-            toast.set_audio(audio.Silent, loop=False)
             toast.show()
 
             logging.info("Showed about dialog")
