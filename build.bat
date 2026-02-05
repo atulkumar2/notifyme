@@ -4,17 +4,26 @@ echo Building NotifyMe executable...
 echo.
 
 REM Ensure running app is closed so dist\NotifyMe.exe is not locked
-tasklist /fi "imagename eq NotifyMe.exe" 2>NUL | find /i "NotifyMe.exe" >NUL
+tasklist /fi "imagename eq NotifyMe.exe" 2>NUL | findstr /i /c:"NotifyMe.exe" >NUL
 if !errorlevel! == 0 (
     echo Closing running NotifyMe.exe...
     taskkill /f /im NotifyMe.exe >NUL 2>&1
 )
 
-REM Remove previous build artifact if present
+REM Remove previous build artifact if present (retry a few times in case it is locked)
 if exist dist\NotifyMe.exe (
     echo Removing old dist\NotifyMe.exe...
-    del /f /q dist\NotifyMe.exe >NUL 2>&1
+    for /l %%i in (1,1,5) do (
+        del /f /q dist\NotifyMe.exe >NUL 2>&1
+        if not exist dist\NotifyMe.exe goto :old_exe_removed
+        timeout /t 1 >NUL
+    )
+    if exist dist\NotifyMe.exe (
+        echo Failed to remove dist\NotifyMe.exe (file is locked).
+        goto :build_failed
+    )
 )
+:old_exe_removed
 
 REM Check if icon.ico exists, if not create it from icon.png
 if not exist icon.ico (
