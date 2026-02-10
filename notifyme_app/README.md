@@ -18,6 +18,7 @@ This directory contains the refactored NotifyMe application organized into logic
 - **`menu.py`** - System tray menu generation and management
 - **`updater.py`** - Application update checking from GitHub releases
 - **`system.py`** - System integration (file operations, browser launching)
+- **`tts.py`** - Text-to-Speech management (NEW)
 - **`utils.py`** - Utility functions and helper classes
 
 ## Key Features
@@ -64,6 +65,14 @@ This directory contains the refactored NotifyMe application organized into logic
 - Web browser launching
 - Icon creation and management
 
+### Text-to-Speech System (`tts.py`)
+
+- **TTSManager**: Manages offline text-to-speech using Windows SAPI (pyttsx3)
+- Non-blocking speech via background worker thread
+- Voice selection with language preference (auto-detect Hindi/English)
+- Fresh engine instance per request for stability
+- Graceful fallback if pyttsx3 unavailable
+
 ## Usage
 
 ```python
@@ -86,6 +95,7 @@ app.run()
 
 - **pystray**: System tray icon management
 - **winotify**: Windows toast notifications
+- **pyttsx3**: Offline Text-to-Speech using Windows SAPI
 - **PIL (Pillow)**: Image processing for icons
 - **Standard library**: logging, threading, json, pathlib, etc.
 
@@ -104,6 +114,12 @@ The application stores its configuration in `%APPDATA%/NotifyMe/config.json` wit
   "walking_sound_enabled": true,
   "water_sound_enabled": true,
   "pranayama_sound_enabled": true,
+  "tts_enabled": true,
+  "tts_language": "auto",
+  "blink_tts_enabled": true,
+  "walking_tts_enabled": true,
+  "water_tts_enabled": true,
+  "pranayama_tts_enabled": true,
   "blink_hidden": false,
   "walking_hidden": false,
   "water_hidden": false,
@@ -111,6 +127,17 @@ The application stores its configuration in `%APPDATA%/NotifyMe/config.json` wit
   "last_run": null
 }
 ```
+
+**Configuration Keys:**
+
+- `interval_minutes`, `*_interval_minutes`: Reminder intervals in minutes
+- `sound_enabled`: Global sound toggle
+- `*_sound_enabled`: Per-reminder sound toggles
+- `tts_enabled`: Global TTS toggle
+- `tts_language`: TTS language ("auto", "en", or "hi")
+- `*_tts_enabled`: Per-reminder TTS toggles
+- `*_hidden`: Hide specific reminders from menu
+- `last_run`: Tracks last application run time
 
 ## Logging
 

@@ -1,4 +1,4 @@
-# Troubleshooting Guide
+# NotifyMe - Troubleshooting Guide
 
 ## Notifications Not Appearing
 
@@ -93,6 +93,40 @@ If running from source:
 1. Right-click → reminder type (e.g., "👁 Blink Reminder")
 2. Confirm selected interval is reasonable
 3. Intervals are counted from last trigger, not elapsed
+
+## Text-to-Speech (TTS) Not Working
+
+### TTS Not Speaking
+
+1. **Test TTS:** Right-click tray icon → Select reminder → **"🔔 Test [Reminder]"** → Should hear speech
+2. **Check if enabled:**
+   - Right-click tray icon → "⚙ Controls" → "🗣️ Global TTS" should show enabled
+   - Check reminder menu → "🗣️ TTS" should show enabled for that reminder
+3. **Check volume:**
+   - Ensure system volume is not muted or very low
+   - Click the volume icon in taskbar to verify
+
+### No Hindi Voice Available
+
+If you want Hindi voice support:
+
+1. **Install Hindi language pack:**
+   - Open Settings (Win + I)
+   - Go to "Time & Language" → "Language & Region"
+   - Click "Add a language" → Search for "Hindi" → Install
+   - Download language pack for Text-to-Speech
+
+2. **After installation:** Restart NotifyMe to detect the Hindi voice
+
+3. **Use Hindi TTS:**
+   - Edit `%APPDATA%\NotifyMe\config.json`
+   - Set `"tts_language": "hi"` for Hindi only, or `"auto"` to prefer Hindi when available
+
+### TTS Sounds Distorted or Robotic
+
+- This is normal behavior for Windows SAPI voices
+- Pro tip: Speaking reminders multiple times in succession can cause slight distortion; this clears after a few seconds of silence
+- Try changing voice in Windows Settings → Accessibility → Text-to-Speech → Voice selection
 
 ## File Locations Reference
 

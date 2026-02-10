@@ -1,4 +1,4 @@
-# Configuration Guide
+# NotifyMe - Configuration Guide
 
 ## Configuration File Location
 
@@ -63,12 +63,53 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 ### 🔊 sound_enabled
 
 - **Type:** Boolean
-- **Default:** false
-- **Purpose:** Enable/disable notification sounds
+- **Default:** false (legacy setting)
+- **Purpose:** Enable/disable built-in notification sounds
 - **When to enable:** If you often miss visual notifications
 
 ```json
 "sound_enabled": false
+```
+
+### 🗣️ tts_enabled (NEW)
+
+- **Type:** Boolean
+- **Default:** true (enabled for new users)
+- **Purpose:** Enable/disable offline Text-to-Speech reminders
+- **Details:** Uses Windows SAPI (pyttsx3) for offline speech synthesis. No internet required. Speaks reminders in English by default, or Hindi if a Hindi voice is installed on your system
+- **Upgrade Note:** Existing users get this feature enabled automatically on upgrade
+
+```json
+"tts_enabled": true
+```
+
+### 🗣️ tts_language
+
+- **Type:** String
+- **Default:** "auto"
+- **Values:** "auto", "en", "hi"
+- **Purpose:** Preferred language for Text-to-Speech
+  - `"auto"`: Prefers Hindi if available, falls back to English
+  - `"en"`: Always use English
+  - `"hi"`: Always use Hindi (if a Hindi voice is installed)
+
+```json
+"tts_language": "auto"
+```
+
+### Per-Reminder TTS Control
+
+Each reminder type can have TTS independently enabled/disabled:
+
+- **Type:** Boolean
+- **Default:** true
+- **Options:** `blink_tts_enabled`, `walking_tts_enabled`, `water_tts_enabled`, `pranayama_tts_enabled`
+
+```json
+"blink_tts_enabled": true,
+"walking_tts_enabled": true,
+"water_tts_enabled": true,
+"pranayama_tts_enabled": true
 ```
 
 ## Example Configurations
@@ -82,6 +123,8 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
   "water_interval_minutes": 20,
   "pranayama_interval_minutes": 120,
   "sound_enabled": true,
+  "tts_enabled": true,
+  "tts_language": "auto"
 }
 ```
 
@@ -94,6 +137,8 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
   "water_interval_minutes": 30,
   "pranayama_interval_minutes": 120,
   "sound_enabled": false,
+  "tts_enabled": true,
+  "tts_language": "auto"
 }
 ```
 
@@ -106,6 +151,22 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
   "water_interval_minutes": 25,
   "pranayama_interval_minutes": 120,
   "sound_enabled": true,
+  "tts_enabled": true,
+  "tts_language": "en"
+}
+```
+
+### 🤫 Silent Mode (TTS Only, No Sounds)
+
+```json
+{
+  "interval_minutes": 20,
+  "walking_interval_minutes": 60,
+  "water_interval_minutes": 30,
+  "pranayama_interval_minutes": 120,
+  "sound_enabled": false,
+  "tts_enabled": true,
+  "tts_language": "auto"
 }
 ```
 

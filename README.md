@@ -135,10 +135,20 @@ You can create a portable `.exe` file that doesn't require Python:
    Or manually:
 
    ```bash
-   uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." --add-data "help.html;." notifyme_new.py
+   .venv\Scripts\python.exe -m PyInstaller NotifyMe.spec
    ```
 
-2. **Find your executable** at `dist/NotifyMe.exe`
+   The build process automatically:
+   - Bundles all dependencies (including pyttsx3 for offline TTS)
+   - Includes required data files (icon, help HTML)
+   - Detects and includes hidden modules
+
+2. **Find your executable** at `dist/NotifyMe.exe` (~18.5 MB)
+
+3. **Optional: Generate SHA256 hash** for integrity verification:
+   ```bash
+   .venv\Scripts\python.exe -c "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); print(f'{h}  NotifyMe.exe')"
+   ```
 
 ### Running Tests (For Developers)
 
@@ -215,6 +225,29 @@ When you first run NotifyMe:
 2. Hover over any reminder type (e.g., **"👁 Blink Reminder"**)
 3. Click **"🔊 Sound"** to toggle sound for that specific reminder type
 4. A checkmark (✓) indicates sound is enabled for that reminder
+
+### Text-to-Speech (TTS) Controls
+
+**Global TTS Control:**
+
+1. Right-click the system tray icon
+2. Open **"⚙ Controls"**
+3. Click **"🗣️ Global TTS"** to toggle text-to-speech for all reminders
+4. A checkmark (✓) indicates TTS is enabled
+
+**Per-Reminder TTS Control:**
+
+1. Right-click the system tray icon
+2. Hover over any reminder type (e.g., **"👁 Blink Reminder"**)
+3. Click **"🗣️ TTS"** to toggle TTS for that specific reminder type
+4. A checkmark (✓) indicates TTS is enabled for that reminder
+
+**Language Preference:**
+
+- Edit `%APPDATA%\NotifyMe\config.json` and set `tts_language`:
+  - `"auto"` (default) - Prefers Hindi if available, falls back to English
+  - `"en"` - Always use English
+  - `"hi"` - Restrict to Hindi only (install Hindi voice first)
 
 ### Hiding/Showing Reminders
 
@@ -347,6 +380,12 @@ The app stores your preferences in `config.json`:
   "walking_sound_enabled": true,
   "water_sound_enabled": true,
   "pranayama_sound_enabled": true,
+  "tts_enabled": true,
+  "tts_language": "auto",
+  "blink_tts_enabled": true,
+  "walking_tts_enabled": true,
+  "water_tts_enabled": true,
+  "pranayama_tts_enabled": true,
   "blink_hidden": false,
   "walking_hidden": false,
   "water_hidden": false,
@@ -361,6 +400,10 @@ The app stores your preferences in `config.json`:
 - **Sound Controls**:
   - `sound_enabled`: Global sound toggle for all notifications
   - `[type]_sound_enabled`: Individual sound controls for each reminder type
+- **Text-to-Speech Controls** (NEW):
+  - `tts_enabled`: Global TTS toggle for all reminders
+  - `tts_language`: Preferred language (`"auto"`, `"en"`, or `"hi"`)
+  - `[type]_tts_enabled`: Individual TTS controls for each reminder type
 - **Visibility Controls**:
   - `[type]_hidden`: Hide specific reminder types from the menu while keeping them active
 - **System**: `last_run` tracks the last application run time
@@ -371,6 +414,8 @@ You can manually edit the config file to:
 
 - Set custom intervals beyond the menu options
 - Enable/disable sounds globally or per reminder type
+- Enable/disable TTS globally or per reminder type
+- Choose TTS language preference (auto-detect Hindi/English, English only, or Hindi only)
 - Hide reminder types you don't want to see in the menu
 - The "Hidden Reminders" menu will appear when any reminders are hidden
 

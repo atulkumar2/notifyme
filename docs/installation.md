@@ -1,4 +1,4 @@
-# Installation Guide
+# NotifyMe - Installation Guide
 
 ## Option 1: Download Pre-built Executable (Recommended)
 
@@ -75,13 +75,21 @@ If you want to build your own `.exe`:
    build.bat
    ```
 
-   Or manually:
+   Or manually with Python:
 
    ```bash
-   uv run pyinstaller --onefile --windowed --icon=icon.ico --name=NotifyMe --add-data "icon.png;." --add-data "icon.ico;." --add-data "help;help" notifyme.py
+   .venv\Scripts\python.exe -m PyInstaller NotifyMe.spec
    ```
 
 3. Find your executable at `dist/NotifyMe.exe`
+
+The build process automatically:
+
+- Bundles all dependencies (including pyttsx3 for offline TTS)
+- Includes required data files (icon, help HTML)
+- Detects and includes hidden modules
+
+**Note**: The `.spec` file is pre-configured with all necessary settings. Only modify it if you have advanced PyInstaller knowledge.
 
 ## Troubleshooting Installation
 

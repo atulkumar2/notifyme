@@ -31,6 +31,14 @@ Take short breathing breaks to reset focus, reduce stress, and improve calm prod
 - Snooze function (delay 5 minutes)
 - Test notifications for verification
 
+### 🗣️ Offline Text-to-Speech (NEW!)
+
+- **Spoken reminders** using Windows SAPI (pyttsx3)
+- **No internet required** - completely offline
+- **Multi-language support** - English default, Hindi if available
+- **Per-reminder control** - Enable/disable TTS for each reminder individually
+- **Global TTS toggle** - Turn speech on/off for all reminders
+
 ### 🎯 Lightweight & Reliable
 
 - Runs in system tray (minimal footprint)

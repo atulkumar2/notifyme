@@ -1,4 +1,4 @@
-# Usage Guide
+# NotifyMe - Usage Guide
 
 ## Getting Started
 
@@ -15,8 +15,39 @@
 - **▶ Start** - Begin all reminders (blink, walking, water, pranayama)
 - **⏸ Pause All** - Pause all reminders without stopping them
 - **▶ Resume All** - Resume all paused reminders
+- **🗣️ Global TTS** - Enable/disable text-to-speech for all reminders
 - **❓ Help** - Open user guide (local or online)
 - **🐙 GitHub Repository** - Visit project repository
+
+### 🗣️ Text-to-Speech (TTS) - Spoken Reminders
+
+NotifyMe includes **offline Text-to-Speech** reminders using Windows SAPI:
+
+**Features:**
+
+- **No internet required** - Runs completely offline on your system
+- **Language support** - English by default, Hindi if a Hindi voice is installed
+- **Non-blocking** - Speaks in background without freezing the app
+- **Per-reminder control** - Enable/disable TTS for each reminder type individually
+- **Global control** - Toggle all TTS at once from the Controls menu
+
+**How to use:**
+
+1. **Global TTS:** Right-click tray icon → **"⚙ Controls"** → **"🗣️ Global TTS"** to toggle all
+2. **Per-reminder TTS:** Right-click tray icon → Select reminder (👁️ Blink, 🚶 Walking, etc.) → **"🗣️ TTS"** to toggle that specific reminder
+
+**Configuration:**
+
+For advanced control, edit `config.json` (see [Configuration Guide](configuration.md)):
+
+- `tts_enabled`: Toggle global TTS (default: `true`)
+- `tts_language`: Set language preference: `"auto"` (default), `"en"`, or `"hi"`
+- Per-reminder toggles: `blink_tts_enabled`, `walking_tts_enabled`, `water_tts_enabled`, `pranayama_tts_enabled`
+
+**Example:**
+
+- Global TTS enabled, only Water reminders speak: Enable global TTS, then disable TTS for Blink, Walking, and Pranayama
+- Silent Hindi reminders only: Set `tts_language` to `"hi"` and disable `sound_enabled` in config.json
 
 ### 👁️ Blink Reminder - Eye Health
 
@@ -73,6 +104,14 @@ Verify notifications work correctly before relying on reminders:
 - Use **Snooze** when you're 2 minutes away from a break
 - Test notifications before a meeting to avoid surprises
 - Take a 2-3 minute pranayama reset every couple of hours for calm focus
+
+**🗣️ Text-to-Speech Tips:**
+
+- **Use TTS instead of sounds** if you work in open offices or shared spaces (no noise!)
+- **Test TTS:** Click **"Test [Reminder]"** in each reminder menu to hear TTS preview
+- **Hindi speakers:** Run `Add Language` in Windows Settings → Languages to install Hindi voice for `tts_language: "auto"` to use it
+- **Silent learning:** Enable TTS only for trickier reminders (e.g., pranayama), keep others visual
+- **Accessibility:** TTS is great for situations where visual notifications might be missed (e.g., looking away from screen)
 
 **⏱️ Interval Strategy:**
 
