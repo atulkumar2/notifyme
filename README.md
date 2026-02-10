@@ -47,6 +47,7 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
   - **Randomized Messages**: Variety of friendly reminder messages
   - **Persistent Settings**: Your preferences are saved between sessions
   - **Dynamic Menu**: Menu adapts based on your visibility and sound preferences
+  - **Offline Text-to-Speech**: Optional TTS using Windows SAPI (pyttsx3). Enables offline spoken reminders (English by default, attempts Hindi when a Hindi voice is installed). Toggle per-reminder and globally via the tray menu.
   - **Rolling Logs**: Log files automatically rotate to prevent disk space issues
   - **Easy Access**: Quickly open log, config, and app locations from the system tray menu
   - **Visual Menu Icons**: Emoji icons for easy navigation of menu options
@@ -82,7 +83,7 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
    ```
 
 3. **Run the application**:
-   
+
    ```bash
    python notifyme.py
    ```
@@ -95,7 +96,7 @@ NotifyMe has been refactored into a clean, modular architecture for better maint
 
 ### Module Structure
 
-```
+```sh
 notifyme_app/
 ├── __init__.py          # Package initialization
 ├── app.py              # Main application coordinator
@@ -188,6 +189,7 @@ To open this folder:
 ### First Launch
 
 When you first run NotifyMe:
+
 1. **Help Page Opens**: The application automatically opens the online help page
 2. **Welcome Notification**: A friendly notification explains that the app is running in your system tray
 3. **Ready to Use**: All reminders are enabled by default
@@ -202,11 +204,13 @@ When you first run NotifyMe:
 ### Sound Controls
 
 **Global Sound Control:**
+
 1. Right-click the system tray icon
 2. Open **"⚙ Controls"**
 3. Click **"🔊 Global Sound"** to toggle sounds for all notifications
 
 **Per-Reminder Sound Control:**
+
 1. Right-click the system tray icon
 2. Hover over any reminder type (e.g., **"👁 Blink Reminder"**)
 3. Click **"🔊 Sound"** to toggle sound for that specific reminder type
@@ -215,12 +219,14 @@ When you first run NotifyMe:
 ### Hiding/Showing Reminders
 
 **Hide a Reminder:**
+
 1. Right-click the system tray icon
 2. Hover over the reminder you want to hide
 3. Click **"🙈 Hide Reminder"**
 4. The reminder will disappear from the main menu but continue running
 
 **Show Hidden Reminders:**
+
 1. Right-click the system tray icon
 2. Look for **"👁 Hidden Reminders"** menu (appears when any reminders are hidden)
 3. Click on the reminder you want to show again
@@ -352,7 +358,7 @@ The app stores your preferences in `config.json`:
 ### Configuration Options
 
 - **Reminder Intervals**: Adjust the default intervals for each reminder type
-- **Sound Controls**: 
+- **Sound Controls**:
   - `sound_enabled`: Global sound toggle for all notifications
   - `[type]_sound_enabled`: Individual sound controls for each reminder type
 - **Visibility Controls**:

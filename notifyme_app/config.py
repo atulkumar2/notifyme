@@ -7,13 +7,13 @@ including reminder intervals, sound settings, and visibility preferences.
 
 import json
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from notifyme_app.constants import (
     DEFAULT_BLINK_INTERVAL_MIN,
+    DEFAULT_PRANAYAMA_INTERVAL_MIN,
     DEFAULT_WALKING_INTERVAL_MIN,
     DEFAULT_WATER_INTERVAL_MIN,
-    DEFAULT_PRANAYAMA_INTERVAL_MIN,
 )
 from notifyme_app.utils import get_app_data_dir
 
@@ -38,6 +38,14 @@ class ConfigManager:
             "walking_sound_enabled": True,
             "water_sound_enabled": True,
             "pranayama_sound_enabled": True,
+            # Text-to-Speech configuration (offline via pyttsx3 / SAPI5 on Windows)
+            "tts_enabled": True,
+            "blink_tts_enabled": True,
+            "walking_tts_enabled": True,
+            "water_tts_enabled": True,
+            "pranayama_tts_enabled": True,
+            # 'auto' prefers Hindi if a Hindi voice is available, otherwise English
+            "tts_language": "auto",
             "blink_hidden": False,
             "walking_hidden": False,
             "water_hidden": False,
@@ -50,7 +58,13 @@ class ConfigManager:
         if self.config_file.exists():
             try:
                 with open(self.config_file, encoding="utf-8") as f:
-                    return json.load(f)
+                    config = json.load(f)
+                # One-time migration: enable TTS for existing users if the key is missing
+                if "tts_enabled" not in config:
+                    config["tts_enabled"] = True
+                    self._config = config
+                    self.save_config()
+                return config
             except Exception as e:
                 logging.error("Error loading config: %s", e)
                 return self._get_default_config()
@@ -83,7 +97,9 @@ class ConfigManager:
         """Update multiple configuration values and save to file."""
         for key, value in updates.items():
             old_value = self._config.get(key)
-            logging.info("Configuration updated: %s = %s (was: %s)", key, value, old_value)
+            logging.info(
+                "Configuration updated: %s = %s (was: %s)", key, value, old_value
+            )
         self._config.update(updates)
         self.save_config()
 
@@ -217,3 +233,64 @@ class ConfigManager:
     def pranayama_hidden(self, value: bool) -> None:
         """Set pranayama reminder hidden state."""
         self.set("pranayama_hidden", value)
+
+    # Text-to-Speech properties
+    @property
+    def tts_enabled(self) -> bool:
+        """Get global TTS enabled state."""
+        return self.get("tts_enabled", False)
+
+    @tts_enabled.setter
+    def tts_enabled(self, value: bool) -> None:
+        """Set global TTS enabled state."""
+        self.set("tts_enabled", value)
+
+    @property
+    def blink_tts_enabled(self) -> bool:
+        """Get blink reminder TTS enabled state."""
+        return self.get("blink_tts_enabled", True)
+
+    @blink_tts_enabled.setter
+    def blink_tts_enabled(self, value: bool) -> None:
+        """Set blink reminder TTS enabled state."""
+        self.set("blink_tts_enabled", value)
+
+    @property
+    def walking_tts_enabled(self) -> bool:
+        """Get walking reminder TTS enabled state."""
+        return self.get("walking_tts_enabled", True)
+
+    @walking_tts_enabled.setter
+    def walking_tts_enabled(self, value: bool) -> None:
+        """Set walking reminder TTS enabled state."""
+        self.set("walking_tts_enabled", value)
+
+    @property
+    def water_tts_enabled(self) -> bool:
+        """Get water reminder TTS enabled state."""
+        return self.get("water_tts_enabled", True)
+
+    @water_tts_enabled.setter
+    def water_tts_enabled(self, value: bool) -> None:
+        """Set water reminder TTS enabled state."""
+        self.set("water_tts_enabled", value)
+
+    @property
+    def pranayama_tts_enabled(self) -> bool:
+        """Get pranayama reminder TTS enabled state."""
+        return self.get("pranayama_tts_enabled", True)
+
+    @pranayama_tts_enabled.setter
+    def pranayama_tts_enabled(self, value: bool) -> None:
+        """Set pranayama reminder TTS enabled state."""
+        self.set("pranayama_tts_enabled", value)
+
+    @property
+    def tts_language(self) -> str:
+        """Get preferred TTS language. 'auto' (default), 'en', or 'hi'."""
+        return self.get("tts_language", "auto")
+
+    @tts_language.setter
+    def tts_language(self, value: str) -> None:
+        """Set preferred TTS language."""
+        self.set("tts_language", value)

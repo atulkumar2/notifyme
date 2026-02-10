@@ -12,9 +12,9 @@ from pystray import Menu, MenuItem
 
 from notifyme_app.constants import (
     REMINDER_BLINK,
+    REMINDER_PRANAYAMA,
     REMINDER_WALKING,
     REMINDER_WATER,
-    REMINDER_PRANAYAMA,
 )
 
 
@@ -23,7 +23,7 @@ class MenuManager:
 
     def __init__(self, app_callbacks: dict):
         """Initialize the menu manager with application callbacks.
-        
+
         Args:
             app_callbacks: Dictionary of callback functions from the main app
         """
@@ -51,10 +51,15 @@ class MenuManager:
         walking_interval_minutes: int = 60,
         water_interval_minutes: int = 30,
         pranayama_interval_minutes: int = 120,
+        tts_enabled: bool = False,
+        blink_tts_enabled: bool = True,
+        walking_tts_enabled: bool = True,
+        water_tts_enabled: bool = True,
+        pranayama_tts_enabled: bool = True,
     ) -> Menu:
         """Create the system tray menu with current state."""
         logging.debug("Creating system tray menu with current application state")
-        
+
         # Update status
         if update_available and latest_version:
             update_label = f"⬆ Update available: v{latest_version}"
@@ -74,6 +79,9 @@ class MenuManager:
                 is_blink_paused,
                 blink_sound_enabled,
                 sound_enabled,
+                tts_enabled,
+                # TTS flag for blink
+                blink_tts_enabled,
                 interval_minutes,
                 [10, 15, 20, 30, 45, 60],
                 is_paused,
@@ -88,6 +96,9 @@ class MenuManager:
                 is_walking_paused,
                 walking_sound_enabled,
                 sound_enabled,
+                tts_enabled,
+                # TTS flag for walking
+                walking_tts_enabled,
                 walking_interval_minutes,
                 [30, 45, 60, 90, 120],
                 is_paused,
@@ -102,6 +113,9 @@ class MenuManager:
                 is_water_paused,
                 water_sound_enabled,
                 sound_enabled,
+                tts_enabled,
+                # TTS flag for water
+                water_tts_enabled,
                 water_interval_minutes,
                 [20, 30, 45, 60, 90],
                 is_paused,
@@ -116,6 +130,9 @@ class MenuManager:
                 is_pranayama_paused,
                 pranayama_sound_enabled,
                 sound_enabled,
+                tts_enabled,
+                # TTS flag for pranayama
+                pranayama_tts_enabled,
                 pranayama_interval_minutes,
                 [60, 90, 120, 180, 240],
                 is_paused,
@@ -125,17 +142,28 @@ class MenuManager:
         # Build hidden reminders menu
         hidden_items = []
         if blink_hidden:
-            hidden_items.append(MenuItem("👁 Show Blink Reminder",
-                                         self.callbacks["toggle_blink_hidden"]))
+            hidden_items.append(
+                MenuItem("👁 Show Blink Reminder", self.callbacks["toggle_blink_hidden"])
+            )
         if walking_hidden:
-            hidden_items.append(MenuItem("🚶 Show Walking Reminder",
-                                         self.callbacks["toggle_walking_hidden"]))
+            hidden_items.append(
+                MenuItem(
+                    "🚶 Show Walking Reminder", self.callbacks["toggle_walking_hidden"]
+                )
+            )
         if water_hidden:
-            hidden_items.append(MenuItem("💧 Show Water Reminder",
-                                         self.callbacks["toggle_water_hidden"]))
+            hidden_items.append(
+                MenuItem(
+                    "💧 Show Water Reminder", self.callbacks["toggle_water_hidden"]
+                )
+            )
         if pranayama_hidden:
-            hidden_items.append(MenuItem("🧘 Show Pranayama Reminder",
-                                         self.callbacks["toggle_pranayama_hidden"]))
+            hidden_items.append(
+                MenuItem(
+                    "🧘 Show Pranayama Reminder",
+                    self.callbacks["toggle_pranayama_hidden"],
+                )
+            )
 
         # Build the main menu
         menu_items = [
@@ -144,7 +172,9 @@ class MenuManager:
             MenuItem(
                 "⚙ Controls",
                 Menu(
-                    MenuItem("▶ Start", self.callbacks["start_reminders"], default=True),
+                    MenuItem(
+                        "▶ Start", self.callbacks["start_reminders"], default=True
+                    ),
                     MenuItem("⏸ Pause All", self.callbacks["pause_reminders"]),
                     MenuItem("▶ Resume All", self.callbacks["resume_reminders"]),
                     Menu.SEPARATOR,
@@ -152,6 +182,11 @@ class MenuManager:
                         "🔊 Global Sound",
                         self.callbacks["toggle_sound"],
                         checked=lambda _: sound_enabled,
+                    ),
+                    MenuItem(
+                        "🗣️ Global TTS",
+                        self.callbacks.get("toggle_tts", lambda: None),
+                        checked=lambda _: tts_enabled,
                     ),
                 ),
             ),
@@ -161,9 +196,16 @@ class MenuManager:
                 "🔔 Test Notifications",
                 Menu(
                     MenuItem("👁 Test Blink", self.callbacks["test_blink_notification"]),
-                    MenuItem("🚶 Test Walking", self.callbacks["test_walking_notification"]),
-                    MenuItem("💧 Test Water", self.callbacks["test_water_notification"]),
-                    MenuItem("🧘 Test Pranayama", self.callbacks["test_pranayama_notification"]),
+                    MenuItem(
+                        "🚶 Test Walking", self.callbacks["test_walking_notification"]
+                    ),
+                    MenuItem(
+                        "💧 Test Water", self.callbacks["test_water_notification"]
+                    ),
+                    MenuItem(
+                        "🧘 Test Pranayama",
+                        self.callbacks["test_pranayama_notification"],
+                    ),
                 ),
             ),
             Menu.SEPARATOR,
@@ -178,33 +220,47 @@ class MenuManager:
             menu_items.append(MenuItem("👁 Hidden Reminders", Menu(*hidden_items)))
 
         # Add remaining menu items
-        menu_items.extend([
-            Menu.SEPARATOR,
-            MenuItem(
-                "❓ Help",
-                Menu(
-                    MenuItem("🌐 User Guide", self.callbacks["open_help"]),
-                    MenuItem("📖 Online Documentation", self.callbacks["open_github_pages"]),
-                    Menu.SEPARATOR,
-                    MenuItem("🔄 Check for Updates", self.callbacks["check_for_updates_async"]),
-                    MenuItem("ℹ️ About NotifyMe", self.callbacks["show_about"]),
-                    Menu.SEPARATOR,
-                    MenuItem("🐙 GitHub Repository", self.callbacks["open_github"]),
-                    MenuItem("⬆ Releases", self.callbacks["open_github_releases"]),
+        menu_items.extend(
+            [
+                Menu.SEPARATOR,
+                MenuItem(
+                    "❓ Help",
+                    Menu(
+                        MenuItem("🌐 User Guide", self.callbacks["open_help"]),
+                        MenuItem(
+                            "📖 Online Documentation",
+                            self.callbacks["open_github_pages"],
+                        ),
+                        Menu.SEPARATOR,
+                        MenuItem(
+                            "🔄 Check for Updates",
+                            self.callbacks["check_for_updates_async"],
+                        ),
+                        MenuItem("ℹ️ About NotifyMe", self.callbacks["show_about"]),
+                        Menu.SEPARATOR,
+                        MenuItem("🐙 GitHub Repository", self.callbacks["open_github"]),
+                        MenuItem("⬆ Releases", self.callbacks["open_github_releases"]),
+                    ),
                 ),
-            ),
-            Menu.SEPARATOR,
-            MenuItem(
-                "📂 Open Locations",
-                Menu(
-                    MenuItem("📄 Log Location", self.callbacks["open_log_location"]),
-                    MenuItem("⚙ Config Location", self.callbacks["open_config_location"]),
-                    MenuItem("📦 App Location", self.callbacks["open_exe_location"]),
+                Menu.SEPARATOR,
+                MenuItem(
+                    "📂 Open Locations",
+                    Menu(
+                        MenuItem(
+                            "📄 Log Location", self.callbacks["open_log_location"]
+                        ),
+                        MenuItem(
+                            "⚙ Config Location", self.callbacks["open_config_location"]
+                        ),
+                        MenuItem(
+                            "📦 App Location", self.callbacks["open_exe_location"]
+                        ),
+                    ),
                 ),
-            ),
-            Menu.SEPARATOR,
-            MenuItem("❌ Quit", self.callbacks["quit_app"]),
-        ])
+                Menu.SEPARATOR,
+                MenuItem("❌ Quit", self.callbacks["quit_app"]),
+            ]
+        )
 
         return Menu(*menu_items)
 
@@ -215,6 +271,10 @@ class MenuManager:
         is_paused: bool,
         sound_enabled: bool,
         global_sound_enabled: bool,
+        # global tts enabled flag
+        global_tts_enabled: bool,
+        # per-reminder tts enabled flag
+        tts_enabled: bool,
         current_interval: int,
         interval_options: List[int],
         global_paused: bool,
@@ -237,14 +297,23 @@ class MenuManager:
             MenuItem(
                 "⏸ Pause/Resume",
                 self.callbacks[f"toggle_{reminder_type}_pause"],
-                checked=lambda _, paused=is_paused: not paused,  # Checked when NOT paused (running)
+                checked=lambda _, paused=is_paused: (
+                    not paused
+                ),  # Checked when NOT paused (running)
             ),
             MenuItem(
                 "🔊 Sound",
                 self.callbacks[f"toggle_{reminder_type}_sound"],
                 checked=lambda _: global_sound_enabled and sound_enabled,
             ),
-            MenuItem("🙈 Hide Reminder", self.callbacks[f"toggle_{reminder_type}_hidden"]),
+            MenuItem(
+                "🗣️ TTS",
+                self.callbacks.get(f"toggle_{reminder_type}_tts", lambda: None),
+                checked=lambda _: tts_enabled and global_tts_enabled,
+            ),
+            MenuItem(
+                "🙈 Hide Reminder", self.callbacks[f"toggle_{reminder_type}_hidden"]
+            ),
             Menu.SEPARATOR,
         ]
         submenu_items.extend(interval_items)

@@ -15,6 +15,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Iterable
 
+from PIL import Image
 from winotify import Notification, audio
 
 from notifyme_app import NotifyMeApp as _RuntimeNotifyMeApp
@@ -22,19 +23,30 @@ from notifyme_app.constants import APP_VERSION
 from notifyme_app.utils import get_idle_seconds as _get_idle_seconds
 
 try:
-    from pystray import Menu, MenuItem
+    from pystray import Menu as _PystrayMenu
+    from pystray import MenuItem as _PystrayMenuItem
+
+    MenuItem = _PystrayMenuItem  # type: ignore[assignment]
+    Menu = _PystrayMenu  # type: ignore[assignment]
 except Exception:  # pragma: no cover - fallback for environments without pystray
-    class MenuItem:  # type: ignore[override]
+
+    class MenuItem:  # type: ignore[no-redef]
+        """Simple MenuItem class to mimic pystray.MenuItem for environments
+        where pystray is unavailable."""
+
         def __init__(self, text, action=None, **_kwargs):
             self.text = text
             self.action = action
 
-    class Menu:  # type: ignore[override]
+    class Menu:  # type: ignore[no-redef]
+        """Simple Menu class to mimic pystray.Menu for environments where pystray is unavailable."""
+
         def __init__(self, *items):
             self._items = list(items)
 
         @property
         def items(self):
+            """Return menu items."""
             return self._items
 
 
@@ -74,6 +86,8 @@ APP_DATA_DIR = get_app_data_dir()
 class NotifyMeApp:
     """Legacy API surface used by the test suite."""
 
+    # pylint: disable-missing-function-docstring, no-self-use, too-many-instance-attributes
+
     def __init__(self):
         self.interval_minutes = 20
         self.walking_interval_minutes = 60
@@ -109,6 +123,7 @@ class NotifyMeApp:
         self.icon = None
 
     def get_default_config(self) -> dict:
+        """Return default configuration."""
         return {
             "interval_minutes": 20,
             "walking_interval_minutes": 60,
@@ -118,38 +133,53 @@ class NotifyMeApp:
         }
 
     def load_config(self) -> dict:
+        """Load configuration from file."""
         if self.config_file.exists():
             return json.loads(self.config_file.read_text(encoding="utf-8"))
         return self.get_default_config()
 
     def save_config(self) -> None:
+        """Save current configuration to file."""
         self.config_file.write_text(json.dumps(self.config, indent=2), encoding="utf-8")
 
     def set_interval(self, minutes: int):
+        """Set the interval for eye blink reminders."""
+
         def _set():
             self.interval_minutes = minutes
             self.config["interval_minutes"] = minutes
+
         return _set
 
     def set_walking_interval(self, minutes: int):
+        """Set the interval for walking reminders."""
+
         def _set():
             self.walking_interval_minutes = minutes
             self.config["walking_interval_minutes"] = minutes
+
         return _set
 
     def set_water_interval(self, minutes: int):
+        """Set the interval for water reminders."""
+
         def _set():
             self.water_interval_minutes = minutes
             self.config["water_interval_minutes"] = minutes
+
         return _set
 
     def set_pranayama_interval(self, minutes: int):
+        """Set the interval for pranayama reminders."""
+
         def _set():
             self.pranayama_interval_minutes = minutes
             self.config["pranayama_interval_minutes"] = minutes
+
         return _set
 
     def start_reminders(self) -> None:
+        """Start all reminder timers."""
         self.is_running = True
         self.is_paused = False
         threading.Thread(target=self.timer_worker, daemon=True).start()
@@ -158,9 +188,11 @@ class NotifyMeApp:
         threading.Thread(target=self.pranayama_timer_worker, daemon=True).start()
 
     def pause_reminders(self) -> None:
+        """Pause all reminder timers."""
         self.is_paused = True
 
     def resume_reminders(self) -> None:
+        """Resume all reminder timers."""
         self.is_paused = False
         self.is_blink_paused = False
         self.is_walking_paused = False
@@ -168,18 +200,23 @@ class NotifyMeApp:
         self.is_pranayama_paused = False
 
     def toggle_blink_pause(self) -> None:
+        """Toggle pause state for eye blink reminders."""
         self.is_blink_paused = not self.is_blink_paused
 
     def toggle_walking_pause(self) -> None:
+        """Toggle pause state for walking reminders."""
         self.is_walking_paused = not self.is_walking_paused
 
     def toggle_water_pause(self) -> None:
+        """Toggle pause state for water reminders."""
         self.is_water_paused = not self.is_water_paused
 
     def toggle_pranayama_pause(self) -> None:
+        """Toggle pause state for pranayama reminders."""
         self.is_pranayama_paused = not self.is_pranayama_paused
 
     def stop_reminders(self) -> None:
+        """Stop all reminder timers."""
         self.is_running = False
         self.is_paused = False
         if self.icon is not None:
@@ -189,19 +226,26 @@ class NotifyMeApp:
                 pass
 
     def open_log_location(self) -> None:
-        subprocess.run(["explorer", "/select,", str(APP_DATA_DIR / "notifyme.log")])
+        """Open the folder containing the log file."""
+        subprocess.run(
+            ["explorer", "/select,", str(APP_DATA_DIR / "notifyme.log")], check=False
+        )
 
     def open_exe_location(self) -> None:
-        subprocess.run(["explorer", "/select,", str(Path(sys.executable))])
+        """Open the folder containing the executable."""
+        subprocess.run(["explorer", "/select,", str(Path(sys.executable))], check=False)
 
     def open_config_location(self) -> None:
-        subprocess.run(["explorer", "/select,", str(self.config_file)])
+        """Open the folder containing the configuration file."""
+        subprocess.run(["explorer", "/select,", str(self.config_file)], check=False)
 
     def open_help(self) -> None:
+        """Open the help documentation in the default web browser."""
         help_dir = get_resource_path("help")
         webbrowser.open(str(help_dir / "index.html"))
 
     def update_icon_title(self) -> None:
+        """Update the system tray icon title based on current state."""
         if not self.icon:
             return
         if self.is_paused:
@@ -209,8 +253,12 @@ class NotifyMeApp:
             return
 
         blink_status = "⏸" if self.is_blink_paused else f"{self.interval_minutes}min"
-        walk_status = "⏸" if self.is_walking_paused else f"{self.walking_interval_minutes}min"
-        water_status = "⏸" if self.is_water_paused else f"{self.water_interval_minutes}min"
+        walk_status = (
+            "⏸" if self.is_walking_paused else f"{self.walking_interval_minutes}min"
+        )
+        water_status = (
+            "⏸" if self.is_water_paused else f"{self.water_interval_minutes}min"
+        )
         pranayama_status = (
             "⏸" if self.is_pranayama_paused else f"{self.pranayama_interval_minutes}min"
         )
@@ -220,34 +268,43 @@ class NotifyMeApp:
         )
 
     def get_initial_title(self) -> str:
+        """Get the initial title for the system tray icon."""
         return (
-            f"Blink: {self.interval_minutes}min, Walk: {self.walking_interval_minutes}min, "
-            f"Water: {self.water_interval_minutes}min, Pranayama: {self.pranayama_interval_minutes}min"
+            f"Blink: {self.interval_minutes}min, "
+            f"Walk: {self.walking_interval_minutes}min, "
+            f"Water: {self.water_interval_minutes}min, "
+            f"Pranayama: {self.pranayama_interval_minutes}min"
         )
 
     def show_notification(self, title: str, messages: Iterable[str]) -> None:
+        """Show a notification with the given title and messages."""
         message = next(iter(messages), "")
         toast = Notification(app_id="NotifyMe Reminder", title=title, msg=message)
         toast.set_audio(audio.Default, loop=False)
         toast.show()
 
     def show_blink_notification(self) -> None:
+        """Show a notification for eye blink reminders."""
         self.show_notification("Eye Blink Reminder", ["Blink now"])
 
     def show_walking_notification(self) -> None:
+        """Show a notification for walking reminders."""
         self.show_notification("Walking Reminder", ["Time to walk"])
 
     def show_water_notification(self) -> None:
+        """Show a notification for water reminders."""
         self.show_notification("Water Reminder", ["Drink water"])
 
     def show_pranayama_notification(self) -> None:
+        """Show a notification for pranayama reminders."""
         self.show_notification("Pranayama Reminder", ["Breathe"])
 
     def create_icon_image(self):
-        from PIL import Image
+        """Load and return the icon image for the system tray."""
         return Image.open(self.icon_file).resize((64, 64))
 
     def create_menu(self):
+        """Create and return the menu for the system tray icon."""
         return Menu(MenuItem("❓ Help", self.open_help))
 
     def _timer_loop(
@@ -288,6 +345,7 @@ class NotifyMeApp:
             time.sleep(1)
 
     def timer_worker(self) -> None:
+        """Worker thread for eye blink reminders."""
         self._timer_loop(
             self.interval_minutes,
             self.blink_offset_seconds,
@@ -298,6 +356,7 @@ class NotifyMeApp:
         )
 
     def walking_timer_worker(self) -> None:
+        """Worker thread for walking reminders."""
         self._timer_loop(
             self.walking_interval_minutes,
             self.walking_offset_seconds,
@@ -308,6 +367,7 @@ class NotifyMeApp:
         )
 
     def water_timer_worker(self) -> None:
+        """Worker thread for water reminders."""
         self._timer_loop(
             self.water_interval_minutes,
             self.water_offset_seconds,
@@ -318,6 +378,7 @@ class NotifyMeApp:
         )
 
     def pranayama_timer_worker(self) -> None:
+        """Worker thread for pranayama reminders."""
         self._timer_loop(
             self.pranayama_interval_minutes,
             self.pranayama_offset_seconds,

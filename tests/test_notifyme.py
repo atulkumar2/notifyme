@@ -9,9 +9,11 @@ from pathlib import Path
 from typing import Iterable, cast
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+from PIL import Image
 
-from notifyme import NotifyMeApp, get_app_data_dir, get_resource_path, APP_VERSION
+from notifyme import APP_VERSION, NotifyMeApp, get_app_data_dir, get_resource_path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 class TestGetAppDataDir(unittest.TestCase):
@@ -62,7 +64,6 @@ class TestNotifyMeApp(unittest.TestCase):
         self.icon_file_ico = Path(self.temp_dir) / "icon.ico"
 
         # Create a simple icon file for testing
-        from PIL import Image
 
         img = Image.new("RGB", (64, 64), color="blue")
         img.save(self.icon_file)
@@ -90,7 +91,11 @@ class TestNotifyMeApp(unittest.TestCase):
         pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
         content = pyproject_path.read_text(encoding="utf-8")
         version_line = next(
-            (line for line in content.splitlines() if line.strip().startswith("version")),
+            (
+                line
+                for line in content.splitlines()
+                if line.strip().startswith("version")
+            ),
             "",
         )
         _, value = version_line.split("=", 1)
@@ -212,7 +217,8 @@ class TestNotifyMeApp(unittest.TestCase):
     def test_stop_reminders(self):
         """Test stopping reminders."""
         self.app.is_running = True
-        self.app.icon = MagicMock()
+        if self.app.icon:
+            self.app.icon = MagicMock()
         self.app.stop_reminders()
         self.assertFalse(self.app.is_running)
         self.assertFalse(self.app.is_paused)
@@ -258,7 +264,8 @@ class TestNotifyMeApp(unittest.TestCase):
 
     def test_update_icon_title_paused(self):
         """Test icon title when all reminders are paused."""
-        self.app.icon = MagicMock()
+        if self.app.icon:
+            self.app.icon = MagicMock()
         self.app.is_paused = True
         self.app.update_icon_title()
         self.assertEqual(self.app.icon.title, "NotifyMe - All Paused")
@@ -319,6 +326,7 @@ class TestNotifyMeApp(unittest.TestCase):
 
         call_args = mock_notification.call_args[1]
         self.assertEqual(call_args["title"], "Eye Blink Reminder")
+        self.assertIsInstance(result, str)
 
     @patch("notifyme.Notification")
     def test_show_walking_notification(self, mock_notification):
@@ -378,9 +386,6 @@ class TestTimerWorkers(unittest.TestCase):
             with patch("notifyme.get_resource_path") as mock_resource:
                 mock_resource.side_effect = lambda x: Path(self.temp_dir) / x
                 self.app = NotifyMeApp()
-                # Create a simple icon
-                from PIL import Image
-
                 img = Image.new("RGB", (64, 64), color="blue")
                 img.save(Path(self.temp_dir) / "icon.png")
                 self.app.icon_file = Path(self.temp_dir) / "icon.png"
@@ -388,9 +393,7 @@ class TestTimerWorkers(unittest.TestCase):
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
     @patch("notifyme.time.time")
-    def test_timer_worker_runs_when_not_paused(
-        self, mock_time, mock_sleep, mock_idle
-    ):
+    def test_timer_worker_runs_when_not_paused(self, mock_time, mock_sleep, mock_idle):
         """Test that timer worker runs when not paused."""
         mock_time.return_value = 1000.0
         mock_idle.return_value = None
@@ -509,9 +512,7 @@ class TestTimerWorkers(unittest.TestCase):
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
     @patch("notifyme.time.time")
-    def test_water_timer_worker_resets_on_idle(
-        self, mock_time, mock_sleep, mock_idle
-    ):
+    def test_water_timer_worker_resets_on_idle(self, mock_time, mock_sleep, mock_idle):
         """Test that water idle time resets the timer without showing a reminder."""
         mock_time.return_value = 3000.0
         mock_idle.return_value = 60.0

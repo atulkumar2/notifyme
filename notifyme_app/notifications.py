@@ -8,22 +8,22 @@ reminder types with appropriate messages and sound settings.
 import logging
 import random
 import time
-from PIL import Image
 from typing import List, Optional
 
+from PIL import Image
 from winotify import Notification, audio
 
 from notifyme_app.constants import (
+    BLINK_MESSAGES,
+    PRANAYAMA_MESSAGES,
     TITLE_BLINK,
+    TITLE_PRANAYAMA,
     TITLE_WALKING,
     TITLE_WATER,
-    TITLE_PRANAYAMA,
-    BLINK_MESSAGES,
     WALKING_MESSAGES,
     WATER_MESSAGES,
-    PRANAYAMA_MESSAGES,
 )
-from notifyme_app.utils import get_resource_path, format_elapsed
+from notifyme_app.utils import format_elapsed, get_resource_path
 
 
 class NotificationManager:
@@ -86,38 +86,41 @@ class NotificationManager:
                 toast.set_audio(audio.Default, loop=False)
 
             toast.show()
+            # Return the selected message so callers can optionally use it (e.g. for TTS)
+            return message
         except Exception as e:
             logging.error("Error showing notification: %s", e)
+            return message
 
     def show_blink_notification(
         self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
-    ) -> None:
-        """Display a blink reminder notification."""
-        self.show_notification(
+    ) -> Optional[str]:
+        """Display a blink reminder notification and return the selected message."""
+        return self.show_notification(
             TITLE_BLINK, BLINK_MESSAGES, last_shown_at, sound_enabled
         )
 
     def show_walking_notification(
         self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
-    ) -> None:
-        """Display a walking reminder notification."""
-        self.show_notification(
+    ) -> Optional[str]:
+        """Display a walking reminder notification and return the selected message."""
+        return self.show_notification(
             TITLE_WALKING, WALKING_MESSAGES, last_shown_at, sound_enabled
         )
 
     def show_water_notification(
         self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
-    ) -> None:
-        """Display a water drinking reminder notification."""
-        self.show_notification(
+    ) -> Optional[str]:
+        """Display a water drinking reminder notification and return the selected message."""
+        return self.show_notification(
             TITLE_WATER, WATER_MESSAGES, last_shown_at, sound_enabled
         )
 
     def show_pranayama_notification(
         self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
-    ) -> None:
-        """Display a pranayama reminder notification."""
-        self.show_notification(
+    ) -> Optional[str]:
+        """Display a pranayama reminder notification and return the selected message."""
+        return self.show_notification(
             TITLE_PRANAYAMA, PRANAYAMA_MESSAGES, last_shown_at, sound_enabled
         )
 
@@ -125,8 +128,7 @@ class NotificationManager:
         """Show a toast notification for an available app update."""
         try:
             message = (
-                f"NotifyMe {latest_version} is available. "
-                "Open the tray menu to update."
+                f"NotifyMe {latest_version} is available. Open the tray menu to update."
             )
             toast = Notification(
                 app_id="NotifyMe Reminder",
