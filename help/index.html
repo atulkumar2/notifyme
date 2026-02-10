@@ -187,7 +187,10 @@
       </p>
       <p style="margin-bottom: 20px">
         Online docs:
-        <a href="https://atulkumar2.github.io/notifyme/" target="_blank" rel="noopener"
+        <a
+          href="https://atulkumar2.github.io/notifyme/"
+          target="_blank"
+          rel="noopener"
           >https://atulkumar2.github.io/notifyme/</a
         >
       </p>
@@ -198,7 +201,10 @@
           alt="NotifyMe icon"
           width="140"
           height="140"
-          style="border-radius: 20px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15)"
+          style="
+            border-radius: 20px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+          "
         />
       </div>
 
@@ -254,6 +260,14 @@
         <div class="feature-card">
           <strong>⚙️ Auto-save Settings</strong>
           <p>Your preferences persist across sessions.</p>
+        </div>
+        <div class="feature-card">
+          <strong>🔊 Sound Control</strong>
+          <p>Global and per-reminder sound toggles.</p>
+        </div>
+        <div class="feature-card">
+          <strong>🗣️ Offline TTS</strong>
+          <p>Spoken reminders via Windows SAPI (English/Hindi).</p>
         </div>
       </div>
 
@@ -351,11 +365,23 @@
         <li><strong>▶ Start:</strong> Begin all reminders</li>
         <li><strong>⏸ Pause All:</strong> Pause all reminders temporarily</li>
         <li><strong>▶ Resume All:</strong> Resume all paused reminders</li>
+        <li>
+          <strong>🔊 Global Sound:</strong> Toggle notification sounds for all
+          reminders
+        </li>
+        <li>
+          <strong>🗣️ Global TTS:</strong> Toggle text-to-speech for all
+          reminders
+        </li>
       </ul>
 
       <h3>👁 Blink Reminder</h3>
       <ul>
         <li><strong>⏸ Pause/Resume:</strong> Toggle blink reminders on/off</li>
+        <li><strong>🔊 Sound:</strong> Toggle sound for blink reminders</li>
+        <li>
+          <strong>🗣️ TTS:</strong> Toggle text-to-speech for blink reminders
+        </li>
         <li><strong>10-60 minutes:</strong> Choose your interval</li>
       </ul>
 
@@ -364,12 +390,20 @@
         <li>
           <strong>⏸ Pause/Resume:</strong> Toggle walking reminders on/off
         </li>
+        <li><strong>🔊 Sound:</strong> Toggle sound for walking reminders</li>
+        <li>
+          <strong>🗣️ TTS:</strong> Toggle text-to-speech for walking reminders
+        </li>
         <li><strong>30-120 minutes:</strong> Choose your interval</li>
       </ul>
 
       <h3>💧 Water Reminder</h3>
       <ul>
         <li><strong>⏸ Pause/Resume:</strong> Toggle water reminders on/off</li>
+        <li><strong>🔊 Sound:</strong> Toggle sound for water reminders</li>
+        <li>
+          <strong>🗣️ TTS:</strong> Toggle text-to-speech for water reminders
+        </li>
         <li><strong>20-90 minutes:</strong> Choose your interval</li>
       </ul>
 
@@ -377,6 +411,10 @@
       <ul>
         <li>
           <strong>⏸ Pause/Resume:</strong> Toggle pranayama reminders on/off
+        </li>
+        <li><strong>🔊 Sound:</strong> Toggle sound for pranayama reminders</li>
+        <li>
+          <strong>🗣️ TTS:</strong> Toggle text-to-speech for pranayama reminders
         </li>
         <li><strong>60-240 minutes:</strong> Choose your interval</li>
       </ul>
@@ -426,7 +464,25 @@
         </li>
         <li>
           <code>sound_enabled</code> - Enable/disable notification sounds
+          globally (true/false)
+        </li>
+        <li>
+          <code>*_sound_enabled</code> - Per-reminder sound toggles
+          (blink_sound_enabled, walking_sound_enabled, water_sound_enabled,
+          pranayama_sound_enabled)
+        </li>
+        <li>
+          <code>tts_enabled</code> - Enable/disable text-to-speech globally
           (true/false)
+        </li>
+        <li>
+          <code>tts_language</code> - TTS language preference ("auto", "en", or
+          "hi")
+        </li>
+        <li>
+          <code>*_tts_enabled</code> - Per-reminder TTS toggles
+          (blink_tts_enabled, walking_tts_enabled, water_tts_enabled,
+          pranayama_tts_enabled)
         </li>
       </ul>
 
@@ -491,9 +547,54 @@
         </ol>
       </div>
 
+      <h3>Text-to-Speech (TTS) Not Working</h3>
+      <div class="info-box">
+        <p><strong>Test TTS:</strong></p>
+        <ol>
+          <li>Right-click NotifyMe icon → Select a reminder type</li>
+          <li>Click "🔔 Test [Reminder]" to hear TTS preview</li>
+          <li>If no sound, check these steps:</li>
+        </ol>
+        <p style="margin-top: 10px">
+          <strong>Check if TTS is enabled:</strong>
+        </p>
+        <ul>
+          <li>
+            Right-click tray icon → "⚙ Controls" → "🗣️ Global TTS" should be
+            enabled
+          </li>
+          <li>
+            Check reminder menu → "🗣️ TTS" should be enabled for that reminder
+          </li>
+        </ul>
+        <p style="margin-top: 10px"><strong>Check system volume:</strong></p>
+        <ul>
+          <li>Ensure system volume is not muted (check taskbar volume icon)</li>
+          <li>Volume should be high enough to hear speech</li>
+        </ul>
+        <p style="margin-top: 10px">
+          <strong>Install Hindi voice (optional):</strong>
+        </p>
+        <ul>
+          <li>Open Settings → "Time & Language" → "Language & Region"</li>
+          <li>
+            Click "Add a language" → Search for "Hindi" → Install language pack
+          </li>
+          <li>Download Text-to-Speech voice for Hindi</li>
+          <li>Restart NotifyMe to detect the Hindi voice</li>
+        </ul>
+      </div>
+
       <h2>💡 Tips & Tricks</h2>
 
       <ul>
+        <li>
+          <strong>Sound Control:</strong> Disable sound for silent reminders
+        </li>
+        <li>
+          <strong>TTS Control:</strong> Use text-to-speech instead of sound for
+          quiet environments
+        </li>
         <li>
           <strong>Individual Control:</strong> Pause each reminder type
           independently

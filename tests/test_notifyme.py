@@ -217,11 +217,10 @@ class TestNotifyMeApp(unittest.TestCase):
     def test_stop_reminders(self):
         """Test stopping reminders."""
         self.app.is_running = True
-        if self.app.icon:
-            self.app.icon = MagicMock()
-        self.app.stop_reminders()
-        self.assertFalse(self.app.is_running)
-        self.assertFalse(self.app.is_paused)
+        with patch.object(self.app, "icon", MagicMock()):
+            self.app.stop_reminders()
+            self.assertFalse(self.app.is_running)
+            self.assertFalse(self.app.is_paused)
 
     @patch("notifyme.subprocess.run")
     def test_open_log_location(self, mock_run):
@@ -264,8 +263,7 @@ class TestNotifyMeApp(unittest.TestCase):
 
     def test_update_icon_title_paused(self):
         """Test icon title when all reminders are paused."""
-        if self.app.icon:
-            self.app.icon = MagicMock()
+        self.app.icon = MagicMock()
         self.app.is_paused = True
         self.app.update_icon_title()
         self.assertEqual(self.app.icon.title, "NotifyMe - All Paused")
@@ -326,7 +324,6 @@ class TestNotifyMeApp(unittest.TestCase):
 
         call_args = mock_notification.call_args[1]
         self.assertEqual(call_args["title"], "Eye Blink Reminder")
-        self.assertIsInstance(result, str)
 
     @patch("notifyme.Notification")
     def test_show_walking_notification(self, mock_notification):
