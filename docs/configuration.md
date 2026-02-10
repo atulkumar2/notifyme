@@ -1,5 +1,9 @@
 # NotifyMe - Configuration Guide
 
+[← Back to Home](index.md) | [🚀 Installation](installation.md) | [📖 Usage](usage.md) | [🆘 Troubleshooting](troubleshooting.md)
+
+---
+
 ## Configuration File Location
 
 Your settings are saved in:

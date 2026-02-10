@@ -1,5 +1,9 @@
 # NotifyMe - Installation Guide
 
+[← Back to Home](index.md) | [📖 Usage](usage.md) | [⚙️ Configuration](configuration.md) | [🆘 Troubleshooting](troubleshooting.md)
+
+---
+
 ## Option 1: Download Pre-built Executable (Recommended)
 
 1. Download the latest `NotifyMe.exe` from [GitHub Releases](https://github.com/atulkumar2/notifyme/releases)

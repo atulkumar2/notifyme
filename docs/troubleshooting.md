@@ -1,5 +1,9 @@
 # NotifyMe - Troubleshooting Guide
 
+[← Back to Home](index.md) | [🚀 Installation](installation.md) | [📖 Usage](usage.md) | [⚙️ Configuration](configuration.md)
+
+---
+
 ## Notifications Not Appearing
 
 ### Windows Notification Settings

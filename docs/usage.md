@@ -1,5 +1,9 @@
 # NotifyMe - Usage Guide
 
+[← Back to Home](index.md) | [🚀 Installation](installation.md) | [⚙️ Configuration](configuration.md) | [🆘 Troubleshooting](troubleshooting.md)
+
+---
+
 ## Getting Started
 
 1. **Launch NotifyMe** - Find the icon in your system tray (bottom-right corner of taskbar)
