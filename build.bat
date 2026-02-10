@@ -34,7 +34,7 @@ if not exist icon.ico (
 
 REM Build the executable
 echo Running PyInstaller...
-uv run pyinstaller NotifyMe.spec
+.venv\Scripts\python.exe -m PyInstaller NotifyMe.spec
 if !errorlevel! neq 0 goto :build_failed
 
 echo.
@@ -44,7 +44,7 @@ if exist dist\NotifyMe.exe (
     echo Executable created at: dist\NotifyMe.exe
     echo .
     echo Generating SHA256 hash...
-    uv run python -c "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); open(r'dist\SHA256SUMS.txt', 'w').write(f'{h}  NotifyMe.exe\n')"
+    .venv\Scripts\python.exe -c "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); open(r'dist\SHA256SUMS.txt', 'w').write(f'{h}  NotifyMe.exe\n')"
     if !errorlevel! neq 0 goto :build_failed
     echo SHA256 hash created at: dist\SHA256SUMS.txt
     echo .
