@@ -146,6 +146,7 @@ You can create a portable `.exe` file that doesn't require Python:
 2. **Find your executable** at `dist/NotifyMe.exe` (~18.5 MB)
 
 3. **Optional: Generate SHA256 hash** for integrity verification:
+
    ```bash
    .venv\Scripts\python.exe -c "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); print(f'{h}  NotifyMe.exe')"
    ```

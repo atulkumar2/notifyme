@@ -30,13 +30,13 @@ Main Components:
 
 Usage:
     from notifyme_app import NotifyMeApp
-    
+
     app = NotifyMeApp()
     app.run()
 
 Author: Atul Kumar
 License: MIT
-Version: 2.1.0
+Version: 2.2.0
 """
 
 from .app import NotifyMeApp

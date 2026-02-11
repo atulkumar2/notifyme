@@ -32,7 +32,7 @@ DEFAULT_OFFSETS_SECONDS = {
 }
 
 # Versioning and update checks
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.2.0"
 GITHUB_REPO_URL = "https://github.com/atulkumar2/notifyme"
 GITHUB_RELEASES_URL = f"{GITHUB_REPO_URL}/releases/latest"
 GITHUB_RELEASES_API_URL = (
