@@ -9,7 +9,7 @@
 > - Build output in `dist/`:
 >   - `notifyme.exe`
 >   - `SHA256SUMS.txt`
-> - Build entrypoint: `build.bat` (repo root)
+> - Build entrypoint: `scripts/build.ps1` or `scripts/build.bat`
 
 ## 0) Decide the release version
 
@@ -51,7 +51,9 @@
 ## 5) Build artifacts
 
 - [ ] Run build from repo root:
-  - [ ] `build.bat`
+  - **PowerShell** (recommended): `.\scripts\build.ps1`
+  - **Batch**: `.\scripts\build.bat`
+  - Or: `.\build.ps1` (root-level wrapper)
 - [ ] Confirm build outputs exist:
   - [ ] `dist/notifyme.exe`
   - [ ] `dist/SHA256SUMS.txt`
@@ -97,7 +99,7 @@ git status
 git pull origin main
 git add -A
 git commit -m "chore: bump version to vX.Y.Z"
-.\build.bat
+.\scripts\build.ps1
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
 git push origin main
 git push origin vX.Y.Z

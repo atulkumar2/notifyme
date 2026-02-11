@@ -1,6 +1,9 @@
 @echo off
 REM NotifyMe - Run Script
 
+REM Change to repo root
+cd /d "%~dp0\.."
+
 echo Starting NotifyMe (Modular Version)...
 
 REM Run the new modular app using uv

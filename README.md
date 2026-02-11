@@ -17,6 +17,7 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
 - [Configuration](#configuration)
 - [Reminder Messages](#reminder-messages)
 - [Technical Details](#technical-details)
+- [Build & Development Scripts](#build--development-scripts)
 - [License](#license)
 - [Contributing](#contributing)
 - [Connect](#connect)
@@ -74,7 +75,18 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
 1. **Clone or download this repository**
 
 2. **Run setup**:
-   Double-click `setup.bat` to install `uv` and all dependencies automatically.
+
+   **Batch** (for CMD):
+
+   ```bash
+   scripts\setup.bat
+   ```
+
+   **PowerShell** (recommended):
+
+   ```powershell
+   .\scripts\setup.ps1
+   ```
 
    Or manually with uv:
 
@@ -83,6 +95,20 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
    ```
 
 3. **Run the application**:
+
+   **Batch** (for CMD):
+
+   ```bash
+   scripts\run.bat
+   ```
+
+   **PowerShell**:
+
+   ```powershell
+   .\scripts\run.ps1
+   ```
+
+   Or manually:
 
    ```bash
    python notifyme.py
@@ -130,7 +156,18 @@ notifyme_app/
 You can create a portable `.exe` file that doesn't require Python:
 
 1. **Build the executable**:
-   Double-click `build.bat`
+
+   **Batch** (for CMD):
+
+   ```bash
+   scripts\build.bat
+   ```
+
+   **PowerShell** (recommended):
+
+   ```powershell
+   .\scripts\build.ps1
+   ```
 
    Or manually:
 
@@ -156,7 +193,18 @@ You can create a portable `.exe` file that doesn't require Python:
 The project includes comprehensive unit tests to ensure reliability:
 
 1. **Run all tests**:
-   Double-click `run_tests.bat`
+
+   **Batch** (for CMD):
+
+   ```bash
+   scripts\run_tests.bat
+   ```
+
+   **PowerShell** (recommended):
+
+   ```powershell
+   .\scripts\run_tests.ps1
+   ```
 
    Or manually:
 
@@ -468,6 +516,26 @@ The app randomly selects from these friendly messages:
 - `pystray` - System tray integration
 - `winotify` - Windows toast notifications
 - `Pillow` - Icon image processing
+
+## Build & Development Scripts
+
+All build and development scripts are in the `scripts/` folder. Both batch (`.bat`) and PowerShell (`.ps1`) versions are available:
+
+| Task  | PowerShell                | Batch                     |
+| ----- | ------------------------- | ------------------------- |
+| Setup | `.\scripts\setup.ps1`     | `.\scripts\setup.bat`     |
+| Run   | `.\scripts\run.ps1`       | `.\scripts\run.bat`       |
+| Build | `.\scripts\build.ps1`     | `.\scripts\build.bat`     |
+| Test  | `.\scripts\run_tests.ps1` | `.\scripts\run_tests.bat` |
+
+See [scripts/README.md](scripts/README.md) for detailed documentation on each script.
+
+**Quick reference:**
+
+- **Setup**: `.\scripts\setup.ps1` - Install dependencies with uv
+- **Run**: `.\scripts\run.ps1` - Launch the application
+- **Build**: `.\scripts\build.ps1` - Create executable (safe two-stage build)
+- **Test**: `.\scripts\run_tests.ps1` - Run test suite
 
 ## License
 

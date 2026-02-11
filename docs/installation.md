@@ -28,8 +28,16 @@
 
 2. Run setup to install dependencies:
 
+   **Batch** (for CMD):
+
    ```bash
-   setup.bat
+   scripts\setup.bat
+   ```
+
+   **PowerShell** (recommended):
+
+   ```powershell
+   .\scripts\setup.ps1
    ```
 
    Or manually:
@@ -40,8 +48,16 @@
 
 3. Run the application:
 
+   **Batch** (for CMD):
+
    ```bash
-   run.bat
+   scripts\run.bat
+   ```
+
+   **PowerShell**:
+
+   ```powershell
+   .\scripts\run.ps1
    ```
 
    Or manually:
@@ -75,8 +91,16 @@ If you want to build your own `.exe`:
 1. Ensure you have the source code
 2. Run the build script:
 
+   **Batch** (for CMD):
+
    ```bash
-   build.bat
+   scripts\build.bat
+   ```
+
+   **PowerShell** (recommended):
+
+   ```powershell
+   .\scripts\build.ps1
    ```
 
    Or manually with Python:

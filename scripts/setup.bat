@@ -1,6 +1,9 @@
 @echo off
 REM NotifyMe - Setup Script (using UV)
 
+REM Change to repo root
+cd /d "%~dp0\.."
+
 echo ========================================
 echo NotifyMe - Setup
 echo ========================================
