@@ -1,11 +1,11 @@
 """
 Offline Text-to-Speech manager using pyttsx3 (SAPI5 on Windows).
 
-- Runs a background worker thread with a queue to keep TTS non-blocking.
+- Creates fresh TTSManager instances when needed and destroys them after use.
 - Attempts to use a Hindi voice when requested or when language='auto' and a Hindi
   voice is available; otherwise falls back to English/default voice.
 - Gracefully degrades if pyttsx3 is not installed or fails: no exceptions escape
-  public methods and the application won't crash.
+  public functions and the application won't crash.
 
 This module is written to be PyInstaller-friendly: it imports pyttsx3 only when
 needed and performs speech work in a single dedicated thread.
@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 import queue
 import threading
+from contextlib import contextmanager
 
 from notifyme_app.constants import APP_NAME
 
@@ -26,20 +27,25 @@ except Exception:  # pragma: no cover - environment dependent
 
 
 class TTSManager:
-    """Background Text-to-Speech manager."""
+    """Text-to-Speech manager with automatic cleanup.
+
+    Instances are created on-demand and should be destroyed after use.
+    Not intended to be kept as a global singleton.
+    """
 
     def __init__(self) -> None:
         self._enabled = bool(pyttsx3)
-        self._queue = queue.Queue()
-        self._thread = threading.Thread(
-            target=self._worker, daemon=True, name=f"{APP_NAME}-TTS"
-        )
+        self._queue: queue.Queue = queue.Queue()
+        self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
         if self._enabled:
+            self._thread = threading.Thread(
+                target=self._worker, daemon=True, name=f"{APP_NAME}-TTS"
+            )
             self._thread.start()
-            logging.info("TTS manager started (fresh engine per request)")
+            logging.debug("TTS manager created")
         else:
-            logging.info("pyttsx3 not available; TTS disabled")
+            logging.debug("pyttsx3 not available; TTS disabled")
 
     def _find_voice_for_lang(self, lang: str, voices: list):
         """Return a voice.id matching the requested language if available.
@@ -135,21 +141,53 @@ class TTSManager:
                         pass
 
     def stop(self) -> None:
-        """Stop the TTS worker thread."""
-        if not self._enabled:
+        """Stop the TTS worker thread and clean up resources."""
+        if not self._enabled or not self._thread:
             return
-        logging.info("Stopping TTS manager")
+        logging.debug("Stopping TTS manager")
         self._stop_event.set()
-        self._thread.join(timeout=1.0)
+        if self._thread.is_alive():
+            self._thread.join(timeout=1.0)
+        logging.debug("TTS manager stopped")
+
+    def __enter__(self):
+        """Context manager entry: return self."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit: cleanup resources."""
+        self.stop()
+        return False
 
 
-# Module-level singleton
-_tts_manager = None
+@contextmanager
+def tts_manager():
+    """Context manager that creates and destroys a TTSManager instance.
+
+    Usage:
+        with tts_manager() as tts:
+            tts.speak("Hello world")
+
+    The manager is automatically cleaned up when exiting the context.
+    """
+    manager = TTSManager()
+    try:
+        yield manager
+    finally:
+        manager.stop()
 
 
-def get_tts_manager() -> TTSManager:
-    """Return a singleton TTSManager instance."""
-    global _tts_manager
-    if _tts_manager is None:
-        _tts_manager = TTSManager()
-    return _tts_manager
+def speak_once(text: str, lang: str = "auto") -> None:
+    """Speak text using a temporary TTSManager instance.
+
+    This is a convenience function for one-off speech requests.
+    The manager is created, used, and destroyed automatically.
+
+    Args:
+        text: The text to speak
+        lang: Language code ('auto', 'en', 'hi', etc.)
+
+    If TTS is disabled or pyttsx3 is not available, this is a no-op.
+    """
+    with tts_manager() as manager:
+        manager.speak(text, lang)

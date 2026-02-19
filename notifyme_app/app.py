@@ -29,7 +29,7 @@ from notifyme_app.menu import MenuManager
 from notifyme_app.notifications import NotificationManager
 from notifyme_app.system import SystemManager
 from notifyme_app.timers import TimerManager
-from notifyme_app.tts import get_tts_manager
+from notifyme_app.tts import speak_once
 from notifyme_app.updater import UpdateChecker
 
 if TYPE_CHECKING:
@@ -100,9 +100,8 @@ class NotifyMeApp:
             # Optionally speak the reminder using offline TTS
             try:
                 if self.config.tts_enabled and self.config.blink_tts_enabled:
-                    tts = get_tts_manager()
                     speak_text = f"Blink reminder: {message}"
-                    tts.speak_async(speak_text, lang=self.config.tts_language)
+                    speak_once(speak_text, lang=self.config.tts_language)
             except Exception as e:
                 logging.error("Error invoking TTS for blink reminder: %s", e)
 
@@ -119,8 +118,7 @@ class NotifyMeApp:
 
             try:
                 if self.config.tts_enabled and self.config.walking_tts_enabled:
-                    tts = get_tts_manager()
-                    tts.speak_async(
+                    speak_once(
                         f"Walking reminder: {message}", lang=self.config.tts_language
                     )
             except Exception as e:
@@ -139,8 +137,7 @@ class NotifyMeApp:
 
             try:
                 if self.config.tts_enabled and self.config.water_tts_enabled:
-                    tts = get_tts_manager()
-                    tts.speak_async(
+                    speak_once(
                         f"Water reminder: {message}", lang=self.config.tts_language
                     )
             except Exception as e:
@@ -159,8 +156,7 @@ class NotifyMeApp:
 
             try:
                 if self.config.tts_enabled and self.config.pranayama_tts_enabled:
-                    tts = get_tts_manager()
-                    tts.speak_async(
+                    speak_once(
                         f"Pranayama reminder: {message}", lang=self.config.tts_language
                     )
             except Exception as e:
@@ -453,8 +449,7 @@ class NotifyMeApp:
             )  # Pass None for last_shown_at
             tts_preview = self.config.tts_enabled or self.config.blink_tts_enabled
             if message and tts_preview:
-                tts = get_tts_manager()
-                tts.speak_async(
+                speak_once(
                     f"Blink reminder: {message}",
                     lang=self.config.tts_language,
                 )
@@ -474,8 +469,7 @@ class NotifyMeApp:
             )  # Pass None for last_shown_at
             tts_preview = self.config.tts_enabled or self.config.walking_tts_enabled
             if message and tts_preview:
-                tts = get_tts_manager()
-                tts.speak_async(
+                speak_once(
                     f"Walking reminder: {message}",
                     lang=self.config.tts_language,
                 )
@@ -493,8 +487,7 @@ class NotifyMeApp:
             )  # Pass None for last_shown_at
             tts_preview = self.config.tts_enabled or self.config.water_tts_enabled
             if message and tts_preview:
-                tts = get_tts_manager()
-                tts.speak_async(
+                speak_once(
                     f"Water reminder: {message}",
                     lang=self.config.tts_language,
                 )
@@ -514,8 +507,7 @@ class NotifyMeApp:
             )  # Pass None for last_shown_at
             tts_preview = self.config.tts_enabled or self.config.pranayama_tts_enabled
             if message and tts_preview:
-                tts = get_tts_manager()
-                tts.speak_async(
+                speak_once(
                     f"Pranayama reminder: {message}",
                     lang=self.config.tts_language,
                 )
@@ -650,10 +642,7 @@ class NotifyMeApp:
         self.stop_reminders()
         if self.icon:
             self.icon.stop()
-        try:
-            get_tts_manager().stop()
-        except Exception:
-            pass
+        # No need to stop TTS manager - it's created on-demand and cleans itself up
         logging.info("Application closed")
 
     def run(self) -> None:
