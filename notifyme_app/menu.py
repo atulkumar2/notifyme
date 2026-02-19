@@ -6,15 +6,16 @@ including dynamic menu generation based on visibility settings.
 """
 
 import logging
-from typing import List
 
 from pystray import Menu, MenuItem
 
 from notifyme_app.constants import (
+    APP_NAME,
     REMINDER_BLINK,
     REMINDER_PRANAYAMA,
     REMINDER_WALKING,
     REMINDER_WATER,
+    MenuCallbacks,
 )
 
 
@@ -63,7 +64,9 @@ class MenuManager:
         # Update status
         if update_available and latest_version:
             update_label = f"⬆ Update available: v{latest_version}"
-            update_item = MenuItem(update_label, self.callbacks["open_github_releases"])
+            update_item = MenuItem(
+                update_label, self.callbacks[MenuCallbacks.OPEN_GITHUB_RELEASES]
+            )
             logging.info("Update available: %s", latest_version)
         else:
             update_item = MenuItem("✅ Up to date", None, enabled=False)
@@ -143,25 +146,30 @@ class MenuManager:
         hidden_items = []
         if blink_hidden:
             hidden_items.append(
-                MenuItem("👁 Show Blink Reminder", self.callbacks["toggle_blink_hidden"])
+                MenuItem(
+                    "👁 Show Blink Reminder",
+                    self.callbacks[MenuCallbacks.TOGGLE_BLINK_HIDDEN],
+                )
             )
         if walking_hidden:
             hidden_items.append(
                 MenuItem(
-                    "🚶 Show Walking Reminder", self.callbacks["toggle_walking_hidden"]
+                    "🚶 Show Walking Reminder",
+                    self.callbacks[MenuCallbacks.TOGGLE_WALKING_HIDDEN],
                 )
             )
         if water_hidden:
             hidden_items.append(
                 MenuItem(
-                    "💧 Show Water Reminder", self.callbacks["toggle_water_hidden"]
+                    "💧 Show Water Reminder",
+                    self.callbacks[MenuCallbacks.TOGGLE_WATER_HIDDEN],
                 )
             )
         if pranayama_hidden:
             hidden_items.append(
                 MenuItem(
                     "🧘 Show Pranayama Reminder",
-                    self.callbacks["toggle_pranayama_hidden"],
+                    self.callbacks[MenuCallbacks.TOGGLE_PRANAYAMA_HIDDEN],
                 )
             )
 
@@ -173,38 +181,54 @@ class MenuManager:
                 "⚙ Controls",
                 Menu(
                     MenuItem(
-                        "▶ Start", self.callbacks["start_reminders"], default=True
+                        "▶ Start",
+                        self.callbacks[MenuCallbacks.START_REMINDERS],
+                        default=True,
                     ),
-                    MenuItem("⏸ Pause All", self.callbacks["pause_reminders"]),
-                    MenuItem("▶ Resume All", self.callbacks["resume_reminders"]),
+                    MenuItem(
+                        "⏸ Pause All",
+                        self.callbacks[MenuCallbacks.PAUSE_REMINDERS],
+                    ),
+                    MenuItem(
+                        "▶ Resume All",
+                        self.callbacks[MenuCallbacks.RESUME_REMINDERS],
+                    ),
                     Menu.SEPARATOR,
                     MenuItem(
                         "🔊 Global Sound",
-                        self.callbacks["toggle_sound"],
+                        self.callbacks[MenuCallbacks.TOGGLE_SOUND],
                         checked=lambda _: sound_enabled,
                     ),
                     MenuItem(
                         "🗣️ Global TTS",
-                        self.callbacks.get("toggle_tts", lambda: None),
+                        self.callbacks.get(MenuCallbacks.TOGGLE_TTS, lambda: None),
                         checked=lambda _: tts_enabled,
                     ),
                 ),
             ),
-            MenuItem("💤 Snooze (5 min)", self.callbacks["snooze_reminder"]),
+            MenuItem(
+                "💤 Snooze (5 min)",
+                self.callbacks[MenuCallbacks.SNOOZE_REMINDER],
+            ),
             Menu.SEPARATOR,
             MenuItem(
                 "🔔 Test Notifications",
                 Menu(
-                    MenuItem("👁 Test Blink", self.callbacks["test_blink_notification"]),
                     MenuItem(
-                        "🚶 Test Walking", self.callbacks["test_walking_notification"]
+                        "👁 Test Blink",
+                        self.callbacks[MenuCallbacks.TEST_BLINK_NOTIFICATION],
                     ),
                     MenuItem(
-                        "💧 Test Water", self.callbacks["test_water_notification"]
+                        "🚶 Test Walking",
+                        self.callbacks[MenuCallbacks.TEST_WALKING_NOTIFICATION],
+                    ),
+                    MenuItem(
+                        "💧 Test Water",
+                        self.callbacks[MenuCallbacks.TEST_WATER_NOTIFICATION],
                     ),
                     MenuItem(
                         "🧘 Test Pranayama",
-                        self.callbacks["test_pranayama_notification"],
+                        self.callbacks[MenuCallbacks.TEST_PRANAYAMA_NOTIFICATION],
                     ),
                 ),
             ),
@@ -226,20 +250,32 @@ class MenuManager:
                 MenuItem(
                     "❓ Help",
                     Menu(
-                        MenuItem("🌐 User Guide", self.callbacks["open_help"]),
+                        MenuItem(
+                            "🌐 User Guide",
+                            self.callbacks[MenuCallbacks.OPEN_HELP],
+                        ),
                         MenuItem(
                             "📖 Online Documentation",
-                            self.callbacks["open_github_pages"],
+                            self.callbacks[MenuCallbacks.OPEN_GITHUB_PAGES],
                         ),
                         Menu.SEPARATOR,
                         MenuItem(
                             "🔄 Check for Updates",
-                            self.callbacks["check_for_updates_async"],
+                            self.callbacks[MenuCallbacks.CHECK_FOR_UPDATES_ASYNC],
                         ),
-                        MenuItem("ℹ️ About NotifyMe", self.callbacks["show_about"]),
+                        MenuItem(
+                            f"ℹ️ About {APP_NAME}",
+                            self.callbacks[MenuCallbacks.SHOW_ABOUT],
+                        ),
                         Menu.SEPARATOR,
-                        MenuItem("🐙 GitHub Repository", self.callbacks["open_github"]),
-                        MenuItem("⬆ Releases", self.callbacks["open_github_releases"]),
+                        MenuItem(
+                            "🐙 GitHub Repository",
+                            self.callbacks[MenuCallbacks.OPEN_GITHUB],
+                        ),
+                        MenuItem(
+                            "⬆ Releases",
+                            self.callbacks[MenuCallbacks.OPEN_GITHUB_RELEASES],
+                        ),
                     ),
                 ),
                 Menu.SEPARATOR,
@@ -247,18 +283,21 @@ class MenuManager:
                     "📂 Open Locations",
                     Menu(
                         MenuItem(
-                            "📄 Log Location", self.callbacks["open_log_location"]
+                            "📄 Log Location",
+                            self.callbacks[MenuCallbacks.OPEN_LOG_LOCATION],
                         ),
                         MenuItem(
-                            "⚙ Config Location", self.callbacks["open_config_location"]
+                            "⚙ Config Location",
+                            self.callbacks[MenuCallbacks.OPEN_CONFIG_LOCATION],
                         ),
                         MenuItem(
-                            "📦 App Location", self.callbacks["open_exe_location"]
+                            "📦 App Location",
+                            self.callbacks[MenuCallbacks.OPEN_EXE_LOCATION],
                         ),
                     ),
                 ),
                 Menu.SEPARATOR,
-                MenuItem("❌ Quit", self.callbacks["quit_app"]),
+                MenuItem("❌ Quit", self.callbacks[MenuCallbacks.QUIT_APP]),
             ]
         )
 
@@ -276,7 +315,7 @@ class MenuManager:
         # per-reminder tts enabled flag
         tts_enabled: bool,
         current_interval: int,
-        interval_options: List[int],
+        interval_options: list[int],
         global_paused: bool,
     ) -> MenuItem:
         """Create a menu for a specific reminder type."""

@@ -11,13 +11,17 @@ import sys
 import tempfile
 import webbrowser
 from pathlib import Path
+
 from PIL import Image, ImageDraw
 
-from notifyme_app.constants import GITHUB_PAGES_URL, HELP_ERROR_HTML
-from notifyme_app.utils import get_resource_path, get_app_data_dir
-from notifyme_app.constants import GITHUB_RELEASES_URL
-from notifyme_app.constants import GITHUB_REPO_URL
-from notifyme_app.constants import GITHUB_PAGES_USAGE_URL
+from notifyme_app.constants import (
+    GITHUB_PAGES_URL,
+    GITHUB_PAGES_USAGE_URL,
+    GITHUB_RELEASES_URL,
+    GITHUB_REPO_URL,
+    HELP_ERROR_HTML,
+)
+from notifyme_app.utils import get_app_data_dir, get_config_path, get_resource_path
 
 
 class SystemManager:
@@ -75,7 +79,7 @@ class SystemManager:
 
     def open_config_location(self) -> None:
         """Open the config file location in Explorer."""
-        config_path = get_app_data_dir() / "config.json"
+        config_path = get_config_path()
         try:
             # Open Explorer and select the config file
             subprocess.run(["explorer", "/select,", str(config_path)], check=False)
@@ -105,7 +109,9 @@ class SystemManager:
 
         # 2. Check project root help directory (dev mode)
         try:
-            help_search_paths.append(Path(__file__).parent.parent / "help" / "index.html")
+            help_search_paths.append(
+                Path(__file__).parent.parent / "help" / "index.html"
+            )
         except Exception:
             logging.debug("Could not determine project root help path")
 
@@ -146,7 +152,6 @@ class SystemManager:
     def open_github(self) -> None:
         """Open the GitHub repository in the default browser."""
         try:
-
             webbrowser.open(GITHUB_REPO_URL)
             logging.info("Opened GitHub repository")
         except Exception as e:
@@ -155,7 +160,6 @@ class SystemManager:
     def open_github_releases(self) -> None:
         """Open the GitHub releases page in the default browser."""
         try:
-
             webbrowser.open(GITHUB_RELEASES_URL)
             logging.info("Opened GitHub releases")
         except Exception as e:

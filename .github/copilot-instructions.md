@@ -7,7 +7,7 @@
 - Run linter checks or fix lint issues introduced by changes.
 - Keep README in sync with user-facing changes.
 - Use existing dependencies when possible; only add new ones if necessary.
-- For Python files, ensure compatibility with Python 3.8 or higher.
+- For Python files, ensure compatibility with Python greater than 3.13.
 - All imports should be absolute imports.
 - All imports should be sorted according to PEP 8 guidelines.
 - All imports should be at the top of the file, after any module comments and docstrings, and before module globals and constants.

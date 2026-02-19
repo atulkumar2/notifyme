@@ -31,7 +31,7 @@
 
 If running from source:
 
-1. Download Python 3.8+ from [python.org](https://www.python.org/)
+1. Download Python 3.13+ from [python.org](https://www.python.org/)
 2. Install with "Add Python to PATH" checked
 3. Restart and try again
 

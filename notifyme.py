@@ -11,15 +11,21 @@ import sys
 import threading
 import time
 import webbrowser
+from collections.abc import Iterable
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Iterable
 
 from PIL import Image
 from winotify import Notification, audio
 
 from notifyme_app import NotifyMeApp as _RuntimeNotifyMeApp
-from notifyme_app.constants import APP_VERSION
+from notifyme_app.constants import (
+    APP_NAME,
+    APP_REMINDER_APP_ID,
+    APP_VERSION,
+    ConfigKeys,
+)
+from notifyme_app.utils import get_config_path
 from notifyme_app.utils import get_idle_seconds as _get_idle_seconds
 
 try:
@@ -61,7 +67,7 @@ __all__ = [
 
 def get_app_data_dir() -> Path:
     """Return the per-user app data directory for config and logs."""
-    app_data = Path(os.environ.get("APPDATA", Path.home())) / "NotifyMe"
+    app_data = Path(os.environ.get("APPDATA", Path.home())) / APP_NAME
     app_data.mkdir(parents=True, exist_ok=True)
     return app_data
 
@@ -117,7 +123,7 @@ class NotifyMeApp:
         self._pranayama_idle_suppressed = False
 
         self.config = self.get_default_config()
-        self.config_file = APP_DATA_DIR / "config.json"
+        self.config_file = get_config_path()
         self.icon_file = get_resource_path("icon.png")
         self.icon_file_ico = get_resource_path("icon.ico")
         self.icon = None
@@ -125,11 +131,11 @@ class NotifyMeApp:
     def get_default_config(self) -> dict:
         """Return default configuration."""
         return {
-            "interval_minutes": 20,
-            "walking_interval_minutes": 60,
-            "water_interval_minutes": 30,
-            "pranayama_interval_minutes": 120,
-            "sound_enabled": False,
+            ConfigKeys.INTERVAL_MINUTES: 20,
+            ConfigKeys.WALKING_INTERVAL_MINUTES: 60,
+            ConfigKeys.WATER_INTERVAL_MINUTES: 30,
+            ConfigKeys.PRANAYAMA_INTERVAL_MINUTES: 120,
+            ConfigKeys.SOUND_ENABLED: False,
         }
 
     def load_config(self) -> dict:
@@ -147,7 +153,7 @@ class NotifyMeApp:
 
         def _set():
             self.interval_minutes = minutes
-            self.config["interval_minutes"] = minutes
+            self.config[ConfigKeys.INTERVAL_MINUTES] = minutes
 
         return _set
 
@@ -156,7 +162,7 @@ class NotifyMeApp:
 
         def _set():
             self.walking_interval_minutes = minutes
-            self.config["walking_interval_minutes"] = minutes
+            self.config[ConfigKeys.WALKING_INTERVAL_MINUTES] = minutes
 
         return _set
 
@@ -165,7 +171,7 @@ class NotifyMeApp:
 
         def _set():
             self.water_interval_minutes = minutes
-            self.config["water_interval_minutes"] = minutes
+            self.config[ConfigKeys.WATER_INTERVAL_MINUTES] = minutes
 
         return _set
 
@@ -174,7 +180,7 @@ class NotifyMeApp:
 
         def _set():
             self.pranayama_interval_minutes = minutes
-            self.config["pranayama_interval_minutes"] = minutes
+            self.config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES] = minutes
 
         return _set
 
@@ -249,7 +255,7 @@ class NotifyMeApp:
         if not self.icon:
             return
         if self.is_paused:
-            self.icon.title = "NotifyMe - All Paused"
+            self.icon.title = f"{APP_NAME} - All Paused"
             return
 
         blink_status = "⏸" if self.is_blink_paused else f"{self.interval_minutes}min"
@@ -279,7 +285,7 @@ class NotifyMeApp:
     def show_notification(self, title: str, messages: Iterable[str]) -> None:
         """Show a notification with the given title and messages."""
         message = next(iter(messages), "")
-        toast = Notification(app_id="NotifyMe Reminder", title=title, msg=message)
+        toast = Notification(app_id=APP_REMINDER_APP_ID, title=title, msg=message)
         toast.set_audio(audio.Default, loop=False)
         toast.show()
 

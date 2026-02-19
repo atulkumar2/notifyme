@@ -8,12 +8,15 @@ and other utility functions used throughout the application.
 import ctypes
 import os
 import sys
-from pathlib import Path
 from ctypes import wintypes
+from pathlib import Path
+
+from notifyme_app.constants import APP_NAME
 
 
 class LASTINPUTINFO(ctypes.Structure):
     """Windows structure for getting last input information."""
+
     _fields_ = [
         ("cbSize", wintypes.UINT),
         ("dwTime", wintypes.DWORD),
@@ -22,9 +25,14 @@ class LASTINPUTINFO(ctypes.Structure):
 
 def get_app_data_dir() -> Path:
     """Return the per-user app data directory for config and logs."""
-    app_data = Path(os.environ.get("APPDATA", Path.home())) / "NotifyMe"
+    app_data = Path(os.environ.get("APPDATA", Path.home())) / APP_NAME
     app_data.mkdir(parents=True, exist_ok=True)
     return app_data
+
+
+def get_config_path() -> Path:
+    """Return the config file path in the app data directory."""
+    return get_app_data_dir() / "config.json"
 
 
 def get_resource_path(filename: str) -> Path:

@@ -16,7 +16,8 @@ from __future__ import annotations
 import logging
 import queue
 import threading
-from typing import Optional
+
+from notifyme_app.constants import APP_NAME
 
 try:
     import pyttsx3
@@ -29,9 +30,9 @@ class TTSManager:
 
     def __init__(self) -> None:
         self._enabled = bool(pyttsx3)
-        self._queue: "queue.Queue[tuple[str, Optional[str]]]" = queue.Queue()
+        self._queue = queue.Queue()
         self._thread = threading.Thread(
-            target=self._worker, daemon=True, name="NotifyMe-TTS"
+            target=self._worker, daemon=True, name=f"{APP_NAME}-TTS"
         )
         self._stop_event = threading.Event()
         if self._enabled:
@@ -40,7 +41,7 @@ class TTSManager:
         else:
             logging.info("pyttsx3 not available; TTS disabled")
 
-    def _find_voice_for_lang(self, lang: str, voices: list) -> Optional[str]:
+    def _find_voice_for_lang(self, lang: str, voices: list):
         """Return a voice.id matching the requested language if available.
 
         lang examples: 'hi' (Hindi), 'en' (English), 'auto' (prefer hi then en)
@@ -143,7 +144,7 @@ class TTSManager:
 
 
 # Module-level singleton
-_tts_manager: Optional[TTSManager] = None
+_tts_manager = None
 
 
 def get_tts_manager() -> TTSManager:

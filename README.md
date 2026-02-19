@@ -68,7 +68,7 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
 #### Prerequisites
 
 - Windows 10 or Windows 11
-- Python 3.8 or higher
+- Python 3.13+ (greater than 3.13)
 
 #### Installation
 

@@ -5,13 +5,18 @@ Unit tests for the NotifyMe application.
 import sys
 import tempfile
 import unittest
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, cast
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 from PIL import Image
 
 from notifyme import APP_VERSION, NotifyMeApp, get_app_data_dir, get_resource_path
+from notifyme_app.constants import (
+    APP_NAME,
+    ConfigKeys,
+)
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -25,14 +30,14 @@ class TestGetAppDataDir(unittest.TestCase):
         """Test get_app_data_dir when APPDATA is not set."""
         mock_home.return_value = Path("/home/user")
         result = get_app_data_dir()
-        self.assertEqual(result.name, "NotifyMe")
+        self.assertEqual(result.name, APP_NAME)
 
     @patch.dict("os.environ", {"APPDATA": "C:\\Users\\Test\\AppData\\Roaming"})
     @patch("notifyme.Path.mkdir")
     def test_get_app_data_dir_with_appdata(self, mock_mkdir):
         """Test get_app_data_dir when APPDATA is set."""
         result = get_app_data_dir()
-        self.assertTrue(str(result).endswith("NotifyMe"))
+        self.assertTrue(str(result).endswith(APP_NAME))
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
 
@@ -105,52 +110,52 @@ class TestNotifyMeApp(unittest.TestCase):
     def test_get_default_config(self):
         """Test default configuration values."""
         config = self.app.get_default_config()
-        self.assertEqual(config["interval_minutes"], 20)
-        self.assertEqual(config["walking_interval_minutes"], 60)
-        self.assertEqual(config["water_interval_minutes"], 30)
-        self.assertEqual(config["pranayama_interval_minutes"], 120)
-        self.assertFalse(config["sound_enabled"])
+        self.assertEqual(config[ConfigKeys.INTERVAL_MINUTES], 20)
+        self.assertEqual(config[ConfigKeys.WALKING_INTERVAL_MINUTES], 60)
+        self.assertEqual(config[ConfigKeys.WATER_INTERVAL_MINUTES], 30)
+        self.assertEqual(config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES], 120)
+        self.assertFalse(config[ConfigKeys.SOUND_ENABLED])
 
     def test_save_and_load_config(self):
         """Test saving and loading configuration."""
-        self.app.config["interval_minutes"] = 30
-        self.app.config["walking_interval_minutes"] = 90
-        self.app.config["pranayama_interval_minutes"] = 180
+        self.app.config[ConfigKeys.INTERVAL_MINUTES] = 30
+        self.app.config[ConfigKeys.WALKING_INTERVAL_MINUTES] = 90
+        self.app.config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES] = 180
         self.app.save_config()
 
         # Load config in a new instance
         loaded_config = self.app.load_config()
-        self.assertEqual(loaded_config["interval_minutes"], 30)
-        self.assertEqual(loaded_config["walking_interval_minutes"], 90)
-        self.assertEqual(loaded_config["pranayama_interval_minutes"], 180)
+        self.assertEqual(loaded_config[ConfigKeys.INTERVAL_MINUTES], 30)
+        self.assertEqual(loaded_config[ConfigKeys.WALKING_INTERVAL_MINUTES], 90)
+        self.assertEqual(loaded_config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES], 180)
 
     def test_set_interval(self):
         """Test setting blink reminder interval."""
         set_func = self.app.set_interval(30)
         set_func()
         self.assertEqual(self.app.interval_minutes, 30)
-        self.assertEqual(self.app.config["interval_minutes"], 30)
+        self.assertEqual(self.app.config[ConfigKeys.INTERVAL_MINUTES], 30)
 
     def test_set_walking_interval(self):
         """Test setting walking reminder interval."""
         set_func = self.app.set_walking_interval(90)
         set_func()
         self.assertEqual(self.app.walking_interval_minutes, 90)
-        self.assertEqual(self.app.config["walking_interval_minutes"], 90)
+        self.assertEqual(self.app.config[ConfigKeys.WALKING_INTERVAL_MINUTES], 90)
 
     def test_set_water_interval(self):
         """Test setting water reminder interval."""
         set_func = self.app.set_water_interval(45)
         set_func()
         self.assertEqual(self.app.water_interval_minutes, 45)
-        self.assertEqual(self.app.config["water_interval_minutes"], 45)
+        self.assertEqual(self.app.config[ConfigKeys.WATER_INTERVAL_MINUTES], 45)
 
     def test_set_pranayama_interval(self):
         """Test setting pranayama reminder interval."""
         set_func = self.app.set_pranayama_interval(180)
         set_func()
         self.assertEqual(self.app.pranayama_interval_minutes, 180)
-        self.assertEqual(self.app.config["pranayama_interval_minutes"], 180)
+        self.assertEqual(self.app.config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES], 180)
 
     def test_start_reminders(self):
         """Test starting reminders."""
@@ -266,7 +271,7 @@ class TestNotifyMeApp(unittest.TestCase):
         self.app.icon = MagicMock()
         self.app.is_paused = True
         self.app.update_icon_title()
-        self.assertEqual(self.app.icon.title, "NotifyMe - All Paused")
+        self.assertEqual(self.app.icon.title, f"{APP_NAME} - All Paused")
 
     def test_update_icon_title_running(self):
         """Test icon title when reminders are running."""

@@ -10,9 +10,9 @@ import logging
 import threading
 from datetime import datetime, timezone
 from urllib.request import Request, urlopen
-from typing import Optional, Callable
 
 from notifyme_app.constants import (
+    APP_NAME,
     APP_VERSION,
     GITHUB_RELEASES_API_URL,
     UPDATE_CHECK_TIMEOUT_SECONDS,
@@ -23,16 +23,16 @@ from notifyme_app.utils import parse_version
 class UpdateChecker:
     """Manages application update checking and notifications."""
 
-    def __init__(self, update_callback: Optional[Callable[[str], None]] = None):
+    def __init__(self, update_callback=None):
         """Initialize the update checker.
 
         Args:
-            update_callback: Optional callback to call when update is available
+            update_callback: Callback to call when update is available
         """
         self.update_callback = update_callback
         self.update_available = False
-        self.latest_version: Optional[str] = None
-        self.last_update_check_at: Optional[datetime] = None
+        self.latest_version = None
+        self.last_update_check_at = None
 
     def get_current_version(self) -> str:
         """Return the current application version string."""
@@ -43,7 +43,7 @@ class UpdateChecker:
         try:
             req = Request(
                 GITHUB_RELEASES_API_URL,
-                headers={"User-Agent": "NotifyMe"},
+                headers={"User-Agent": APP_NAME},
             )
             with urlopen(req, timeout=UPDATE_CHECK_TIMEOUT_SECONDS) as resp:
                 payload = resp.read().decode("utf-8")
@@ -83,10 +83,10 @@ class UpdateChecker:
         """Check if an update is available."""
         return self.update_available
 
-    def get_latest_version(self) -> Optional[str]:
+    def get_latest_version(self):
         """Get the latest available version."""
         return self.latest_version
 
-    def get_last_check_time(self) -> Optional[datetime]:
+    def get_last_check_time(self):
         """Get the timestamp of the last update check."""
         return self.last_update_check_at

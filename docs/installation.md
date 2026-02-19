@@ -15,7 +15,7 @@
 ### Prerequisites
 
 - Windows 10 or Windows 11
-- Python 3.8 or higher
+- Python 3.13+ (greater than 3.13)
 
 ### Installation Steps
 
@@ -121,7 +121,7 @@ The build process automatically:
 
 ## Troubleshooting Installation
 
-- **"Python not found"**: Install Python 3.8+ from [python.org](https://www.python.org/)
+- **"Python not found"**: Install Python 3.13+ from [python.org](https://www.python.org/)
 - **"uv command not found"**: Run `setup.bat` to install uv
 - **Notifications not working**: Check [Troubleshooting Guide](troubleshooting.md)
 

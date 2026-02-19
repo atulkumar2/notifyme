@@ -8,20 +8,18 @@ reminder types with appropriate messages and sound settings.
 import logging
 import random
 import time
-from typing import List, Optional
 
 from PIL import Image
 from winotify import Notification, audio
 
 from notifyme_app.constants import (
+    APP_NAME,
+    APP_REMINDER_APP_ID,
     BLINK_MESSAGES,
     PRANAYAMA_MESSAGES,
-    TITLE_BLINK,
-    TITLE_PRANAYAMA,
-    TITLE_WALKING,
-    TITLE_WATER,
     WALKING_MESSAGES,
     WATER_MESSAGES,
+    ReminderTitles,
 )
 from notifyme_app.utils import format_elapsed, get_resource_path
 
@@ -45,7 +43,7 @@ class NotificationManager:
             except Exception as e:
                 logging.error("Failed to create .ico file: %s", e)
 
-    def _get_icon_path(self) -> Optional[str]:
+    def _get_icon_path(self):
         """Get the path to the notification icon."""
         if self.icon_file_ico.exists():
             return str(self.icon_file_ico)
@@ -56,10 +54,10 @@ class NotificationManager:
     def show_notification(
         self,
         title: str,
-        messages: List[str],
-        last_shown_at: Optional[float] = None,
+        messages: list[str],
+        last_shown_at=None,
         sound_enabled: bool = False,
-    ) -> None:
+    ) -> str:
         """Display a Windows toast notification for a reminder."""
         message = random.choice(messages)  # noqa: S311
         if last_shown_at:
@@ -72,7 +70,7 @@ class NotificationManager:
 
             # Create notification using winotify
             toast_args = {
-                "app_id": "NotifyMe Reminder",
+                "app_id": APP_REMINDER_APP_ID,
                 "title": title,
                 "msg": message,
             }
@@ -92,46 +90,43 @@ class NotificationManager:
             logging.error("Error showing notification: %s", e)
             return message
 
-    def show_blink_notification(
-        self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
-    ) -> Optional[str]:
+    def show_blink_notification(self, last_shown_at=None, sound_enabled: bool = False):
         """Display a blink reminder notification and return the selected message."""
         return self.show_notification(
-            TITLE_BLINK, BLINK_MESSAGES, last_shown_at, sound_enabled
+            ReminderTitles.BLINK, BLINK_MESSAGES, last_shown_at, sound_enabled
         )
 
     def show_walking_notification(
-        self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
-    ) -> Optional[str]:
+        self, last_shown_at=None, sound_enabled: bool = False
+    ):
         """Display a walking reminder notification and return the selected message."""
         return self.show_notification(
-            TITLE_WALKING, WALKING_MESSAGES, last_shown_at, sound_enabled
+            ReminderTitles.WALKING, WALKING_MESSAGES, last_shown_at, sound_enabled
         )
 
-    def show_water_notification(
-        self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
-    ) -> Optional[str]:
+    def show_water_notification(self, last_shown_at=None, sound_enabled: bool = False):
         """Display a water drinking reminder notification and return the selected message."""
         return self.show_notification(
-            TITLE_WATER, WATER_MESSAGES, last_shown_at, sound_enabled
+            ReminderTitles.WATER, WATER_MESSAGES, last_shown_at, sound_enabled
         )
 
     def show_pranayama_notification(
-        self, last_shown_at: Optional[float] = None, sound_enabled: bool = False
-    ) -> Optional[str]:
+        self, last_shown_at=None, sound_enabled: bool = False
+    ):
         """Display a pranayama reminder notification and return the selected message."""
         return self.show_notification(
-            TITLE_PRANAYAMA, PRANAYAMA_MESSAGES, last_shown_at, sound_enabled
+            ReminderTitles.PRANAYAMA,
+            PRANAYAMA_MESSAGES,
+            last_shown_at,
+            sound_enabled,
         )
 
     def show_update_notification(self, latest_version: str) -> None:
         """Show a toast notification for an available app update."""
         try:
-            message = (
-                f"NotifyMe {latest_version} is available. Open the tray menu to update."
-            )
+            message = f"{APP_NAME} {latest_version} is available. Open the tray menu to update."
             toast = Notification(
-                app_id="NotifyMe Reminder",
+                app_id=APP_REMINDER_APP_ID,
                 title="Update Available",
                 msg=message,
             )
@@ -146,14 +141,14 @@ class NotificationManager:
             icon_path = self._get_icon_path()
 
             message = (
-                "NotifyMe is now installed and running in your system tray!\n"
+                f"{APP_NAME} is now installed and running in your system tray!\n"
                 "Right-click the tray icon to access controls and settings.\n"
                 "Reminders are enabled and ready to help you stay healthy."
             )
 
             toast_args = {
-                "app_id": "NotifyMe Reminder",
-                "title": "🎉 Welcome to NotifyMe!",
+                "app_id": APP_REMINDER_APP_ID,
+                "title": f"🎉 Welcome to {APP_NAME}!",
                 "msg": message,
             }
             if icon_path:

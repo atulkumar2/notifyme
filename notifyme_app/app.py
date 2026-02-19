@@ -8,18 +8,21 @@ configuration, and system tray integration.
 
 import logging
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pystray import Icon
 from winotify import Notification
 
 from notifyme_app.config import ConfigManager
 from notifyme_app.constants import (
+    APP_NAME,
+    APP_REMINDER_APP_ID,
     APP_VERSION,
     REMINDER_BLINK,
     REMINDER_PRANAYAMA,
     REMINDER_WALKING,
     REMINDER_WATER,
+    MenuCallbacks,
 )
 from notifyme_app.menu import MenuManager
 from notifyme_app.notifications import NotificationManager
@@ -29,7 +32,7 @@ from notifyme_app.tts import get_tts_manager
 from notifyme_app.updater import UpdateChecker
 
 if TYPE_CHECKING:
-    from pystray._base import Icon as PystrayIcon
+    pass
 
 
 class NotifyMeApp:
@@ -48,11 +51,11 @@ class NotifyMeApp:
         self.menu_manager = MenuManager(self._get_menu_callbacks())
 
         # Application state
-        self.icon: Optional["PystrayIcon"] = None
-        self.last_blink_shown_at: Optional[float] = None
-        self.last_walking_shown_at: Optional[float] = None
-        self.last_water_shown_at: Optional[float] = None
-        self.last_pranayama_shown_at: Optional[float] = None
+        self.icon = None
+        self.last_blink_shown_at = None
+        self.last_walking_shown_at = None
+        self.last_water_shown_at = None
+        self.last_pranayama_shown_at = None
 
         # Initialize timers
         self._setup_timers()
@@ -166,54 +169,54 @@ class NotifyMeApp:
         """Get callback functions for menu items."""
         return {
             # Control callbacks
-            "start_reminders": self.start_reminders,
-            "pause_reminders": self.pause_reminders,
-            "resume_reminders": self.resume_reminders,
-            "snooze_reminder": self.snooze_reminder,
-            "quit_app": self.quit_app,
+            MenuCallbacks.START_REMINDERS: self.start_reminders,
+            MenuCallbacks.PAUSE_REMINDERS: self.pause_reminders,
+            MenuCallbacks.RESUME_REMINDERS: self.resume_reminders,
+            MenuCallbacks.SNOOZE_REMINDER: self.snooze_reminder,
+            MenuCallbacks.QUIT_APP: self.quit_app,
             # Sound callbacks
-            "toggle_sound": self.toggle_sound,
-            "toggle_blink_sound": self.toggle_blink_sound,
-            "toggle_walking_sound": self.toggle_walking_sound,
-            "toggle_water_sound": self.toggle_water_sound,
-            "toggle_pranayama_sound": self.toggle_pranayama_sound,
+            MenuCallbacks.TOGGLE_SOUND: self.toggle_sound,
+            MenuCallbacks.TOGGLE_BLINK_SOUND: self.toggle_blink_sound,
+            MenuCallbacks.TOGGLE_WALKING_SOUND: self.toggle_walking_sound,
+            MenuCallbacks.TOGGLE_WATER_SOUND: self.toggle_water_sound,
+            MenuCallbacks.TOGGLE_PRANAYAMA_SOUND: self.toggle_pranayama_sound,
             # TTS callbacks
-            "toggle_tts": self.toggle_tts,
-            "toggle_blink_tts": self.toggle_blink_tts,
-            "toggle_walking_tts": self.toggle_walking_tts,
-            "toggle_water_tts": self.toggle_water_tts,
-            "toggle_pranayama_tts": self.toggle_pranayama_tts,
+            MenuCallbacks.TOGGLE_TTS: self.toggle_tts,
+            MenuCallbacks.TOGGLE_BLINK_TTS: self.toggle_blink_tts,
+            MenuCallbacks.TOGGLE_WALKING_TTS: self.toggle_walking_tts,
+            MenuCallbacks.TOGGLE_WATER_TTS: self.toggle_water_tts,
+            MenuCallbacks.TOGGLE_PRANAYAMA_TTS: self.toggle_pranayama_tts,
             # Visibility callbacks
-            "toggle_blink_hidden": self.toggle_blink_hidden,
-            "toggle_walking_hidden": self.toggle_walking_hidden,
-            "toggle_water_hidden": self.toggle_water_hidden,
-            "toggle_pranayama_hidden": self.toggle_pranayama_hidden,
+            MenuCallbacks.TOGGLE_BLINK_HIDDEN: self.toggle_blink_hidden,
+            MenuCallbacks.TOGGLE_WALKING_HIDDEN: self.toggle_walking_hidden,
+            MenuCallbacks.TOGGLE_WATER_HIDDEN: self.toggle_water_hidden,
+            MenuCallbacks.TOGGLE_PRANAYAMA_HIDDEN: self.toggle_pranayama_hidden,
             # Pause callbacks
-            "toggle_blink_pause": self.toggle_blink_pause,
-            "toggle_walking_pause": self.toggle_walking_pause,
-            "toggle_water_pause": self.toggle_water_pause,
-            "toggle_pranayama_pause": self.toggle_pranayama_pause,
+            MenuCallbacks.TOGGLE_BLINK_PAUSE: self.toggle_blink_pause,
+            MenuCallbacks.TOGGLE_WALKING_PAUSE: self.toggle_walking_pause,
+            MenuCallbacks.TOGGLE_WATER_PAUSE: self.toggle_water_pause,
+            MenuCallbacks.TOGGLE_PRANAYAMA_PAUSE: self.toggle_pranayama_pause,
             # Interval callbacks
-            "set_blink_interval": self.set_interval,
-            "set_walking_interval": self.set_walking_interval,
-            "set_water_interval": self.set_water_interval,
-            "set_pranayama_interval": self.set_pranayama_interval,
+            MenuCallbacks.SET_BLINK_INTERVAL: self.set_interval,
+            MenuCallbacks.SET_WALKING_INTERVAL: self.set_walking_interval,
+            MenuCallbacks.SET_WATER_INTERVAL: self.set_water_interval,
+            MenuCallbacks.SET_PRANAYAMA_INTERVAL: self.set_pranayama_interval,
             # Test callbacks
-            "test_blink_notification": self.test_blink_notification,
-            "test_walking_notification": self.test_walking_notification,
-            "test_water_notification": self.test_water_notification,
-            "test_pranayama_notification": self.test_pranayama_notification,
+            MenuCallbacks.TEST_BLINK_NOTIFICATION: self.test_blink_notification,
+            MenuCallbacks.TEST_WALKING_NOTIFICATION: self.test_walking_notification,
+            MenuCallbacks.TEST_WATER_NOTIFICATION: self.test_water_notification,
+            MenuCallbacks.TEST_PRANAYAMA_NOTIFICATION: self.test_pranayama_notification,
             # System callbacks
-            "open_help": self.system.open_help,
-            "open_github": self.system.open_github,
-            "open_github_pages": self.system.open_github_pages,
-            "open_github_releases": self.system.open_github_releases,
-            "open_log_location": self.system.open_log_location,
-            "open_config_location": self.system.open_config_location,
-            "open_exe_location": self.system.open_exe_location,
+            MenuCallbacks.OPEN_HELP: self.system.open_help,
+            MenuCallbacks.OPEN_GITHUB: self.system.open_github,
+            MenuCallbacks.OPEN_GITHUB_PAGES: self.system.open_github_pages,
+            MenuCallbacks.OPEN_GITHUB_RELEASES: self.system.open_github_releases,
+            MenuCallbacks.OPEN_LOG_LOCATION: self.system.open_log_location,
+            MenuCallbacks.OPEN_CONFIG_LOCATION: self.system.open_config_location,
+            MenuCallbacks.OPEN_EXE_LOCATION: self.system.open_exe_location,
             # Update callbacks
-            "check_for_updates_async": self.updater.check_for_updates_async,
-            "show_about": self.show_about,
+            MenuCallbacks.CHECK_FOR_UPDATES_ASYNC: self.updater.check_for_updates_async,
+            MenuCallbacks.SHOW_ABOUT: self.show_about,
         }
 
     def start_reminders(self) -> None:
@@ -523,7 +526,7 @@ class NotifyMeApp:
         """Show about dialog with application information."""
         try:
             message = (
-                f"NotifyMe v{APP_VERSION}\n\n"
+                f"{APP_NAME} v{APP_VERSION}\n\n"
                 "A health reminder application that helps you:\n"
                 "• Blink regularly to prevent eye strain\n"
                 "• Take walking breaks for better circulation\n"
@@ -534,8 +537,8 @@ class NotifyMeApp:
             )
 
             toast_args = {
-                "app_id": "NotifyMe Reminder",
-                "title": "About NotifyMe",
+                "app_id": APP_REMINDER_APP_ID,
+                "title": f"About {APP_NAME}",
                 "msg": message,
             }
 
@@ -587,7 +590,7 @@ class NotifyMeApp:
             return
 
         if self.timers.is_global_paused:
-            self.icon.title = "NotifyMe - All Paused"
+            self.icon.title = f"{APP_NAME} - All Paused"
             return
 
         # Build status for each reminder type
@@ -644,7 +647,7 @@ class NotifyMeApp:
         # Create the icon
         icon_image = self.system.create_icon_image()
         self.icon = Icon(
-            "NotifyMe",
+            APP_NAME,
             icon_image,
             self.get_initial_title(),
             menu=self.menu_manager.create_menu(
@@ -679,7 +682,7 @@ class NotifyMeApp:
         self.notifications.show_welcome_notification()
 
         # Run the icon in a separate thread so main thread can handle signals
-        logging.info("NotifyMe is running in the system tray")
+        logging.info("%s is running in the system tray", APP_NAME)
         logging.info(
             (
                 "Blink interval: %s minutes, Walking interval: %s minutes,"
@@ -690,8 +693,8 @@ class NotifyMeApp:
             self.config.water_interval_minutes,
             self.config.pranayama_interval_minutes,
         )
-        logging.info("NotifyMe version: %s", self.updater.get_current_version())
-        print("NotifyMe is running. Press Ctrl+C to quit.")
+        logging.info("%s version: %s", APP_NAME, self.updater.get_current_version())
+        print(f"{APP_NAME} is running. Press Ctrl+C to quit.")
 
         self.icon.run_detached()
 

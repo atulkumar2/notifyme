@@ -8,7 +8,7 @@ at specified intervals, with support for idle detection and pause states.
 import logging
 import threading
 import time
-from typing import Optional, Callable
+from collections.abc import Callable
 
 from notifyme_app.constants import DEFAULT_OFFSETS_SECONDS
 from notifyme_app.utils import get_idle_seconds
@@ -25,7 +25,7 @@ class ReminderTimer:
         offset_seconds: int = 0,
     ):
         """Initialize a reminder timer.
-        
+
         Args:
             reminder_type: Type of reminder (blink, walking, water, pranayama)
             interval_minutes: Interval between reminders in minutes
@@ -36,11 +36,11 @@ class ReminderTimer:
         self.interval_minutes = interval_minutes
         self.callback = callback
         self.offset_seconds = offset_seconds
-        
+
         self.is_running = False
         self.is_paused = False
-        self.thread: Optional[threading.Thread] = None
-        self.next_reminder_time: Optional[float] = None
+        self.thread = None
+        self.next_reminder_time = None
         self.idle_suppressed = False
 
     def start(self) -> None:
@@ -74,24 +74,31 @@ class ReminderTimer:
             self.next_reminder_time = time.time() + (minutes * 60)
             logging.info(
                 "%s timer snoozed for %d minutes",
-                self.reminder_type.capitalize(), minutes)
+                self.reminder_type.capitalize(),
+                minutes,
+            )
 
     def update_interval(self, interval_minutes: int) -> None:
         """Update the reminder interval."""
         self.interval_minutes = interval_minutes
         logging.info(
             "%s interval updated to %d minutes",
-            self.reminder_type.capitalize(), interval_minutes)
+            self.reminder_type.capitalize(),
+            interval_minutes,
+        )
 
     def _should_reset_due_to_idle(self, interval_seconds: int) -> bool:
         """Return True if idle time exceeds interval and the timer should reset."""
         idle_seconds = get_idle_seconds()
         if idle_seconds is None:
             return False
-        
+
         if idle_seconds >= interval_seconds:
             if not self.idle_suppressed:
-                logging.info("%s reminder reset due to user idle/lock", self.reminder_type.capitalize())
+                logging.info(
+                    "%s reminder reset due to user idle/lock",
+                    self.reminder_type.capitalize(),
+                )
             return True
         return False
 
@@ -112,12 +119,14 @@ class ReminderTimer:
                     self.idle_suppressed = False
 
                 if self.next_reminder_time is None:
-                    self.next_reminder_time = now + interval_seconds + self.offset_seconds
+                    self.next_reminder_time = (
+                        now + interval_seconds + self.offset_seconds
+                    )
 
                 if now >= self.next_reminder_time:
                     self.callback()
                     self.next_reminder_time = now + interval_seconds
-                
+
                 time.sleep(1)
             else:
                 # If paused, check every second
@@ -179,7 +188,7 @@ class TimerManager:
                 timer.snooze(minutes)
         logging.info("All active timers snoozed for %d minutes", minutes)
 
-    def get_timer(self, reminder_type: str) -> Optional[ReminderTimer]:
+    def get_timer(self, reminder_type: str):
         """Get a specific timer by reminder type."""
         return self.timers.get(reminder_type)
 

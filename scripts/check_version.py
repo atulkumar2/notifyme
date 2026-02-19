@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from urllib.request import Request, urlopen
 
+from notifyme_app.constants import APP_NAME
+
 ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT_PATH = ROOT / "pyproject.toml"
 APP_MODULE_PATH = ROOT / "notifyme_app" / "constants.py"
@@ -75,7 +77,7 @@ def read_init_version() -> str:
 
 def fetch_latest_release_version() -> str:
     """Fetch latest release version from GitHub API."""
-    req = Request(GITHUB_RELEASES_API_URL, headers={"User-Agent": "NotifyMe"})
+    req = Request(GITHUB_RELEASES_API_URL, headers={"User-Agent": APP_NAME})
     with urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
         payload = resp.read().decode("utf-8")
     data = json.loads(payload)

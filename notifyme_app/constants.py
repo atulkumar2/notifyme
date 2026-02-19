@@ -5,6 +5,81 @@ This module contains all the constant values used throughout the application,
 including reminder types, default intervals, messages, and URLs.
 """
 
+# Application naming
+APP_NAME = "NotifyMe"
+APP_REMINDER_APP_ID = f"{APP_NAME} Reminder"
+
+
+class ConfigKeys:
+    """String keys for persisted configuration."""
+
+    INTERVAL_MINUTES = "interval_minutes"
+    WALKING_INTERVAL_MINUTES = "walking_interval_minutes"
+    WATER_INTERVAL_MINUTES = "water_interval_minutes"
+    PRANAYAMA_INTERVAL_MINUTES = "pranayama_interval_minutes"
+    SOUND_ENABLED = "sound_enabled"
+    BLINK_SOUND_ENABLED = "blink_sound_enabled"
+    WALKING_SOUND_ENABLED = "walking_sound_enabled"
+    WATER_SOUND_ENABLED = "water_sound_enabled"
+    PRANAYAMA_SOUND_ENABLED = "pranayama_sound_enabled"
+    TTS_ENABLED = "tts_enabled"
+    BLINK_TTS_ENABLED = "blink_tts_enabled"
+    WALKING_TTS_ENABLED = "walking_tts_enabled"
+    WATER_TTS_ENABLED = "water_tts_enabled"
+    PRANAYAMA_TTS_ENABLED = "pranayama_tts_enabled"
+    TTS_LANGUAGE = "tts_language"
+    BLINK_HIDDEN = "blink_hidden"
+    WALKING_HIDDEN = "walking_hidden"
+    WATER_HIDDEN = "water_hidden"
+    PRANAYAMA_HIDDEN = "pranayama_hidden"
+    LAST_RUN = "last_run"
+
+
+class MenuCallbacks:
+    """String keys for menu callback mapping."""
+
+    CHECK_FOR_UPDATES_ASYNC = "check_for_updates_async"
+    OPEN_CONFIG_LOCATION = "open_config_location"
+    OPEN_EXE_LOCATION = "open_exe_location"
+    OPEN_GITHUB = "open_github"
+    OPEN_GITHUB_PAGES = "open_github_pages"
+    OPEN_GITHUB_RELEASES = "open_github_releases"
+    OPEN_HELP = "open_help"
+    OPEN_LOG_LOCATION = "open_log_location"
+    PAUSE_REMINDERS = "pause_reminders"
+    QUIT_APP = "quit_app"
+    RESUME_REMINDERS = "resume_reminders"
+    SET_BLINK_INTERVAL = "set_blink_interval"
+    SET_PRANAYAMA_INTERVAL = "set_pranayama_interval"
+    SET_WALKING_INTERVAL = "set_walking_interval"
+    SET_WATER_INTERVAL = "set_water_interval"
+    SHOW_ABOUT = "show_about"
+    SNOOZE_REMINDER = "snooze_reminder"
+    START_REMINDERS = "start_reminders"
+    TEST_BLINK_NOTIFICATION = "test_blink_notification"
+    TEST_PRANAYAMA_NOTIFICATION = "test_pranayama_notification"
+    TEST_WALKING_NOTIFICATION = "test_walking_notification"
+    TEST_WATER_NOTIFICATION = "test_water_notification"
+    TOGGLE_BLINK_HIDDEN = "toggle_blink_hidden"
+    TOGGLE_BLINK_PAUSE = "toggle_blink_pause"
+    TOGGLE_BLINK_SOUND = "toggle_blink_sound"
+    TOGGLE_BLINK_TTS = "toggle_blink_tts"
+    TOGGLE_PRANAYAMA_HIDDEN = "toggle_pranayama_hidden"
+    TOGGLE_PRANAYAMA_PAUSE = "toggle_pranayama_pause"
+    TOGGLE_PRANAYAMA_SOUND = "toggle_pranayama_sound"
+    TOGGLE_PRANAYAMA_TTS = "toggle_pranayama_tts"
+    TOGGLE_SOUND = "toggle_sound"
+    TOGGLE_TTS = "toggle_tts"
+    TOGGLE_WALKING_HIDDEN = "toggle_walking_hidden"
+    TOGGLE_WALKING_PAUSE = "toggle_walking_pause"
+    TOGGLE_WALKING_SOUND = "toggle_walking_sound"
+    TOGGLE_WALKING_TTS = "toggle_walking_tts"
+    TOGGLE_WATER_HIDDEN = "toggle_water_hidden"
+    TOGGLE_WATER_PAUSE = "toggle_water_pause"
+    TOGGLE_WATER_SOUND = "toggle_water_sound"
+    TOGGLE_WATER_TTS = "toggle_water_tts"
+
+
 # Reminder types
 REMINDER_BLINK = "blink"
 REMINDER_WALKING = "walking"
@@ -17,12 +92,6 @@ DEFAULT_WALKING_INTERVAL_MIN = 60
 DEFAULT_WATER_INTERVAL_MIN = 30
 DEFAULT_PRANAYAMA_INTERVAL_MIN = 120
 
-# Reminder titles
-TITLE_BLINK = "Eye Blink Reminder"
-TITLE_WALKING = "Walking Reminder"
-TITLE_WATER = "Water Reminder"
-TITLE_PRANAYAMA = "Pranayama Reminder"
-
 # Initial stagger offsets (seconds) to avoid simultaneous notifications
 DEFAULT_OFFSETS_SECONDS = {
     REMINDER_BLINK: 30,
@@ -30,6 +99,16 @@ DEFAULT_OFFSETS_SECONDS = {
     REMINDER_WALKING: 50,
     REMINDER_PRANAYAMA: 20,
 }
+
+
+class ReminderTitles:
+    """User-facing reminder titles."""
+
+    BLINK = "Eye Blink Reminder"
+    WALKING = "Walking Reminder"
+    WATER = "Water Reminder"
+    PRANAYAMA = "Pranayama Reminder"
+
 
 # Versioning and update checks
 APP_VERSION = "2.2.0"
