@@ -15,11 +15,12 @@ from winotify import Notification, audio
 from notifyme_app.constants import (
     APP_NAME,
     APP_REMINDER_APP_ID,
-    BLINK_MESSAGES,
-    PRANAYAMA_MESSAGES,
-    WALKING_MESSAGES,
-    WATER_MESSAGES,
-    ReminderTitles,
+    REMINDER_BLINK,
+    REMINDER_MESSAGES,
+    REMINDER_PRANAYAMA,
+    REMINDER_TITLES,
+    REMINDER_WALKING,
+    REMINDER_WATER,
 )
 from notifyme_app.utils import format_elapsed, get_resource_path
 
@@ -93,7 +94,10 @@ class NotificationManager:
     def show_blink_notification(self, last_shown_at=None, sound_enabled: bool = False):
         """Display a blink reminder notification and return the selected message."""
         return self.show_notification(
-            ReminderTitles.BLINK, BLINK_MESSAGES, last_shown_at, sound_enabled
+            REMINDER_TITLES[REMINDER_BLINK],
+            REMINDER_MESSAGES[REMINDER_BLINK],
+            last_shown_at,
+            sound_enabled,
         )
 
     def show_walking_notification(
@@ -101,13 +105,19 @@ class NotificationManager:
     ):
         """Display a walking reminder notification and return the selected message."""
         return self.show_notification(
-            ReminderTitles.WALKING, WALKING_MESSAGES, last_shown_at, sound_enabled
+            REMINDER_TITLES[REMINDER_WALKING],
+            REMINDER_MESSAGES[REMINDER_WALKING],
+            last_shown_at,
+            sound_enabled,
         )
 
     def show_water_notification(self, last_shown_at=None, sound_enabled: bool = False):
         """Display a water drinking reminder notification and return the selected message."""
         return self.show_notification(
-            ReminderTitles.WATER, WATER_MESSAGES, last_shown_at, sound_enabled
+            REMINDER_TITLES[REMINDER_WATER],
+            REMINDER_MESSAGES[REMINDER_WATER],
+            last_shown_at,
+            sound_enabled,
         )
 
     def show_pranayama_notification(
@@ -115,8 +125,8 @@ class NotificationManager:
     ):
         """Display a pranayama reminder notification and return the selected message."""
         return self.show_notification(
-            ReminderTitles.PRANAYAMA,
-            PRANAYAMA_MESSAGES,
+            REMINDER_TITLES[REMINDER_PRANAYAMA],
+            REMINDER_MESSAGES[REMINDER_PRANAYAMA],
             last_shown_at,
             sound_enabled,
         )

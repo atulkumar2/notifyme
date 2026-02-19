@@ -86,11 +86,21 @@ REMINDER_WALKING = "walking"
 REMINDER_WATER = "water"
 REMINDER_PRANAYAMA = "pranayama"
 
+# All available reminder types (for iteration)
+ALL_REMINDER_TYPES = [
+    REMINDER_BLINK,
+    REMINDER_WALKING,
+    REMINDER_WATER,
+    REMINDER_PRANAYAMA,
+]
+
 # Default intervals (minutes)
-DEFAULT_BLINK_INTERVAL_MIN = 20
-DEFAULT_WALKING_INTERVAL_MIN = 60
-DEFAULT_WATER_INTERVAL_MIN = 30
-DEFAULT_PRANAYAMA_INTERVAL_MIN = 120
+DEFAULT_INTERVALS_MIN = {
+    REMINDER_BLINK: 20,
+    REMINDER_WALKING: 60,
+    REMINDER_WATER: 30,
+    REMINDER_PRANAYAMA: 120,
+}
 
 # Initial stagger offsets (seconds) to avoid simultaneous notifications
 DEFAULT_OFFSETS_SECONDS = {
@@ -101,13 +111,13 @@ DEFAULT_OFFSETS_SECONDS = {
 }
 
 
-class ReminderTitles:
-    """User-facing reminder titles."""
-
-    BLINK = "Eye Blink Reminder"
-    WALKING = "Walking Reminder"
-    WATER = "Water Reminder"
-    PRANAYAMA = "Pranayama Reminder"
+# Reminder titles
+REMINDER_TITLES = {
+    REMINDER_BLINK: "Eye Blink Reminder",
+    REMINDER_WALKING: "Walking Reminder",
+    REMINDER_WATER: "Water Reminder",
+    REMINDER_PRANAYAMA: "Pranayama Reminder",
+}
 
 
 # Versioning and update checks
@@ -135,39 +145,90 @@ HELP_ERROR_HTML = """
 </html>
 """
 
+# Interval options for menu (in minutes)
+INTERVAL_OPTIONS = {
+    REMINDER_BLINK: [10, 15, 20, 30, 45, 60],
+    REMINDER_WALKING: [30, 45, 60, 90, 120],
+    REMINDER_WATER: [20, 30, 45, 60, 90],
+    REMINDER_PRANAYAMA: [60, 90, 120, 180, 240],
+}
+
 # Reminder messages (randomized for variety)
-BLINK_MESSAGES = [
-    "👁️ Time to blink! Give your eyes a break.",
-    "💧 Blink reminder: Keep your eyes hydrated!",
-    "✨ Don't forget to blink and look away from the screen.",
-    "🌟 Eye care reminder: Blink 10 times slowly.",
-    "💙 Your eyes need a break - blink and relax!",
-    "🌈 Blink break! Look at something 20 feet away for 20 seconds.",
-]
+REMINDER_MESSAGES = {
+    REMINDER_BLINK: [
+        "👁️ Time to blink! Give your eyes a break.",
+        "💧 Blink reminder: Keep your eyes hydrated!",
+        "✨ Don't forget to blink and look away from the screen.",
+        "🌟 Eye care reminder: Blink 10 times slowly.",
+        "💙 Your eyes need a break - blink and relax!",
+        "🌈 Blink break! Look at something 20 feet away for 20 seconds.",
+    ],
+    REMINDER_WALKING: [
+        "🚶 Time for a walk! Stretch your legs.",
+        "🏃 Walking break: Get up and move around!",
+        "🌿 Take a short walk - your body will thank you.",
+        "💪 Stand up and walk for a few minutes!",
+        "🚶‍♂️ Sitting too long? Time for a walking break!",
+        "🌞 Walk around for 5 minutes - refresh your mind and body!",
+    ],
+    REMINDER_WATER: [
+        "💧 Time to hydrate! Drink a glass of water.",
+        "🚰 Water break: Stay hydrated for better health!",
+        "💦 Don't forget to drink water - your body needs it!",
+        "🌊 Hydration reminder: Drink some water now.",
+        "💙 Keep yourself hydrated - drink water regularly!",
+        "🥤 Water time! Drink at least 250ml now.",
+    ],
+    REMINDER_PRANAYAMA: [
+        "🧘 Pranayama break: Slow, deep breathing for 2-3 minutes.",
+        "🌬️ Breathing reminder: Inhale 4, hold 4, exhale 6.",
+        "🫁 Reset with pranayama: Calm breath, clear mind.",
+        "🧘‍♀️ Pause and breathe: Gentle pranayama now.",
+        "🌿 Take a breathing break: Relax your shoulders and breathe.",
+        "🧘‍♂️ Pranayama time: Smooth, steady breaths.",
+    ],
+}
 
-WALKING_MESSAGES = [
-    "🚶 Time for a walk! Stretch your legs.",
-    "🏃 Walking break: Get up and move around!",
-    "🌿 Take a short walk - your body will thank you.",
-    "💪 Stand up and walk for a few minutes!",
-    "🚶‍♂️ Sitting too long? Time for a walking break!",
-    "🌞 Walk around for 5 minutes - refresh your mind and body!",
-]
-
-WATER_MESSAGES = [
-    "💧 Time to hydrate! Drink a glass of water.",
-    "🚰 Water break: Stay hydrated for better health!",
-    "💦 Don't forget to drink water - your body needs it!",
-    "🌊 Hydration reminder: Drink some water now.",
-    "💙 Keep yourself hydrated - drink water regularly!",
-    "🥤 Water time! Drink at least 250ml now.",
-]
-
-PRANAYAMA_MESSAGES = [
-    "🧘 Pranayama break: Slow, deep breathing for 2-3 minutes.",
-    "🌬️ Breathing reminder: Inhale 4, hold 4, exhale 6.",
-    "🫁 Reset with pranayama: Calm breath, clear mind.",
-    "🧘‍♀️ Pause and breathe: Gentle pranayama now.",
-    "🌿 Take a breathing break: Relax your shoulders and breathe.",
-    "🧘‍♂️ Pranayama time: Smooth, steady breaths.",
-]
+# Comprehensive reminder configuration (single source of truth)
+REMINDER_CONFIGS = {
+    REMINDER_BLINK: {
+        "id": REMINDER_BLINK,
+        "icon": "👁",
+        "display_title": "👁 Blink Reminder",
+        "notification_title": REMINDER_TITLES[REMINDER_BLINK],
+        "default_interval": DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
+        "default_offset": DEFAULT_OFFSETS_SECONDS[REMINDER_BLINK],
+        "interval_options": INTERVAL_OPTIONS[REMINDER_BLINK],
+        "messages": REMINDER_MESSAGES[REMINDER_BLINK],
+    },
+    REMINDER_WALKING: {
+        "id": REMINDER_WALKING,
+        "icon": "🚶",
+        "display_title": "🚶 Walking Reminder",
+        "notification_title": REMINDER_TITLES[REMINDER_WALKING],
+        "default_interval": DEFAULT_INTERVALS_MIN[REMINDER_WALKING],
+        "default_offset": DEFAULT_OFFSETS_SECONDS[REMINDER_WALKING],
+        "interval_options": INTERVAL_OPTIONS[REMINDER_WALKING],
+        "messages": REMINDER_MESSAGES[REMINDER_WALKING],
+    },
+    REMINDER_WATER: {
+        "id": REMINDER_WATER,
+        "icon": "💧",
+        "display_title": "💧 Water Reminder",
+        "notification_title": REMINDER_TITLES[REMINDER_WATER],
+        "default_interval": DEFAULT_INTERVALS_MIN[REMINDER_WATER],
+        "default_offset": DEFAULT_OFFSETS_SECONDS[REMINDER_WATER],
+        "interval_options": INTERVAL_OPTIONS[REMINDER_WATER],
+        "messages": REMINDER_MESSAGES[REMINDER_WATER],
+    },
+    REMINDER_PRANAYAMA: {
+        "id": REMINDER_PRANAYAMA,
+        "icon": "🧘",
+        "display_title": "🧘 Pranayama Reminder",
+        "notification_title": REMINDER_TITLES[REMINDER_PRANAYAMA],
+        "default_interval": DEFAULT_INTERVALS_MIN[REMINDER_PRANAYAMA],
+        "default_offset": DEFAULT_OFFSETS_SECONDS[REMINDER_PRANAYAMA],
+        "interval_options": INTERVAL_OPTIONS[REMINDER_PRANAYAMA],
+        "messages": REMINDER_MESSAGES[REMINDER_PRANAYAMA],
+    },
+}

@@ -15,6 +15,7 @@ from winotify import Notification
 
 from notifyme_app.config import ConfigManager
 from notifyme_app.constants import (
+    ALL_REMINDER_TYPES,
     APP_NAME,
     APP_REMINDER_APP_ID,
     APP_VERSION,
@@ -553,35 +554,48 @@ class NotifyMeApp:
         except Exception as e:
             logging.error("Failed to show about dialog: %s", e)
 
+    def _build_reminder_states(self) -> dict:
+        """Build reminder states dictionary from current config and timer states.
+
+        Returns:
+            Dictionary keyed by reminder type containing state for each reminder
+        """
+        # Map reminder types to their interval property names in config
+        interval_property_map = {
+            REMINDER_BLINK: "interval_minutes",
+            REMINDER_WALKING: "walking_interval_minutes",
+            REMINDER_WATER: "water_interval_minutes",
+            REMINDER_PRANAYAMA: "pranayama_interval_minutes",
+        }
+
+        reminder_states = {}
+        for reminder_type in ALL_REMINDER_TYPES:
+            interval_property = interval_property_map.get(
+                reminder_type, "interval_minutes"
+            )
+            reminder_states[reminder_type] = {
+                "hidden": getattr(self.config, f"{reminder_type}_hidden", False),
+                "paused": self.timers.is_timer_paused(reminder_type),
+                "sound_enabled": getattr(
+                    self.config, f"{reminder_type}_sound_enabled", True
+                ),
+                "tts_enabled": getattr(
+                    self.config, f"{reminder_type}_tts_enabled", True
+                ),
+                "interval_minutes": getattr(self.config, interval_property, 20),
+            }
+        return reminder_states
+
     def update_menu(self) -> None:
         """Update the system tray menu to reflect current state."""
         if self.icon:
             self.icon.menu = self.menu_manager.create_menu(
-                update_available=self.updater.is_update_available(),
-                latest_version=self.updater.get_latest_version() or "",
+                reminder_states=self._build_reminder_states(),
+                is_paused=self.timers.is_global_paused,
                 sound_enabled=self.config.sound_enabled,
                 tts_enabled=self.config.tts_enabled,
-                blink_hidden=self.config.blink_hidden,
-                walking_hidden=self.config.walking_hidden,
-                water_hidden=self.config.water_hidden,
-                pranayama_hidden=self.config.pranayama_hidden,
-                blink_sound_enabled=self.config.blink_sound_enabled,
-                walking_sound_enabled=self.config.walking_sound_enabled,
-                water_sound_enabled=self.config.water_sound_enabled,
-                pranayama_sound_enabled=self.config.pranayama_sound_enabled,
-                blink_tts_enabled=self.config.blink_tts_enabled,
-                walking_tts_enabled=self.config.walking_tts_enabled,
-                water_tts_enabled=self.config.water_tts_enabled,
-                pranayama_tts_enabled=self.config.pranayama_tts_enabled,
-                is_blink_paused=self.timers.is_timer_paused(REMINDER_BLINK),
-                is_walking_paused=self.timers.is_timer_paused(REMINDER_WALKING),
-                is_water_paused=self.timers.is_timer_paused(REMINDER_WATER),
-                is_pranayama_paused=self.timers.is_timer_paused(REMINDER_PRANAYAMA),
-                is_paused=self.timers.is_global_paused,
-                interval_minutes=self.config.interval_minutes,
-                walking_interval_minutes=self.config.walking_interval_minutes,
-                water_interval_minutes=self.config.water_interval_minutes,
-                pranayama_interval_minutes=self.config.pranayama_interval_minutes,
+                update_available=self.updater.is_update_available(),
+                latest_version=self.updater.get_latest_version(),
             )
 
     def update_icon_title(self) -> None:
@@ -651,24 +665,10 @@ class NotifyMeApp:
             icon_image,
             self.get_initial_title(),
             menu=self.menu_manager.create_menu(
+                reminder_states=self._build_reminder_states(),
+                is_paused=False,
                 sound_enabled=self.config.sound_enabled,
                 tts_enabled=self.config.tts_enabled,
-                blink_hidden=self.config.blink_hidden,
-                walking_hidden=self.config.walking_hidden,
-                water_hidden=self.config.water_hidden,
-                pranayama_hidden=self.config.pranayama_hidden,
-                blink_sound_enabled=self.config.blink_sound_enabled,
-                walking_sound_enabled=self.config.walking_sound_enabled,
-                water_sound_enabled=self.config.water_sound_enabled,
-                pranayama_sound_enabled=self.config.pranayama_sound_enabled,
-                blink_tts_enabled=self.config.blink_tts_enabled,
-                walking_tts_enabled=self.config.walking_tts_enabled,
-                water_tts_enabled=self.config.water_tts_enabled,
-                pranayama_tts_enabled=self.config.pranayama_tts_enabled,
-                interval_minutes=self.config.interval_minutes,
-                walking_interval_minutes=self.config.walking_interval_minutes,
-                water_interval_minutes=self.config.water_interval_minutes,
-                pranayama_interval_minutes=self.config.pranayama_interval_minutes,
             ),
         )
 

@@ -10,10 +10,11 @@ import logging
 from typing import Any
 
 from notifyme_app.constants import (
-    DEFAULT_BLINK_INTERVAL_MIN,
-    DEFAULT_PRANAYAMA_INTERVAL_MIN,
-    DEFAULT_WALKING_INTERVAL_MIN,
-    DEFAULT_WATER_INTERVAL_MIN,
+    DEFAULT_INTERVALS_MIN,
+    REMINDER_BLINK,
+    REMINDER_PRANAYAMA,
+    REMINDER_WALKING,
+    REMINDER_WATER,
     ConfigKeys,
 )
 from notifyme_app.utils import get_config_path
@@ -30,10 +31,14 @@ class ConfigManager:
     def _get_default_config(self) -> dict[str, Any]:
         """Return default configuration values."""
         return {
-            ConfigKeys.INTERVAL_MINUTES: DEFAULT_BLINK_INTERVAL_MIN,
-            ConfigKeys.WALKING_INTERVAL_MINUTES: DEFAULT_WALKING_INTERVAL_MIN,
-            ConfigKeys.WATER_INTERVAL_MINUTES: DEFAULT_WATER_INTERVAL_MIN,
-            ConfigKeys.PRANAYAMA_INTERVAL_MINUTES: DEFAULT_PRANAYAMA_INTERVAL_MIN,
+            ConfigKeys.INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
+            ConfigKeys.WALKING_INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[
+                REMINDER_WALKING
+            ],
+            ConfigKeys.WATER_INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[REMINDER_WATER],
+            ConfigKeys.PRANAYAMA_INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[
+                REMINDER_PRANAYAMA
+            ],
             ConfigKeys.SOUND_ENABLED: False,
             ConfigKeys.BLINK_SOUND_ENABLED: True,
             ConfigKeys.WALKING_SOUND_ENABLED: True,
@@ -108,7 +113,10 @@ class ConfigManager:
     @property
     def interval_minutes(self) -> int:
         """Get blink reminder interval in minutes."""
-        return self.get(ConfigKeys.INTERVAL_MINUTES, DEFAULT_BLINK_INTERVAL_MIN)
+        return self.get(
+            ConfigKeys.INTERVAL_MINUTES,
+            DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
+        )
 
     @interval_minutes.setter
     def interval_minutes(self, value: int) -> None:
@@ -119,7 +127,8 @@ class ConfigManager:
     def walking_interval_minutes(self) -> int:
         """Get walking reminder interval in minutes."""
         return self.get(
-            ConfigKeys.WALKING_INTERVAL_MINUTES, DEFAULT_WALKING_INTERVAL_MIN
+            ConfigKeys.WALKING_INTERVAL_MINUTES,
+            DEFAULT_INTERVALS_MIN[REMINDER_WALKING],
         )
 
     @walking_interval_minutes.setter
@@ -130,7 +139,10 @@ class ConfigManager:
     @property
     def water_interval_minutes(self) -> int:
         """Get water reminder interval in minutes."""
-        return self.get(ConfigKeys.WATER_INTERVAL_MINUTES, DEFAULT_WATER_INTERVAL_MIN)
+        return self.get(
+            ConfigKeys.WATER_INTERVAL_MINUTES,
+            DEFAULT_INTERVALS_MIN[REMINDER_WATER],
+        )
 
     @water_interval_minutes.setter
     def water_interval_minutes(self, value: int) -> None:
@@ -142,7 +154,7 @@ class ConfigManager:
         """Get pranayama reminder interval in minutes."""
         return self.get(
             ConfigKeys.PRANAYAMA_INTERVAL_MINUTES,
-            DEFAULT_PRANAYAMA_INTERVAL_MIN,
+            DEFAULT_INTERVALS_MIN[REMINDER_PRANAYAMA],
         )
 
     @pranayama_interval_minutes.setter

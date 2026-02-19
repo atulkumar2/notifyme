@@ -147,3 +147,122 @@ The application uses Python's logging module with a rotating file handler:
 - Maximum size: 5 MB per file
 - Backup count: 5 files
 - Format: `%(asctime)s - %(levelname)s - %(message)s`
+
+## Adding Custom Reminders
+
+The application is designed with extensibility in mind. To add a new custom reminder:
+
+### 1. Define the Reminder Constant (`constants.py`)
+
+Add a new reminder type constant:
+
+```python
+# Reminder types
+REMINDER_BLINK = "blink"
+REMINDER_WALKING = "walking"
+REMINDER_WATER = "water"
+REMINDER_PRANAYAMA = "pranayama"
+REMINDER_STRETCH = "stretch"  # New custom reminder
+
+# Update the reminder types list
+ALL_REMINDER_TYPES = [
+    REMINDER_BLINK,
+    REMINDER_WALKING,
+    REMINDER_WATER,
+    REMINDER_PRANAYAMA,
+    REMINDER_STRETCH,  # Add to list
+]
+```
+
+### 2. Add Reminder Configuration (`constants.py`)
+
+Define the reminder's properties in `REMINDER_CONFIGS`:
+
+```python
+REMINDER_CONFIGS = {
+    # ... existing reminders ...
+    REMINDER_STRETCH: {
+        "id": REMINDER_STRETCH,
+        "icon": "🤸",
+        "display_title": "🤸 Stretch Reminder",
+        "notification_title": "Stretch Reminder",
+        "default_interval": 45,  # minutes
+        "default_offset": 40,  # seconds
+        "interval_options": [30, 45, 60, 90],  # menu options
+        "messages": [
+            "🤸 Time to stretch! Stand up and move.",
+            "🦴 Stretch break: Loosen up those muscles!",
+            "💪 Quick stretch time - your body needs it!",
+        ],
+    },
+}
+```
+
+### 3. Add Configuration Keys (`constants.py`)
+
+Update the `ConfigKeys` class with new keys for your reminder:
+
+```python
+class ConfigKeys:
+    # ... existing keys ...
+    STRETCH_INTERVAL_MINUTES = "stretch_interval_minutes"
+    STRETCH_SOUND_ENABLED = "stretch_sound_enabled"
+    STRETCH_TTS_ENABLED = "stretch_tts_enabled"
+    STRETCH_HIDDEN = "stretch_hidden"
+```
+
+### 4. Add Configuration Properties (`config.py`)
+
+Add properties to `ConfigManager` for the new reminder:
+
+```python
+@property
+def stretch_interval_minutes(self) -> int:
+    return int(
+        self.get(
+            ConfigKeys.STRETCH_INTERVAL_MINUTES,
+            DEFAULT_INTERVALS_MIN[REMINDER_STRETCH],
+        )
+    )
+
+@stretch_interval_minutes.setter
+def stretch_interval_minutes(self, value: int) -> None:
+    self.set(ConfigKeys.STRETCH_INTERVAL_MINUTES, value)
+
+# Add similar properties for stretch_sound_enabled, stretch_tts_enabled, stretch_hidden
+```
+
+### 5. Add Notification Method (`notifications.py`)
+
+Add a notification method for the custom reminder:
+
+```python
+def show_stretch_notification(self, last_shown_at=None, sound_enabled: bool = False):
+    """Display a stretch reminder notification and return the selected message."""
+    return self.show_notification(
+        REMINDER_TITLES[REMINDER_STRETCH],
+        REMINDER_MESSAGES[REMINDER_STRETCH],
+        last_shown_at,
+        sound_enabled,
+    )
+```
+
+### 6. Add Menu Callbacks (`app.py`)
+
+The menu system automatically generates entries for all reminders in `ALL_REMINDER_TYPES`. Ensure your callback functions follow the naming convention:
+
+- `toggle_{reminder_type}_hidden`
+- `toggle_{reminder_type}_pause`
+- `toggle_{reminder_type}_sound`
+- `toggle_{reminder_type}_tts`
+- `set_{reminder_type}_interval`
+- `test_{reminder_type}_notification`
+
+The dynamic menu system will automatically create menu items for your custom reminder!
+
+### Notes
+
+- The menu system is **fully dynamic** and will automatically generate menu items for all reminders in `ALL_REMINDER_TYPES`
+- Configuration management automatically handles new reminder properties through `_build_reminder_states()` in `app.py`
+- No changes needed to `menu.py` - it dynamically iterates through all configured reminders
+- The system supports unlimited custom reminders without modifying core menu logic
