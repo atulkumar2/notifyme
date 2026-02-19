@@ -15,6 +15,7 @@ from notifyme_app.constants import (
     APP_NAME,
     REMINDER_CONFIGS,
     MenuCallbacks,
+    ReminderConfigKeys,
 )
 
 
@@ -78,15 +79,19 @@ class MenuManager:
                     "paused": False,
                     "sound_enabled": True,
                     "tts_enabled": True,
-                    "interval_minutes": config["default_interval"],
+                    "interval_minutes": config[ReminderConfigKeys.DEFAULT_INTERVAL],
                 },
             )
 
             if not state.get("hidden", False):
                 # Create menu for visible reminder
-                display_title = cast(str, config["display_title"])
-                interval_options = cast(list[int], config["interval_options"])
-                default_interval = cast(int, config["default_interval"])
+                display_title = cast(str, config[ReminderConfigKeys.DISPLAY_TITLE])
+                interval_options = cast(
+                    list[int], config[ReminderConfigKeys.INTERVAL_OPTIONS]
+                )
+                default_interval = cast(
+                    int, config[ReminderConfigKeys.DEFAULT_INTERVAL]
+                )
 
                 reminder_menu = self._create_reminder_menu(
                     display_title,

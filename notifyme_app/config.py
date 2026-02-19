@@ -31,7 +31,7 @@ class ConfigManager:
     def _get_default_config(self) -> dict[str, Any]:
         """Return default configuration values."""
         return {
-            ConfigKeys.INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
+            ConfigKeys.BLINK_INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
             ConfigKeys.WALKING_INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[
                 REMINDER_WALKING
             ],
@@ -114,14 +114,14 @@ class ConfigManager:
     def interval_minutes(self) -> int:
         """Get blink reminder interval in minutes."""
         return self.get(
-            ConfigKeys.INTERVAL_MINUTES,
+            ConfigKeys.BLINK_INTERVAL_MINUTES,
             DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
         )
 
     @interval_minutes.setter
     def interval_minutes(self, value: int) -> None:
         """Set blink reminder interval in minutes."""
-        self.set(ConfigKeys.INTERVAL_MINUTES, value)
+        self.set(ConfigKeys.BLINK_INTERVAL_MINUTES, value)
 
     @property
     def walking_interval_minutes(self) -> int:

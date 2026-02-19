@@ -84,7 +84,7 @@ class TestNotifyMeApp(unittest.TestCase):
 
     def test_initialization(self):
         """Test app initialization with default values."""
-        self.assertEqual(self.app.interval_minutes, 20)
+        self.assertEqual(self.app.blink_interval_minutes, 20)
         self.assertEqual(self.app.walking_interval_minutes, 60)
         self.assertEqual(self.app.water_interval_minutes, 30)
         self.assertEqual(self.app.pranayama_interval_minutes, 120)
@@ -110,7 +110,7 @@ class TestNotifyMeApp(unittest.TestCase):
     def test_get_default_config(self):
         """Test default configuration values."""
         config = self.app.get_default_config()
-        self.assertEqual(config[ConfigKeys.INTERVAL_MINUTES], 20)
+        self.assertEqual(config[ConfigKeys.BLINK_INTERVAL_MINUTES], 20)
         self.assertEqual(config[ConfigKeys.WALKING_INTERVAL_MINUTES], 60)
         self.assertEqual(config[ConfigKeys.WATER_INTERVAL_MINUTES], 30)
         self.assertEqual(config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES], 120)
@@ -118,14 +118,14 @@ class TestNotifyMeApp(unittest.TestCase):
 
     def test_save_and_load_config(self):
         """Test saving and loading configuration."""
-        self.app.config[ConfigKeys.INTERVAL_MINUTES] = 30
+        self.app.config[ConfigKeys.BLINK_INTERVAL_MINUTES] = 30
         self.app.config[ConfigKeys.WALKING_INTERVAL_MINUTES] = 90
         self.app.config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES] = 180
         self.app.save_config()
 
         # Load config in a new instance
         loaded_config = self.app.load_config()
-        self.assertEqual(loaded_config[ConfigKeys.INTERVAL_MINUTES], 30)
+        self.assertEqual(loaded_config[ConfigKeys.BLINK_INTERVAL_MINUTES], 30)
         self.assertEqual(loaded_config[ConfigKeys.WALKING_INTERVAL_MINUTES], 90)
         self.assertEqual(loaded_config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES], 180)
 
@@ -133,8 +133,8 @@ class TestNotifyMeApp(unittest.TestCase):
         """Test setting blink reminder interval."""
         set_func = self.app._set_reminder_interval("blink", 30)
         set_func()
-        self.assertEqual(self.app.interval_minutes, 30)
-        self.assertEqual(self.app.config[ConfigKeys.INTERVAL_MINUTES], 30)
+        self.assertEqual(self.app.blink_interval_minutes, 30)
+        self.assertEqual(self.app.config[ConfigKeys.BLINK_INTERVAL_MINUTES], 30)
 
     def test_set_walking_interval(self):
         """Test setting walking reminder interval."""
@@ -277,7 +277,7 @@ class TestNotifyMeApp(unittest.TestCase):
         """Test icon title when reminders are running."""
         self.app.icon = MagicMock()
         self.app.is_paused = False
-        self.app.interval_minutes = 20
+        self.app.blink_interval_minutes = 20
         self.app.walking_interval_minutes = 60
         self.app.water_interval_minutes = 30
         self.app.pranayama_interval_minutes = 120
@@ -297,7 +297,7 @@ class TestNotifyMeApp(unittest.TestCase):
 
     def test_get_initial_title(self):
         """Test initial title shows reminder intervals."""
-        self.app.interval_minutes = 20
+        self.app.blink_interval_minutes = 20
         self.app.walking_interval_minutes = 60
         self.app.water_interval_minutes = 30
         self.app.pranayama_interval_minutes = 120
@@ -400,7 +400,7 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.return_value = 1000.0
         mock_idle.return_value = None
         self.app.is_running = True
-        self.app.interval_minutes = 1  # 1 minute for quick test
+        self.app.blink_interval_minutes = 1  # 1 minute for quick test
         self.app.blink_offset_seconds = 0
 
         # Mock to stop after first iteration
@@ -421,7 +421,7 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.return_value = 1000.0
         mock_idle.return_value = 60.0
         self.app.is_running = True
-        self.app.interval_minutes = 1
+        self.app.blink_interval_minutes = 1
         self.app.blink_offset_seconds = 0
 
         def stop_after_first(*args):
@@ -445,7 +445,7 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.side_effect = [1000.0, 1061.0]
         mock_idle.side_effect = [60.0, 0.0]
         self.app.is_running = True
-        self.app.interval_minutes = 1
+        self.app.blink_interval_minutes = 1
         self.app.blink_offset_seconds = 0
 
         call_count = {"count": 0}

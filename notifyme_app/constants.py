@@ -13,7 +13,7 @@ APP_REMINDER_APP_ID = f"{APP_NAME} Reminder"
 class ConfigKeys:
     """String keys for persisted configuration."""
 
-    INTERVAL_MINUTES = "interval_minutes"
+    BLINK_INTERVAL_MINUTES = "blink_interval_minutes"
     WALKING_INTERVAL_MINUTES = "walking_interval_minutes"
     WATER_INTERVAL_MINUTES = "water_interval_minutes"
     PRANAYAMA_INTERVAL_MINUTES = "pranayama_interval_minutes"
@@ -33,6 +33,19 @@ class ConfigKeys:
     WATER_HIDDEN = "water_hidden"
     PRANAYAMA_HIDDEN = "pranayama_hidden"
     LAST_RUN = "last_run"
+
+
+class ReminderConfigKeys:
+    """String keys for reminder configuration dictionaries."""
+
+    ID = "id"
+    ICON = "icon"
+    DISPLAY_TITLE = "display_title"
+    NOTIFICATION_TITLE = "notification_title"
+    DEFAULT_INTERVAL = "default_interval"
+    DEFAULT_OFFSET = "default_offset"
+    INTERVAL_OPTIONS = "interval_options"
+    MESSAGES = "messages"
 
 
 class MenuCallbacks:
@@ -192,43 +205,43 @@ REMINDER_MESSAGES = {
 # Comprehensive reminder configuration (single source of truth)
 REMINDER_CONFIGS = {
     REMINDER_BLINK: {
-        "id": REMINDER_BLINK,
-        "icon": "👁",
-        "display_title": "👁 Blink Reminder",
-        "notification_title": REMINDER_TITLES[REMINDER_BLINK],
-        "default_interval": DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
-        "default_offset": DEFAULT_OFFSETS_SECONDS[REMINDER_BLINK],
-        "interval_options": INTERVAL_OPTIONS[REMINDER_BLINK],
-        "messages": REMINDER_MESSAGES[REMINDER_BLINK],
+        ReminderConfigKeys.ID: REMINDER_BLINK,
+        ReminderConfigKeys.ICON: "👁",
+        ReminderConfigKeys.DISPLAY_TITLE: f"👁 {REMINDER_TITLES[REMINDER_BLINK]}",
+        ReminderConfigKeys.NOTIFICATION_TITLE: REMINDER_TITLES[REMINDER_BLINK],
+        ReminderConfigKeys.DEFAULT_INTERVAL: DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
+        ReminderConfigKeys.DEFAULT_OFFSET: DEFAULT_OFFSETS_SECONDS[REMINDER_BLINK],
+        ReminderConfigKeys.INTERVAL_OPTIONS: INTERVAL_OPTIONS[REMINDER_BLINK],
+        ReminderConfigKeys.MESSAGES: REMINDER_MESSAGES[REMINDER_BLINK],
     },
     REMINDER_WALKING: {
-        "id": REMINDER_WALKING,
-        "icon": "🚶",
-        "display_title": "🚶 Walking Reminder",
-        "notification_title": REMINDER_TITLES[REMINDER_WALKING],
-        "default_interval": DEFAULT_INTERVALS_MIN[REMINDER_WALKING],
-        "default_offset": DEFAULT_OFFSETS_SECONDS[REMINDER_WALKING],
-        "interval_options": INTERVAL_OPTIONS[REMINDER_WALKING],
-        "messages": REMINDER_MESSAGES[REMINDER_WALKING],
+        ReminderConfigKeys.ID: REMINDER_WALKING,
+        ReminderConfigKeys.ICON: "🚶",
+        ReminderConfigKeys.DISPLAY_TITLE: f"🚶 {REMINDER_TITLES[REMINDER_WALKING]}",
+        ReminderConfigKeys.NOTIFICATION_TITLE: REMINDER_TITLES[REMINDER_WALKING],
+        ReminderConfigKeys.DEFAULT_INTERVAL: DEFAULT_INTERVALS_MIN[REMINDER_WALKING],
+        ReminderConfigKeys.DEFAULT_OFFSET: DEFAULT_OFFSETS_SECONDS[REMINDER_WALKING],
+        ReminderConfigKeys.INTERVAL_OPTIONS: INTERVAL_OPTIONS[REMINDER_WALKING],
+        ReminderConfigKeys.MESSAGES: REMINDER_MESSAGES[REMINDER_WALKING],
     },
     REMINDER_WATER: {
-        "id": REMINDER_WATER,
-        "icon": "💧",
-        "display_title": "💧 Water Reminder",
-        "notification_title": REMINDER_TITLES[REMINDER_WATER],
-        "default_interval": DEFAULT_INTERVALS_MIN[REMINDER_WATER],
-        "default_offset": DEFAULT_OFFSETS_SECONDS[REMINDER_WATER],
-        "interval_options": INTERVAL_OPTIONS[REMINDER_WATER],
-        "messages": REMINDER_MESSAGES[REMINDER_WATER],
+        ReminderConfigKeys.ID: REMINDER_WATER,
+        ReminderConfigKeys.ICON: "💧",
+        ReminderConfigKeys.DISPLAY_TITLE: f"💧 {REMINDER_TITLES[REMINDER_WATER]}",
+        ReminderConfigKeys.NOTIFICATION_TITLE: REMINDER_TITLES[REMINDER_WATER],
+        ReminderConfigKeys.DEFAULT_INTERVAL: DEFAULT_INTERVALS_MIN[REMINDER_WATER],
+        ReminderConfigKeys.DEFAULT_OFFSET: DEFAULT_OFFSETS_SECONDS[REMINDER_WATER],
+        ReminderConfigKeys.INTERVAL_OPTIONS: INTERVAL_OPTIONS[REMINDER_WATER],
+        ReminderConfigKeys.MESSAGES: REMINDER_MESSAGES[REMINDER_WATER],
     },
     REMINDER_PRANAYAMA: {
-        "id": REMINDER_PRANAYAMA,
-        "icon": "🧘",
-        "display_title": "🧘 Pranayama Reminder",
-        "notification_title": REMINDER_TITLES[REMINDER_PRANAYAMA],
-        "default_interval": DEFAULT_INTERVALS_MIN[REMINDER_PRANAYAMA],
-        "default_offset": DEFAULT_OFFSETS_SECONDS[REMINDER_PRANAYAMA],
-        "interval_options": INTERVAL_OPTIONS[REMINDER_PRANAYAMA],
-        "messages": REMINDER_MESSAGES[REMINDER_PRANAYAMA],
+        ReminderConfigKeys.ID: REMINDER_PRANAYAMA,
+        ReminderConfigKeys.ICON: "🧘",
+        ReminderConfigKeys.DISPLAY_TITLE: f"🧘 {REMINDER_TITLES[REMINDER_PRANAYAMA]}",
+        ReminderConfigKeys.NOTIFICATION_TITLE: REMINDER_TITLES[REMINDER_PRANAYAMA],
+        ReminderConfigKeys.DEFAULT_INTERVAL: DEFAULT_INTERVALS_MIN[REMINDER_PRANAYAMA],
+        ReminderConfigKeys.DEFAULT_OFFSET: DEFAULT_OFFSETS_SECONDS[REMINDER_PRANAYAMA],
+        ReminderConfigKeys.INTERVAL_OPTIONS: INTERVAL_OPTIONS[REMINDER_PRANAYAMA],
+        ReminderConfigKeys.MESSAGES: REMINDER_MESSAGES[REMINDER_PRANAYAMA],
     },
 }
