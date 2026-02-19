@@ -192,31 +192,31 @@ class NotifyMeApp:
 
         # Dynamically add reminder-specific callbacks for all reminder types
         for reminder_type in ALL_REMINDER_TYPES:
-            # Sound callbacks
-            callbacks[f"toggle_{reminder_type}_sound"] = lambda rt=reminder_type: (
-                self._toggle_reminder_sound(rt)
+            # Sound callbacks - called directly by pystray, wrap to ignore extra args
+            callbacks[f"toggle_{reminder_type}_sound"] = (
+                lambda *_, rt=reminder_type, **__: self._toggle_reminder_sound(rt)
             )
-            # TTS callbacks
-            callbacks[f"toggle_{reminder_type}_tts"] = lambda rt=reminder_type: (
-                self._toggle_reminder_tts(rt)
+            # TTS callbacks - called directly by pystray
+            callbacks[f"toggle_{reminder_type}_tts"] = (
+                lambda *_, rt=reminder_type, **__: self._toggle_reminder_tts(rt)
             )
-            # Hidden callbacks
-            callbacks[f"toggle_{reminder_type}_hidden"] = lambda rt=reminder_type: (
-                self._toggle_reminder_hidden(rt)
+            # Hidden callbacks - called directly by pystray
+            callbacks[f"toggle_{reminder_type}_hidden"] = (
+                lambda *_, rt=reminder_type, **__: self._toggle_reminder_hidden(rt)
             )
-            # Pause callbacks
-            callbacks[f"toggle_{reminder_type}_pause"] = lambda rt=reminder_type: (
-                self._toggle_reminder_pause(rt)
+            # Pause callbacks - called directly by pystray
+            callbacks[f"toggle_{reminder_type}_pause"] = (
+                lambda *_, rt=reminder_type, **__: self._toggle_reminder_pause(rt)
             )
-            # Interval callbacks
+            # Interval callbacks - called from menu code with explicit arguments
             callbacks[f"set_{reminder_type}_interval"] = (
                 lambda minutes, rt=reminder_type: self._set_reminder_interval(
                     rt, minutes
                 )
             )
-            # Test notification callbacks
-            callbacks[f"test_{reminder_type}_notification"] = lambda rt=reminder_type: (
-                self._test_reminder_notification(rt)
+            # Test notification callbacks - called directly by pystray
+            callbacks[f"test_{reminder_type}_notification"] = (
+                lambda *_, rt=reminder_type, **__: self._test_reminder_notification(rt)
             )
 
         return callbacks
