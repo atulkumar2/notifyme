@@ -29,7 +29,7 @@ class TestNotificationSoundPreview(unittest.TestCase):
         app.config.sound_enabled = False
         app.config.blink_sound_enabled = True
 
-        app.test_blink_notification()
+        app._test_reminder_notification("blink")
 
         # The test notification should set audio to Default
         mock_toast.set_audio.assert_called_once()

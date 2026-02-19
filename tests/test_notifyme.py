@@ -131,28 +131,28 @@ class TestNotifyMeApp(unittest.TestCase):
 
     def test_set_interval(self):
         """Test setting blink reminder interval."""
-        set_func = self.app.set_interval(30)
+        set_func = self.app._set_reminder_interval("blink", 30)
         set_func()
         self.assertEqual(self.app.interval_minutes, 30)
         self.assertEqual(self.app.config[ConfigKeys.INTERVAL_MINUTES], 30)
 
     def test_set_walking_interval(self):
         """Test setting walking reminder interval."""
-        set_func = self.app.set_walking_interval(90)
+        set_func = self.app._set_reminder_interval("walking", 90)
         set_func()
         self.assertEqual(self.app.walking_interval_minutes, 90)
         self.assertEqual(self.app.config[ConfigKeys.WALKING_INTERVAL_MINUTES], 90)
 
     def test_set_water_interval(self):
         """Test setting water reminder interval."""
-        set_func = self.app.set_water_interval(45)
+        set_func = self.app._set_reminder_interval("water", 45)
         set_func()
         self.assertEqual(self.app.water_interval_minutes, 45)
         self.assertEqual(self.app.config[ConfigKeys.WATER_INTERVAL_MINUTES], 45)
 
     def test_set_pranayama_interval(self):
         """Test setting pranayama reminder interval."""
-        set_func = self.app.set_pranayama_interval(180)
+        set_func = self.app._set_reminder_interval("pranayama", 180)
         set_func()
         self.assertEqual(self.app.pranayama_interval_minutes, 180)
         self.assertEqual(self.app.config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES], 180)
@@ -196,27 +196,27 @@ class TestNotifyMeApp(unittest.TestCase):
     def test_toggle_blink_pause(self):
         """Test toggling blink reminder pause."""
         initial_state = self.app.is_blink_paused
-        self.app.toggle_blink_pause()
+        self.app._toggle_reminder_pause("blink")
         self.assertEqual(self.app.is_blink_paused, not initial_state)
-        self.app.toggle_blink_pause()
+        self.app._toggle_reminder_pause("blink")
         self.assertEqual(self.app.is_blink_paused, initial_state)
 
     def test_toggle_walking_pause(self):
         """Test toggling walking reminder pause."""
         initial_state = self.app.is_walking_paused
-        self.app.toggle_walking_pause()
+        self.app._toggle_reminder_pause("walking")
         self.assertEqual(self.app.is_walking_paused, not initial_state)
 
     def test_toggle_water_pause(self):
         """Test toggling water reminder pause."""
         initial_state = self.app.is_water_paused
-        self.app.toggle_water_pause()
+        self.app._toggle_reminder_pause("water")
         self.assertEqual(self.app.is_water_paused, not initial_state)
 
     def test_toggle_pranayama_pause(self):
         """Test toggling pranayama reminder pause."""
         initial_state = self.app.is_pranayama_paused
-        self.app.toggle_pranayama_pause()
+        self.app._toggle_reminder_pause("pranayama")
         self.assertEqual(self.app.is_pranayama_paused, not initial_state)
 
     def test_stop_reminders(self):

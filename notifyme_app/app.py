@@ -163,46 +163,20 @@ class NotifyMeApp:
                 logging.error("Error invoking TTS for pranayama reminder: %s", e)
 
     def _get_menu_callbacks(self) -> dict:
-        """Get callback functions for menu items."""
-        return {
+        """Get callback functions for menu items.
+
+        Builds callbacks dynamically for each reminder type to avoid code duplication.
+        """
+        callbacks = {
             # Control callbacks
             MenuCallbacks.START_REMINDERS: self.start_reminders,
             MenuCallbacks.PAUSE_REMINDERS: self.pause_reminders,
             MenuCallbacks.RESUME_REMINDERS: self.resume_reminders,
             MenuCallbacks.SNOOZE_REMINDER: self.snooze_reminder,
             MenuCallbacks.QUIT_APP: self.quit_app,
-            # Sound callbacks
+            # Global toggles
             MenuCallbacks.TOGGLE_SOUND: self.toggle_sound,
-            MenuCallbacks.TOGGLE_BLINK_SOUND: self.toggle_blink_sound,
-            MenuCallbacks.TOGGLE_WALKING_SOUND: self.toggle_walking_sound,
-            MenuCallbacks.TOGGLE_WATER_SOUND: self.toggle_water_sound,
-            MenuCallbacks.TOGGLE_PRANAYAMA_SOUND: self.toggle_pranayama_sound,
-            # TTS callbacks
             MenuCallbacks.TOGGLE_TTS: self.toggle_tts,
-            MenuCallbacks.TOGGLE_BLINK_TTS: self.toggle_blink_tts,
-            MenuCallbacks.TOGGLE_WALKING_TTS: self.toggle_walking_tts,
-            MenuCallbacks.TOGGLE_WATER_TTS: self.toggle_water_tts,
-            MenuCallbacks.TOGGLE_PRANAYAMA_TTS: self.toggle_pranayama_tts,
-            # Visibility callbacks
-            MenuCallbacks.TOGGLE_BLINK_HIDDEN: self.toggle_blink_hidden,
-            MenuCallbacks.TOGGLE_WALKING_HIDDEN: self.toggle_walking_hidden,
-            MenuCallbacks.TOGGLE_WATER_HIDDEN: self.toggle_water_hidden,
-            MenuCallbacks.TOGGLE_PRANAYAMA_HIDDEN: self.toggle_pranayama_hidden,
-            # Pause callbacks
-            MenuCallbacks.TOGGLE_BLINK_PAUSE: self.toggle_blink_pause,
-            MenuCallbacks.TOGGLE_WALKING_PAUSE: self.toggle_walking_pause,
-            MenuCallbacks.TOGGLE_WATER_PAUSE: self.toggle_water_pause,
-            MenuCallbacks.TOGGLE_PRANAYAMA_PAUSE: self.toggle_pranayama_pause,
-            # Interval callbacks
-            MenuCallbacks.SET_BLINK_INTERVAL: self.set_interval,
-            MenuCallbacks.SET_WALKING_INTERVAL: self.set_walking_interval,
-            MenuCallbacks.SET_WATER_INTERVAL: self.set_water_interval,
-            MenuCallbacks.SET_PRANAYAMA_INTERVAL: self.set_pranayama_interval,
-            # Test callbacks
-            MenuCallbacks.TEST_BLINK_NOTIFICATION: self.test_blink_notification,
-            MenuCallbacks.TEST_WALKING_NOTIFICATION: self.test_walking_notification,
-            MenuCallbacks.TEST_WATER_NOTIFICATION: self.test_water_notification,
-            MenuCallbacks.TEST_PRANAYAMA_NOTIFICATION: self.test_pranayama_notification,
             # System callbacks
             MenuCallbacks.OPEN_HELP: self.system.open_help,
             MenuCallbacks.OPEN_GITHUB: self.system.open_github,
@@ -215,6 +189,37 @@ class NotifyMeApp:
             MenuCallbacks.CHECK_FOR_UPDATES_ASYNC: self.updater.check_for_updates_async,
             MenuCallbacks.SHOW_ABOUT: self.show_about,
         }
+
+        # Dynamically add reminder-specific callbacks for all reminder types
+        for reminder_type in ALL_REMINDER_TYPES:
+            # Sound callbacks
+            callbacks[f"toggle_{reminder_type}_sound"] = lambda rt=reminder_type: (
+                self._toggle_reminder_sound(rt)
+            )
+            # TTS callbacks
+            callbacks[f"toggle_{reminder_type}_tts"] = lambda rt=reminder_type: (
+                self._toggle_reminder_tts(rt)
+            )
+            # Hidden callbacks
+            callbacks[f"toggle_{reminder_type}_hidden"] = lambda rt=reminder_type: (
+                self._toggle_reminder_hidden(rt)
+            )
+            # Pause callbacks
+            callbacks[f"toggle_{reminder_type}_pause"] = lambda rt=reminder_type: (
+                self._toggle_reminder_pause(rt)
+            )
+            # Interval callbacks
+            callbacks[f"set_{reminder_type}_interval"] = (
+                lambda minutes, rt=reminder_type: self._set_reminder_interval(
+                    rt, minutes
+                )
+            )
+            # Test notification callbacks
+            callbacks[f"test_{reminder_type}_notification"] = lambda rt=reminder_type: (
+                self._test_reminder_notification(rt)
+            )
+
+        return callbacks
 
     def start_reminders(self) -> None:
         """Start all reminder timers."""
@@ -253,40 +258,13 @@ class NotifyMeApp:
         )
         self.update_menu()
 
-    def toggle_blink_sound(self) -> None:
-        """Toggle blink reminder sound on/off."""
-        self.config.blink_sound_enabled = not self.config.blink_sound_enabled
-        logging.info(
-            "Blink sound %s",
-            "enabled" if self.config.blink_sound_enabled else "disabled",
-        )
-        self.update_menu()
-
-    def toggle_walking_sound(self) -> None:
-        """Toggle walking reminder sound on/off."""
-        self.config.walking_sound_enabled = not self.config.walking_sound_enabled
-        logging.info(
-            "Walking sound %s",
-            "enabled" if self.config.walking_sound_enabled else "disabled",
-        )
-        self.update_menu()
-
-    def toggle_water_sound(self) -> None:
-        """Toggle water reminder sound on/off."""
-        self.config.water_sound_enabled = not self.config.water_sound_enabled
-        logging.info(
-            "Water sound %s",
-            "enabled" if self.config.water_sound_enabled else "disabled",
-        )
-        self.update_menu()
-
-    def toggle_pranayama_sound(self) -> None:
-        """Toggle pranayama reminder sound on/off."""
-        self.config.pranayama_sound_enabled = not self.config.pranayama_sound_enabled
-        logging.info(
-            "Pranayama sound %s",
-            "enabled" if self.config.pranayama_sound_enabled else "disabled",
-        )
+    def _toggle_reminder_sound(self, reminder_type: str) -> None:
+        """Toggle sound for a specific reminder type."""
+        attr_name = f"{reminder_type}_sound_enabled"
+        current = getattr(self.config, attr_name, True)
+        setattr(self.config, attr_name, not current)
+        new_state = "enabled" if not current else "disabled"
+        logging.info("%s sound %s", reminder_type.title(), new_state)
         self.update_menu()
 
     # TTS control methods
@@ -298,222 +276,81 @@ class NotifyMeApp:
         )
         self.update_menu()
 
-    def toggle_blink_tts(self) -> None:
-        """Toggle blink reminder TTS on/off."""
-        self.config.blink_tts_enabled = not self.config.blink_tts_enabled
-        logging.info(
-            "Blink TTS %s", "enabled" if self.config.blink_tts_enabled else "disabled"
-        )
-        self.update_menu()
-
-    def toggle_walking_tts(self) -> None:
-        """Toggle walking reminder TTS on/off."""
-        self.config.walking_tts_enabled = not self.config.walking_tts_enabled
-        logging.info(
-            "Walking TTS %s",
-            "enabled" if self.config.walking_tts_enabled else "disabled",
-        )
-        self.update_menu()
-
-    def toggle_water_tts(self) -> None:
-        """Toggle water reminder TTS on/off."""
-        self.config.water_tts_enabled = not self.config.water_tts_enabled
-        logging.info(
-            "Water TTS %s", "enabled" if self.config.water_tts_enabled else "disabled"
-        )
-        self.update_menu()
-
-    def toggle_pranayama_tts(self) -> None:
-        """Toggle pranayama reminder TTS on/off."""
-        self.config.pranayama_tts_enabled = not self.config.pranayama_tts_enabled
-        logging.info(
-            "Pranayama TTS %s",
-            "enabled" if self.config.pranayama_tts_enabled else "disabled",
-        )
+    def _toggle_reminder_tts(self, reminder_type: str) -> None:
+        """Toggle TTS for a specific reminder type."""
+        attr_name = f"{reminder_type}_tts_enabled"
+        current = getattr(self.config, attr_name, True)
+        setattr(self.config, attr_name, not current)
+        new_state = "enabled" if not current else "disabled"
+        logging.info("%s TTS %s", reminder_type.title(), new_state)
         self.update_menu()
 
     # Visibility control methods
-    def toggle_blink_hidden(self) -> None:
-        """Toggle blink reminder visibility."""
-        self.config.blink_hidden = not self.config.blink_hidden
-        logging.info(
-            "Blink reminder %s", "hidden" if self.config.blink_hidden else "visible"
-        )
-        self.update_menu()
-
-    def toggle_walking_hidden(self) -> None:
-        """Toggle walking reminder visibility."""
-        self.config.walking_hidden = not self.config.walking_hidden
-        logging.info(
-            "Walking reminder %s", "hidden" if self.config.walking_hidden else "visible"
-        )
-        self.update_menu()
-
-    def toggle_water_hidden(self) -> None:
-        """Toggle water reminder visibility."""
-        self.config.water_hidden = not self.config.water_hidden
-        logging.info(
-            "Water reminder %s", "hidden" if self.config.water_hidden else "visible"
-        )
-        self.update_menu()
-
-    def toggle_pranayama_hidden(self) -> None:
-        """Toggle pranayama reminder visibility."""
-        self.config.pranayama_hidden = not self.config.pranayama_hidden
-        logging.info(
-            "Pranayama reminder %s",
-            "hidden" if self.config.pranayama_hidden else "visible",
-        )
+    def _toggle_reminder_hidden(self, reminder_type: str) -> None:
+        """Toggle visibility for a specific reminder type."""
+        attr_name = f"{reminder_type}_hidden"
+        current = getattr(self.config, attr_name, False)
+        setattr(self.config, attr_name, not current)
+        new_state = "hidden" if not current else "visible"
+        logging.info("%s reminder %s", reminder_type.title(), new_state)
         self.update_menu()
 
     # Pause control methods
-    def toggle_blink_pause(self) -> None:
-        """Toggle pause state for blink reminders."""
-        self.timers.toggle_timer_pause(REMINDER_BLINK)
-        self.update_icon_title()
-        self.update_menu()
-
-    def toggle_walking_pause(self) -> None:
-        """Toggle pause state for walking reminders."""
-        self.timers.toggle_timer_pause(REMINDER_WALKING)
-        self.update_icon_title()
-        self.update_menu()
-
-    def toggle_water_pause(self) -> None:
-        """Toggle pause state for water reminders."""
-        self.timers.toggle_timer_pause(REMINDER_WATER)
-        self.update_icon_title()
-        self.update_menu()
-
-    def toggle_pranayama_pause(self) -> None:
-        """Toggle pause state for pranayama reminders."""
-        self.timers.toggle_timer_pause(REMINDER_PRANAYAMA)
+    def _toggle_reminder_pause(self, reminder_type: str) -> None:
+        """Toggle pause state for a specific reminder type."""
+        self.timers.toggle_timer_pause(reminder_type)
         self.update_icon_title()
         self.update_menu()
 
     # Interval setting methods
-    def set_interval(self, minutes: int):
-        """Set a new blink reminder interval."""
+    def _set_reminder_interval(self, reminder_type: str, minutes: int):
+        """Set interval for a specific reminder type.
+
+        Returns a callable for use as a menu callback.
+        """
 
         def _set():
-            self.config.interval_minutes = minutes
-            self.timers.update_timer_interval(REMINDER_BLINK, minutes)
-            logging.info("Blink interval set to %s minutes", minutes)
-            self.update_icon_title()
-
-        return _set
-
-    def set_walking_interval(self, minutes: int):
-        """Set a new walking reminder interval."""
-
-        def _set():
-            self.config.walking_interval_minutes = minutes
-            self.timers.update_timer_interval(REMINDER_WALKING, minutes)
-            logging.info("Walking interval set to %s minutes", minutes)
-            self.update_icon_title()
-
-        return _set
-
-    def set_water_interval(self, minutes: int):
-        """Set a new water reminder interval."""
-
-        def _set():
-            self.config.water_interval_minutes = minutes
-            self.timers.update_timer_interval(REMINDER_WATER, minutes)
-            logging.info("Water interval set to %s minutes", minutes)
-            self.update_icon_title()
-
-        return _set
-
-    def set_pranayama_interval(self, minutes: int):
-        """Set a new pranayama reminder interval."""
-
-        def _set():
-            self.config.pranayama_interval_minutes = minutes
-            self.timers.update_timer_interval(REMINDER_PRANAYAMA, minutes)
-            logging.info("Pranayama interval set to %s minutes", minutes)
+            attr_type = f"{'walking_' if reminder_type == REMINDER_WALKING else 'water_' if reminder_type == REMINDER_WATER else 'pranayama_' if reminder_type == REMINDER_PRANAYAMA else ''}"
+            attr_name = f"{attr_type}interval_minutes"
+            setattr(self.config, attr_name, minutes)
+            self.timers.update_timer_interval(reminder_type, minutes)
+            logging.info(
+                "%s interval set to %s minutes", reminder_type.title(), minutes
+            )
             self.update_icon_title()
 
         return _set
 
     # Test notification methods
-    def test_blink_notification(self) -> None:
-        """Trigger a test blink notification immediately."""
-        logging.info("User requested test blink notification")
+    def _test_reminder_notification(self, reminder_type: str) -> None:
+        """Trigger a test notification for a specific reminder type."""
+        logging.info("User requested test %s notification", reminder_type)
         try:
-            # For test notifications, play sound when either global sound OR
-            # the per-reminder sound setting is enabled (so tests can preview sound)
-            sound_enabled = self.config.sound_enabled or self.config.blink_sound_enabled
-            message = self.notifications.show_blink_notification(
-                None, sound_enabled
-            )  # Pass None for last_shown_at
-            tts_preview = self.config.tts_enabled or self.config.blink_tts_enabled
-            if message and tts_preview:
-                speak_once(
-                    f"Blink reminder: {message}",
-                    lang=self.config.tts_language,
-                )
-            logging.info("Test blink notification displayed successfully")
-        except Exception as e:
-            logging.error("Failed to show test blink notification: %s", e)
-
-    def test_walking_notification(self) -> None:
-        """Trigger a test walking notification immediately."""
-        logging.info("User requested test walking notification")
-        try:
-            sound_enabled = (
-                self.config.sound_enabled or self.config.walking_sound_enabled
+            # Show notification sound based on global or reminder-specific setting
+            sound_attr = f"{reminder_type}_sound_enabled"
+            sound_enabled = self.config.sound_enabled or getattr(
+                self.config, sound_attr, True
             )
-            message = self.notifications.show_walking_notification(
-                None, sound_enabled
-            )  # Pass None for last_shown_at
-            tts_preview = self.config.tts_enabled or self.config.walking_tts_enabled
-            if message and tts_preview:
-                speak_once(
-                    f"Walking reminder: {message}",
-                    lang=self.config.tts_language,
-                )
-            logging.info("Test walking notification displayed successfully")
-        except Exception as e:
-            logging.error("Failed to show test walking notification: %s", e)
 
-    def test_water_notification(self) -> None:
-        """Trigger a test water notification immediately."""
-        logging.info("User requested test water notification")
-        try:
-            sound_enabled = self.config.sound_enabled or self.config.water_sound_enabled
-            message = self.notifications.show_water_notification(
-                None, sound_enabled
-            )  # Pass None for last_shown_at
-            tts_preview = self.config.tts_enabled or self.config.water_tts_enabled
-            if message and tts_preview:
-                speak_once(
-                    f"Water reminder: {message}",
-                    lang=self.config.tts_language,
-                )
-            logging.info("Test water notification displayed successfully")
-        except Exception as e:
-            logging.error("Failed to show test water notification: %s", e)
-
-    def test_pranayama_notification(self) -> None:
-        """Trigger a test pranayama notification immediately."""
-        logging.info("User requested test pranayama notification")
-        try:
-            sound_enabled = (
-                self.config.sound_enabled or self.config.pranayama_sound_enabled
+            # Show the notification
+            show_method = getattr(
+                self.notifications, f"show_{reminder_type}_notification"
             )
-            message = self.notifications.show_pranayama_notification(
-                None, sound_enabled
-            )  # Pass None for last_shown_at
-            tts_preview = self.config.tts_enabled or self.config.pranayama_tts_enabled
+            message = show_method(None, sound_enabled)
+
+            # Optionally speak using TTS
+            tts_attr = f"{reminder_type}_tts_enabled"
+            tts_preview = self.config.tts_enabled or getattr(
+                self.config, tts_attr, True
+            )
             if message and tts_preview:
                 speak_once(
-                    f"Pranayama reminder: {message}",
+                    f"{reminder_type.title()} reminder: {message}",
                     lang=self.config.tts_language,
                 )
-            logging.info("Test pranayama notification displayed successfully")
+            logging.info("Test %s notification displayed successfully", reminder_type)
         except Exception as e:
-            logging.error("Failed to show test pranayama notification: %s", e)
+            logging.error("Failed to show test %s notification: %s", reminder_type, e)
 
     def show_about(self) -> None:
         """Show about dialog with application information."""

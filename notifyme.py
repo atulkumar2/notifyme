@@ -184,6 +184,29 @@ class NotifyMeApp:
 
         return _set
 
+    # Generic interval setting method
+    def _set_reminder_interval(self, reminder_type: str, minutes: int):
+        """Set interval for a specific reminder type.
+
+        Returns a callable for use as a menu callback.
+        """
+
+        def _set():
+            if reminder_type == "blink":
+                self.interval_minutes = minutes
+                self.config[ConfigKeys.INTERVAL_MINUTES] = minutes
+            elif reminder_type == "walking":
+                self.walking_interval_minutes = minutes
+                self.config[ConfigKeys.WALKING_INTERVAL_MINUTES] = minutes
+            elif reminder_type == "water":
+                self.water_interval_minutes = minutes
+                self.config[ConfigKeys.WATER_INTERVAL_MINUTES] = minutes
+            elif reminder_type == "pranayama":
+                self.pranayama_interval_minutes = minutes
+                self.config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES] = minutes
+
+        return _set
+
     def start_reminders(self) -> None:
         """Start all reminder timers."""
         self.is_running = True
@@ -220,6 +243,18 @@ class NotifyMeApp:
     def toggle_pranayama_pause(self) -> None:
         """Toggle pause state for pranayama reminders."""
         self.is_pranayama_paused = not self.is_pranayama_paused
+
+    # Generic pause toggle method
+    def _toggle_reminder_pause(self, reminder_type: str) -> None:
+        """Toggle pause state for a specific reminder type."""
+        if reminder_type == "blink":
+            self.is_blink_paused = not self.is_blink_paused
+        elif reminder_type == "walking":
+            self.is_walking_paused = not self.is_walking_paused
+        elif reminder_type == "water":
+            self.is_water_paused = not self.is_water_paused
+        elif reminder_type == "pranayama":
+            self.is_pranayama_paused = not self.is_pranayama_paused
 
     def stop_reminders(self) -> None:
         """Stop all reminder timers."""
