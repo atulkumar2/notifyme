@@ -123,14 +123,10 @@ If you want Hindi voice support:
 2. **After installation:** Restart NotifyMe to detect the Hindi voice
 
 3. **Use Hindi TTS:**
-   - Edit `%APPDATA%\NotifyMe\config.json`
-   - Set `"tts_language": "hi"` for Hindi only, or `"auto"` to prefer Hindi when available
+   Edit `%APPDATA%\NotifyMe\config.json`
+   Set `"global.tts_language": "hi"` for Hindi only, or `"auto"` to prefer Hindi when available
 
 ### TTS Sounds Distorted or Robotic
-
-- This is normal behavior for Windows SAPI voices
-- Pro tip: Speaking reminders multiple times in succession can cause slight distortion; this clears after a few seconds of silence
-- Try changing voice in Windows Settings → Accessibility → Text-to-Speech → Voice selection
 
 ## File Locations Reference
 

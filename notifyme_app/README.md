@@ -105,39 +105,51 @@ The application stores its configuration in `%APPDATA%/NotifyMe/config.json` wit
 
 ```json
 {
-  "blink_interval_minutes": 20,
-  "walking_interval_minutes": 60,
-  "water_interval_minutes": 30,
-  "pranayama_interval_minutes": 120,
-  "sound_enabled": false,
-  "blink_sound_enabled": true,
-  "walking_sound_enabled": true,
-  "water_sound_enabled": true,
-  "pranayama_sound_enabled": true,
-  "tts_enabled": true,
-  "tts_language": "auto",
-  "blink_tts_enabled": true,
-  "walking_tts_enabled": true,
-  "water_tts_enabled": true,
-  "pranayama_tts_enabled": true,
-  "blink_hidden": false,
-  "walking_hidden": false,
-  "water_hidden": false,
-  "pranayama_hidden": false,
-  "last_run": null
+  "global": {
+    "sound_enabled": false,
+    "tts_enabled": true,
+    "tts_language": "auto",
+    "last_run": null
+  },
+  "reminders": {
+    "blink": {
+      "interval_minutes": 20,
+      "sound_enabled": true,
+      "tts_enabled": true,
+      "hidden": false
+    },
+    "walking": {
+      "interval_minutes": 60,
+      "sound_enabled": true,
+      "tts_enabled": true,
+      "hidden": false
+    },
+    "water": {
+      "interval_minutes": 30,
+      "sound_enabled": true,
+      "tts_enabled": true,
+      "hidden": false
+    },
+    "pranayama": {
+      "interval_minutes": 120,
+      "sound_enabled": true,
+      "tts_enabled": true,
+      "hidden": false
+    }
+  }
 }
 ```
 
 **Configuration Keys:**
 
-- `interval_minutes`, `*_interval_minutes`: Reminder intervals in minutes
-- `sound_enabled`: Global sound toggle
-- `*_sound_enabled`: Per-reminder sound toggles
-- `tts_enabled`: Global TTS toggle
-- `tts_language`: TTS language ("auto", "en", or "hi")
-- `*_tts_enabled`: Per-reminder TTS toggles
-- `*_hidden`: Hide specific reminders from menu
-- `last_run`: Tracks last application run time
+- `global.sound_enabled`: Global sound toggle
+- `global.tts_enabled`: Global TTS toggle
+- `global.tts_language`: TTS language ("auto", "en", or "hi")
+- `global.last_run`: Tracks last application run time
+- `reminders.[type].interval_minutes`: Reminder intervals in minutes
+- `reminders.[type].sound_enabled`: Per-reminder sound toggles
+- `reminders.[type].tts_enabled`: Per-reminder TTS toggles
+- `reminders.[type].hidden`: Hide specific reminders from menu
 
 ## Logging
 
@@ -198,56 +210,31 @@ REMINDER_CONFIGS = {
 }
 ```
 
-### 3. Add Configuration Keys (`constants.py`)
+### 3. Add Default Intervals (`constants.py`)
 
-Update the `ConfigKeys` class with new keys for your reminder:
-
-```python
-class ConfigKeys:
-    # ... existing keys ...
-    STRETCH_INTERVAL_MINUTES = "stretch_interval_minutes"
-    STRETCH_SOUND_ENABLED = "stretch_sound_enabled"
-    STRETCH_TTS_ENABLED = "stretch_tts_enabled"
-    STRETCH_HIDDEN = "stretch_hidden"
-```
-
-### 4. Add Configuration Properties (`config.py`)
-
-Add properties to `ConfigManager` for the new reminder:
+Update the defaults so new reminders get initial values automatically:
 
 ```python
-@property
-def stretch_interval_minutes(self) -> int:
-    return int(
-        self.get(
-            ConfigKeys.STRETCH_INTERVAL_MINUTES,
-            DEFAULT_INTERVALS_MIN[REMINDER_STRETCH],
-        )
-    )
-
-@stretch_interval_minutes.setter
-def stretch_interval_minutes(self, value: int) -> None:
-    self.set(ConfigKeys.STRETCH_INTERVAL_MINUTES, value)
-
-# Add similar properties for stretch_sound_enabled, stretch_tts_enabled, stretch_hidden
+DEFAULT_INTERVALS_MIN = {
+    # ... existing reminders ...
+    REMINDER_STRETCH: 45,
+}
 ```
 
-### 5. Add Notification Method (`notifications.py`)
+### 4. Configuration Defaults (Automatic)
 
-Add a notification method for the custom reminder:
+No new `ConfigKeys` or properties are required. The config system uses
+sectioned reminder settings under `reminders.[type]` and will initialize
+defaults based on `ALL_REMINDER_TYPES` and `DEFAULT_INTERVALS_MIN`.
+No extra config properties are needed for new reminders.
 
-```python
-def show_stretch_notification(self, last_shown_at=None, sound_enabled: bool = False):
-    """Display a stretch reminder notification and return the selected message."""
-    return self.show_notification(
-        REMINDER_TITLES[REMINDER_STRETCH],
-        REMINDER_MESSAGES[REMINDER_STRETCH],
-        last_shown_at,
-        sound_enabled,
-    )
-```
+### 5. Notifications (Automatic)
 
-### 6. Add Menu Callbacks (`app.py`)
+NotificationManager uses `show_reminder_notification(reminder_type)` and the
+entries in `REMINDER_TITLES` and `REMINDER_MESSAGES`, so no new notification
+method is required.
+
+### 6. Menu Callbacks (`app.py`)
 
 The menu system automatically generates entries for all reminders in `ALL_REMINDER_TYPES`. Ensure your callback functions follow the naming convention:
 

@@ -16,7 +16,28 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 
 ## Configuration Options
 
-### 👁️ interval_minutes
+The configuration file uses sections for global settings and per-reminder settings:
+
+```json
+{
+  "global": {
+    "sound_enabled": false,
+    "tts_enabled": true,
+    "tts_language": "auto",
+    "last_run": null
+  },
+  "reminders": {
+    "blink": {
+      "interval_minutes": 20,
+      "sound_enabled": true,
+      "tts_enabled": true,
+      "hidden": false
+    }
+  }
+}
+```
+
+### 👁️ reminders.blink.interval_minutes
 
 - **Type:** Integer
 - **Default:** 20 minutes
@@ -25,10 +46,14 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 - **Recommended:** 15-20 min for screen work, 30+ min for mixed tasks
 
 ```json
-"blink_interval_minutes": 20
+"reminders": {
+  "blink": {
+    "interval_minutes": 20
+  }
+}
 ```
 
-### 🚶 walking_interval_minutes
+### 🚶 reminders.walking.interval_minutes
 
 - **Type:** Integer
 - **Default:** 60 minutes
@@ -37,10 +62,14 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 - **Recommended:** 45-60 min for desk jobs, 90-120 min for active roles
 
 ```json
-"walking_interval_minutes": 60
+"reminders": {
+  "walking": {
+    "interval_minutes": 60
+  }
+}
 ```
 
-### 💧 water_interval_minutes
+### 💧 reminders.water.interval_minutes
 
 - **Type:** Integer
 - **Default:** 30 minutes
@@ -49,10 +78,14 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 - **Recommended:** 20-30 min to build hydration habit, adjust to comfort
 
 ```json
-"water_interval_minutes": 30
+"reminders": {
+  "water": {
+    "interval_minutes": 30
+  }
+}
 ```
 
-### 🧘 pranayama_interval_minutes
+### 🧘 reminders.pranayama.interval_minutes
 
 - **Type:** Integer
 - **Default:** 120 minutes
@@ -61,10 +94,14 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 - **Recommended:** 120 min for steady work blocks, 180-240 min for lighter days
 
 ```json
-"pranayama_interval_minutes": 120
+"reminders": {
+  "pranayama": {
+    "interval_minutes": 120
+  }
+}
 ```
 
-### 🔊 sound_enabled
+### 🔊 global.sound_enabled
 
 - **Type:** Boolean
 - **Default:** false (legacy setting)
@@ -72,10 +109,12 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 - **When to enable:** If you often miss visual notifications
 
 ```json
-"sound_enabled": false
+"global": {
+  "sound_enabled": false
+}
 ```
 
-### 🗣️ tts_enabled (NEW)
+### 🗣️ global.tts_enabled (NEW)
 
 - **Type:** Boolean
 - **Default:** true (enabled for new users)
@@ -84,10 +123,12 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 - **Upgrade Note:** Existing users get this feature enabled automatically on upgrade
 
 ```json
-"tts_enabled": true
+"global": {
+  "tts_enabled": true
+}
 ```
 
-### 🗣️ tts_language
+### 🗣️ global.tts_language
 
 - **Type:** String
 - **Default:** "auto"
@@ -98,7 +139,9 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
   - `"hi"`: Always use Hindi (if a Hindi voice is installed)
 
 ```json
-"tts_language": "auto"
+"global": {
+  "tts_language": "auto"
+}
 ```
 
 ### Per-Reminder TTS Control
@@ -107,13 +150,15 @@ Each reminder type can have TTS independently enabled/disabled:
 
 - **Type:** Boolean
 - **Default:** true
-- **Options:** `blink_tts_enabled`, `walking_tts_enabled`, `water_tts_enabled`, `pranayama_tts_enabled`
+- **Options:** `reminders.[type].tts_enabled`
 
 ```json
-"blink_tts_enabled": true,
-"walking_tts_enabled": true,
-"water_tts_enabled": true,
-"pranayama_tts_enabled": true
+"reminders": {
+  "blink": { "tts_enabled": true },
+  "walking": { "tts_enabled": true },
+  "water": { "tts_enabled": true },
+  "pranayama": { "tts_enabled": true }
+}
 ```
 
 ## Example Configurations
@@ -122,13 +167,17 @@ Each reminder type can have TTS independently enabled/disabled:
 
 ```json
 {
-  "blink_interval_minutes": 15,
-  "walking_interval_minutes": 45,
-  "water_interval_minutes": 20,
-  "pranayama_interval_minutes": 120,
-  "sound_enabled": true,
-  "tts_enabled": true,
-  "tts_language": "auto"
+  "global": {
+    "sound_enabled": true,
+    "tts_enabled": true,
+    "tts_language": "auto"
+  },
+  "reminders": {
+    "blink": { "interval_minutes": 15 },
+    "walking": { "interval_minutes": 45 },
+    "water": { "interval_minutes": 20 },
+    "pranayama": { "interval_minutes": 120 }
+  }
 }
 ```
 
@@ -136,13 +185,17 @@ Each reminder type can have TTS independently enabled/disabled:
 
 ```json
 {
-  "blink_interval_minutes": 25,
-  "walking_interval_minutes": 60,
-  "water_interval_minutes": 30,
-  "pranayama_interval_minutes": 120,
-  "sound_enabled": false,
-  "tts_enabled": true,
-  "tts_language": "auto"
+  "global": {
+    "sound_enabled": false,
+    "tts_enabled": true,
+    "tts_language": "auto"
+  },
+  "reminders": {
+    "blink": { "interval_minutes": 25 },
+    "walking": { "interval_minutes": 60 },
+    "water": { "interval_minutes": 30 },
+    "pranayama": { "interval_minutes": 120 }
+  }
 }
 ```
 
@@ -150,13 +203,17 @@ Each reminder type can have TTS independently enabled/disabled:
 
 ```json
 {
-  "blink_interval_minutes": 25,
-  "walking_interval_minutes": 50,
-  "water_interval_minutes": 25,
-  "pranayama_interval_minutes": 120,
-  "sound_enabled": true,
-  "tts_enabled": true,
-  "tts_language": "en"
+  "global": {
+    "sound_enabled": true,
+    "tts_enabled": true,
+    "tts_language": "en"
+  },
+  "reminders": {
+    "blink": { "interval_minutes": 25 },
+    "walking": { "interval_minutes": 50 },
+    "water": { "interval_minutes": 25 },
+    "pranayama": { "interval_minutes": 120 }
+  }
 }
 ```
 
@@ -164,13 +221,17 @@ Each reminder type can have TTS independently enabled/disabled:
 
 ```json
 {
-  "blink_interval_minutes": 20,
-  "walking_interval_minutes": 60,
-  "water_interval_minutes": 30,
-  "pranayama_interval_minutes": 120,
-  "sound_enabled": false,
-  "tts_enabled": true,
-  "tts_language": "auto"
+  "global": {
+    "sound_enabled": false,
+    "tts_enabled": true,
+    "tts_language": "auto"
+  },
+  "reminders": {
+    "blink": { "interval_minutes": 20 },
+    "walking": { "interval_minutes": 60 },
+    "water": { "interval_minutes": 30 },
+    "pranayama": { "interval_minutes": 120 }
+  }
 }
 ```
 

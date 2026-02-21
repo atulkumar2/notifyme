@@ -45,13 +45,13 @@ NotifyMe includes **offline Text-to-Speech** reminders using Windows SAPI:
 For advanced control, edit `config.json` (see [Configuration Guide](configuration.md)):
 
 - `tts_enabled`: Toggle global TTS (default: `true`)
-- `tts_language`: Set language preference: `"auto"` (default), `"en"`, or `"hi"`
+- `global.tts_language`: Set language preference: `"auto"` (default), `"en"`, or `"hi"`
 - Per-reminder toggles: `blink_tts_enabled`, `walking_tts_enabled`, `water_tts_enabled`, `pranayama_tts_enabled`
 
 **Example:**
 
 - Global TTS enabled, only Water reminders speak: Enable global TTS, then disable TTS for Blink, Walking, and Pranayama
-- Silent Hindi reminders only: Set `tts_language` to `"hi"` and disable `sound_enabled` in config.json
+- Silent Hindi reminders only: Set `global.tts_language` to `"hi"` and disable `global.sound_enabled` in config.json
 
 ### 👁️ Blink Reminder - Eye Health
 

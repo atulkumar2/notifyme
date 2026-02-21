@@ -41,6 +41,22 @@ class ConfigKeys:
     LAST_RUN = "last_run"
 
 
+class ConfigSections:
+    """Top-level sections for persisted configuration."""
+
+    GLOBAL = "global"
+    REMINDERS = "reminders"
+
+
+class ReminderConfigFields:
+    """Keys for reminder-specific configuration values."""
+
+    INTERVAL_MINUTES = "interval_minutes"
+    SOUND_ENABLED = "sound_enabled"
+    TTS_ENABLED = "tts_enabled"
+    HIDDEN = "hidden"
+
+
 class ReminderConfigKeys:
     """String keys for reminder configuration dictionaries."""
 

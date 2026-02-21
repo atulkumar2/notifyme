@@ -293,7 +293,7 @@ When you first run NotifyMe:
 
 **Language Preference:**
 
-- Edit `%APPDATA%\NotifyMe\config.json` and set `tts_language`:
+- Edit `%APPDATA%\NotifyMe\config.json` and set `global.tts_language`:
   - `"auto"` (default) - Prefers Hindi if available, falls back to English
   - `"en"` - Always use English
   - `"hi"` - Restrict to Hindi only (install Hindi voice first)
@@ -420,26 +420,38 @@ The app stores your preferences in `config.json`:
 
 ```json
 {
-  "blink_interval_minutes": 20,
-  "walking_interval_minutes": 60,
-  "water_interval_minutes": 30,
-  "pranayama_interval_minutes": 120,
-  "sound_enabled": false,
-  "blink_sound_enabled": true,
-  "walking_sound_enabled": true,
-  "water_sound_enabled": true,
-  "pranayama_sound_enabled": true,
-  "tts_enabled": true,
-  "tts_language": "auto",
-  "blink_tts_enabled": true,
-  "walking_tts_enabled": true,
-  "water_tts_enabled": true,
-  "pranayama_tts_enabled": true,
-  "blink_hidden": false,
-  "walking_hidden": false,
-  "water_hidden": false,
-  "pranayama_hidden": false,
-  "last_run": null
+  "global": {
+    "sound_enabled": false,
+    "tts_enabled": true,
+    "tts_language": "auto",
+    "last_run": null
+  },
+  "reminders": {
+    "blink": {
+      "interval_minutes": 20,
+      "sound_enabled": true,
+      "tts_enabled": true,
+      "hidden": false
+    },
+    "walking": {
+      "interval_minutes": 60,
+      "sound_enabled": true,
+      "tts_enabled": true,
+      "hidden": false
+    },
+    "water": {
+      "interval_minutes": 30,
+      "sound_enabled": true,
+      "tts_enabled": true,
+      "hidden": false
+    },
+    "pranayama": {
+      "interval_minutes": 120,
+      "sound_enabled": true,
+      "tts_enabled": true,
+      "hidden": false
+    }
+  }
 }
 ```
 
@@ -447,15 +459,15 @@ The app stores your preferences in `config.json`:
 
 - **Reminder Intervals**: Adjust the default intervals for each reminder type
 - **Sound Controls**:
-  - `sound_enabled`: Global sound toggle for all notifications
-  - `[type]_sound_enabled`: Individual sound controls for each reminder type
+  - `global.sound_enabled`: Global sound toggle for all notifications
+  - `reminders.[type].sound_enabled`: Individual sound controls for each reminder type
 - **Text-to-Speech Controls** (NEW):
-  - `tts_enabled`: Global TTS toggle for all reminders
-  - `tts_language`: Preferred language (`"auto"`, `"en"`, or `"hi"`)
-  - `[type]_tts_enabled`: Individual TTS controls for each reminder type
+  - `global.tts_enabled`: Global TTS toggle for all reminders
+  - `global.tts_language`: Preferred language (`"auto"`, `"en"`, or `"hi"`)
+  - `reminders.[type].tts_enabled`: Individual TTS controls for each reminder type
 - **Visibility Controls**:
-  - `[type]_hidden`: Hide specific reminder types from the menu while keeping them active
-- **System**: `last_run` tracks the last application run time
+  - `reminders.[type].hidden`: Hide specific reminder types from the menu while keeping them active
+- **System**: `global.last_run` tracks the last application run time
 
 ### Advanced Configuration
 
