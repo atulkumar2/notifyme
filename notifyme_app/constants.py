@@ -14,13 +14,43 @@ REMINDER_BLINK = "blink"
 REMINDER_WALKING = "walking"
 REMINDER_WATER = "water"
 REMINDER_PRANAYAMA = "pranayama"
+REMINDER_MEDICINE = "medicine"
 
 ReminderLabels = {
     REMINDER_BLINK: "Blink",
     REMINDER_WALKING: "Walk",
     REMINDER_WATER: "Water",
     REMINDER_PRANAYAMA: "Pranayama",
+    REMINDER_MEDICINE: "Medicine",
 }
+
+# Medicine reminder types
+MEDICINE_BREAKFAST = "breakfast"
+MEDICINE_LUNCH = "lunch"
+MEDICINE_DINNER = "dinner"
+
+MedicineTimeLabels = {
+    MEDICINE_BREAKFAST: "Breakfast",
+    MEDICINE_LUNCH: "Lunch",
+    MEDICINE_DINNER: "Dinner",
+}
+
+# Common disease types for medicine
+COMMON_DISEASES = [
+    "Diabetes",
+    "Hypertension",
+    "Thyroid",
+    "Heart Disease",
+    "Asthma",
+    "Arthritis",
+    "Cholesterol",
+    "Acid Reflux",
+    "Allergy",
+    "Vitamin Deficiency",
+    "Pain Relief",
+    "Antibiotic",
+    "Other",
+]
 
 
 class ConfigKeys:
@@ -116,6 +146,12 @@ class MenuCallbacks:
     TOGGLE_WATER_PAUSE = "toggle_water_pause"
     TOGGLE_WATER_SOUND = "toggle_water_sound"
     TOGGLE_WATER_TTS = "toggle_water_tts"
+    # Medicine reminder callbacks
+    MANAGE_MEDICINES = "manage_medicines"
+    MARK_BREAKFAST_COMPLETED = "mark_breakfast_completed"
+    MARK_LUNCH_COMPLETED = "mark_lunch_completed"
+    MARK_DINNER_COMPLETED = "mark_dinner_completed"
+    TOGGLE_MEDICINE_ENABLED = "toggle_medicine_enabled"
 
 
 # All available reminder types (for iteration)
@@ -125,6 +161,23 @@ ALL_REMINDER_TYPES = [
     REMINDER_WATER,
     REMINDER_PRANAYAMA,
 ]
+
+# All medicine time slots
+ALL_MEDICINE_TIMES = [
+    MEDICINE_BREAKFAST,
+    MEDICINE_LUNCH,
+    MEDICINE_DINNER,
+]
+
+# Default time windows for medicine reminders (24-hour format)
+DEFAULT_MEDICINE_TIME_WINDOWS = {
+    MEDICINE_BREAKFAST: {"start": "07:00", "end": "09:00"},
+    MEDICINE_LUNCH: {"start": "12:00", "end": "14:00"},
+    MEDICINE_DINNER: {"start": "19:00", "end": "21:00"},
+}
+
+# Default reminder interval for medicine (in minutes) within the time window
+DEFAULT_MEDICINE_REMINDER_INTERVAL = 20
 
 # Default intervals (minutes)
 DEFAULT_INTERVALS_MIN = {

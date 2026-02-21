@@ -7,10 +7,10 @@ This script demonstrates the visual indication when reminders are paused.
 import sys
 from pathlib import Path
 
+from notifyme import NotifyMeApp
+
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
-
-from notifyme import NotifyMeApp
 
 
 def verify_menu_feature():
@@ -20,7 +20,7 @@ def verify_menu_feature():
     # Create app instance (without running the GUI)
     app = NotifyMeApp()
 
-    print("✅ Test 1: Initial state - all reminders unpausedcd")
+    print("✅ Test 1: Initial state - all reminders unpaused")
     print(f"   - Blink paused: {app.is_paused_map['blink']}")
     print(f"   - Walking paused: {app.is_paused_map['walking']}")
     print(f"   - Water paused: {app.is_paused_map['water']}\n")

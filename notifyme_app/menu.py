@@ -11,9 +11,11 @@ from typing import cast
 from pystray import Menu, MenuItem
 
 from notifyme_app.constants import (
+    ALL_MEDICINE_TIMES,
     ALL_REMINDER_TYPES,
     APP_NAME,
     REMINDER_CONFIGS,
+    MedicineTimeLabels,
     MenuCallbacks,
     ReminderConfigKeys,
 )
@@ -48,6 +50,8 @@ class MenuManager:
         tts_enabled: bool = False,
         update_available: bool = False,
         latest_version: str | None = None,
+        medicine_enabled: bool = True,
+        medicine_completions: dict | None = None,
     ) -> Menu:
         """Create the system tray menu with current state.
 
@@ -60,6 +64,8 @@ class MenuManager:
             tts_enabled: Global TTS enabled state
             update_available: Whether an update is available
             latest_version: Latest version string if update available
+            medicine_enabled: Whether medicine reminders are enabled
+            medicine_completions: Dict of completed meal times for today
 
         Returns:
             Menu object for the system tray
@@ -131,7 +137,7 @@ class MenuManager:
         menu_items = [
             update_item,
             Menu.SEPARATOR,
-            self._create_global_controls_menu(is_paused, sound_enabled, tts_enabled),
+            self._create_global_controls_menu(sound_enabled, tts_enabled),
             MenuItem(
                 "💤 Snooze (5 min)",
                 self.callbacks[MenuCallbacks.SNOOZE_REMINDER],
@@ -152,6 +158,13 @@ class MenuManager:
 
         menu_items.append(
             MenuItem("🔔 Test Notifications", Menu(*test_notification_items))
+        )
+        menu_items.append(Menu.SEPARATOR)
+
+        # Add medicine menu
+        medicine_completions = medicine_completions or {}
+        menu_items.append(
+            self._create_medicine_menu(medicine_enabled, medicine_completions)
         )
         menu_items.append(Menu.SEPARATOR)
 
@@ -178,7 +191,7 @@ class MenuManager:
         return Menu(*menu_items)
 
     def _create_global_controls_menu(
-        self, is_paused: bool, sound_enabled: bool, tts_enabled: bool
+        self, sound_enabled: bool, tts_enabled: bool
     ) -> MenuItem:
         """Create the global controls submenu entry."""
         return MenuItem(
@@ -320,3 +333,53 @@ class MenuManager:
         submenu_items.extend(interval_items)
 
         return MenuItem(title, Menu(*submenu_items))
+
+    def _create_medicine_menu(
+        self, medicine_enabled: bool, medicine_completions: dict
+    ) -> MenuItem:
+        """Create the medicine reminders menu."""
+        # Build mark completed items
+        completion_items = []
+        for meal_time in ALL_MEDICINE_TIMES:
+            meal_label = MedicineTimeLabels.get(meal_time, meal_time.title())
+            is_completed = meal_time in medicine_completions
+
+            if is_completed:
+                completion_items.append(
+                    MenuItem(
+                        f"✅ {meal_label} (Completed)",
+                        None,
+                        enabled=False,
+                    )
+                )
+            else:
+                callback_key = getattr(
+                    MenuCallbacks,
+                    f"MARK_{meal_time.upper()}_COMPLETED",
+                    None,
+                )
+                if callback_key:
+                    completion_items.append(
+                        MenuItem(
+                            f"☑️ Mark {meal_label} Complete",
+                            self.callbacks.get(callback_key, lambda: None),
+                        )
+                    )
+
+        # Build submenu
+        submenu_items = [
+            MenuItem(
+                "⚙️ Manage Medicines",
+                self.callbacks.get(MenuCallbacks.MANAGE_MEDICINES, lambda: None),
+            ),
+            Menu.SEPARATOR,
+            MenuItem(
+                "✓ Enable Medicine Reminders",
+                self.callbacks.get(MenuCallbacks.TOGGLE_MEDICINE_ENABLED, lambda: None),
+                checked=lambda _: medicine_enabled,
+            ),
+            Menu.SEPARATOR,
+        ]
+        submenu_items.extend(completion_items)
+
+        return MenuItem("💊 Medicine Reminders", Menu(*submenu_items))

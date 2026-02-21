@@ -7,7 +7,13 @@ configuration, and system tray integration.
 """
 
 import logging
+import os
+import subprocess
+import sys
+import threading
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pystray import Icon
@@ -15,16 +21,22 @@ from winotify import Notification
 
 from notifyme_app.config import ConfigManager
 from notifyme_app.constants import (
+    ALL_MEDICINE_TIMES,
     ALL_REMINDER_TYPES,
     APP_NAME,
     APP_REMINDER_APP_ID,
     APP_VERSION,
+    MEDICINE_BREAKFAST,
+    MEDICINE_DINNER,
+    MEDICINE_LUNCH,
     REMINDER_BLINK,
     REMINDER_PRANAYAMA,
     REMINDER_WALKING,
     REMINDER_WATER,
+    MedicineTimeLabels,
     MenuCallbacks,
 )
+from notifyme_app.medicine import MedicineManager
 from notifyme_app.menu import MenuManager, ReminderStateKeys
 from notifyme_app.notifications import NotificationManager
 from notifyme_app.system import SystemManager
@@ -47,6 +59,7 @@ class NotifyMeApp:
         self.system = SystemManager()
         self.timers = TimerManager()
         self.updater = UpdateChecker(self.notifications.show_update_notification)
+        self.medicine_manager = MedicineManager()
 
         # Create menu manager with callbacks
         self.menu_manager = MenuManager(self._get_menu_callbacks())
@@ -56,9 +69,13 @@ class NotifyMeApp:
         self.last_reminder_shown_at: dict[str, float | None] = {
             reminder_type: None for reminder_type in ALL_REMINDER_TYPES
         }
+        self.last_medicine_reminder_at: dict[str, float | None] = {
+            meal_time: None for meal_time in ALL_MEDICINE_TIMES
+        }
 
         # Initialize timers
         self._setup_timers()
+        self._setup_medicine_timers()
 
         logging.info("Application initialized")
 
@@ -104,6 +121,73 @@ class NotifyMeApp:
 
         return handler
 
+    def _setup_medicine_timers(self) -> None:
+        """Set up medicine reminder timers for each meal time."""
+        if not self.config.medicine_enabled:
+            logging.info("Medicine reminders disabled")
+            return
+
+        interval = self.config.medicine_reminder_interval
+        for meal_time in ALL_MEDICINE_TIMES:
+            self.timers.create_timer(
+                f"medicine_{meal_time}",
+                interval,
+                self._create_medicine_handler(meal_time),
+            )
+        logging.info("Medicine timers set up")
+
+    def _create_medicine_handler(self, meal_time: str):
+        """Create a medicine reminder handler for a specific meal time."""
+
+        def handler() -> None:
+            if not self.config.medicine_enabled:
+                return
+
+            if self.medicine_manager.should_remind(meal_time):
+                medicines = self.medicine_manager.get_medicines_for_meal_time(meal_time)
+                if medicines:
+                    self._show_medicine_notification(meal_time, medicines)
+                    self.last_medicine_reminder_at[meal_time] = time.time()
+
+        return handler
+
+    def _show_medicine_notification(self, meal_time: str, medicines: list) -> None:
+        """Show notification for medicine reminder."""
+        try:
+            meal_label = MedicineTimeLabels.get(meal_time, meal_time.title())
+
+            # Build medicine list
+            medicine_names = [f"• {m.name} ({m.dosage})" for m in medicines]
+            medicine_list = "\n".join(medicine_names)
+
+            title = f"💊 {meal_label} Medicine Reminder"
+            message = f"Time to take your medicine:\n{medicine_list}\n\nClick to mark as completed."
+
+            # Create notification with action buttons
+            notification = Notification(
+                app_id=APP_REMINDER_APP_ID,
+                title=title,
+                msg=message,
+            )
+
+            # Add action button to mark as completed
+            notification.add_actions(
+                label="Mark Completed", launch=f"medicine_completed:{meal_time}"
+            )
+
+            notification.show()
+
+            # TTS
+            if self.config.tts_enabled:
+                tts_message = (
+                    f"{meal_label} medicine reminder. Time to take your medicine."
+                )
+                speak_once(tts_message, lang=self.config.tts_language)
+
+            logging.info("Showed %s medicine notification", meal_time)
+        except Exception as e:
+            logging.error("Failed to show medicine notification: %s", e)
+
     def _get_menu_callbacks(self) -> dict:
         """Get callback functions for menu items.
 
@@ -130,6 +214,18 @@ class NotifyMeApp:
             # Update callbacks
             MenuCallbacks.CHECK_FOR_UPDATES_ASYNC: self.updater.check_for_updates_async,
             MenuCallbacks.SHOW_ABOUT: self.show_about,
+            # Medicine callbacks
+            MenuCallbacks.MANAGE_MEDICINES: self.manage_medicines,
+            MenuCallbacks.MARK_BREAKFAST_COMPLETED: lambda *_, **__: (
+                self.mark_medicine_completed(MEDICINE_BREAKFAST)
+            ),
+            MenuCallbacks.MARK_LUNCH_COMPLETED: lambda *_, **__: (
+                self.mark_medicine_completed(MEDICINE_LUNCH)
+            ),
+            MenuCallbacks.MARK_DINNER_COMPLETED: lambda *_, **__: (
+                self.mark_medicine_completed(MEDICINE_DINNER)
+            ),
+            MenuCallbacks.TOGGLE_MEDICINE_ENABLED: self.toggle_medicine_enabled,
         }
 
         # Dynamically add reminder-specific callbacks for all reminder types
@@ -152,8 +248,10 @@ class NotifyMeApp:
             )
             # Interval callbacks - called from menu code with explicit arguments
             callbacks[f"set_{reminder_type}_interval"] = (
-                lambda minutes, rt=reminder_type: self._set_reminder_interval(
-                    rt, minutes
+                lambda *_, minutes=None, rt=reminder_type, **__: (
+                    self._set_reminder_interval(rt, minutes)
+                    if minutes is not None
+                    else None
                 )
             )
             # Test notification callbacks - called directly by pystray
@@ -242,21 +340,12 @@ class NotifyMeApp:
         self.update_menu()
 
     # Interval setting methods
-    def _set_reminder_interval(self, reminder_type: str, minutes: int):
-        """Set interval for a specific reminder type.
-
-        Returns a callable for use as a menu callback.
-        """
-
-        def _set():
-            self.config.set_reminder_interval_minutes(reminder_type, minutes)
-            self.timers.update_timer_interval(reminder_type, minutes)
-            logging.info(
-                "%s interval set to %s minutes", reminder_type.title(), minutes
-            )
-            self.update_icon_title()
-
-        return _set
+    def _set_reminder_interval(self, reminder_type: str, minutes: int) -> None:
+        """Set interval for a specific reminder type."""
+        self.config.set_reminder_interval_minutes(reminder_type, minutes)
+        self.timers.update_timer_interval(reminder_type, minutes)
+        logging.info("%s interval set to %s minutes", reminder_type.title(), minutes)
+        self.update_icon_title()
 
     # Test notification methods
     def _test_reminder_notification(self, reminder_type: str) -> None:
@@ -319,6 +408,103 @@ class NotifyMeApp:
         except Exception as e:
             logging.error("Failed to show about dialog: %s", e)
 
+    # Medicine reminder methods
+    def manage_medicines(self) -> None:
+        """Open the medicine management window in a separate subprocess."""
+        try:
+            # If running as a frozen/compiled app (PyInstaller), run in a thread instead
+            # of subprocess to avoid spawning a new instance of the entire app
+            if getattr(sys, "frozen", False):
+
+                def open_medicine_ui() -> None:
+                    try:
+                        import tkinter as tk
+
+                        from notifyme_app.medicine import MedicineManager
+                        from notifyme_app.medicine_ui import MedicineManagementWindow
+
+                        # Create a new root window
+                        root = tk.Tk()
+                        root.title("Medicine Management")
+                        root.geometry("800x600")
+
+                        # Create and display the medicine management window
+                        medicine_manager = MedicineManager()
+                        window = MedicineManagementWindow(root, medicine_manager)
+
+                        # Run the window's event loop
+                        root.mainloop()
+                    except Exception as e:
+                        logging.error("Error in medicine UI: %s", e, exc_info=True)
+
+                # Run in a daemon thread so it doesn't block the main app
+                thread = threading.Thread(target=open_medicine_ui, daemon=True)
+                thread.start()
+                logging.info("Opened medicine management UI")
+            else:
+                # If running as a regular Python script, use subprocess
+                standalone_module = Path(__file__).parent / "medicine_ui_standalone.py"
+                env = os.environ.copy()
+
+                # Use pythonw.exe on Windows
+                executable = sys.executable
+                if sys.platform == "win32" and executable.endswith("python.exe"):
+                    executable = executable.replace("python.exe", "pythonw.exe")
+
+                kwargs = {
+                    "cwd": str(Path(__file__).parent.parent),
+                    "env": env,
+                    "stdin": subprocess.DEVNULL,
+                    "stdout": subprocess.DEVNULL,
+                    "stderr": subprocess.DEVNULL,
+                }
+
+                if sys.platform == "win32":
+                    kwargs["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
+
+                subprocess.Popen([executable, "-u", str(standalone_module)], **kwargs)
+                logging.info("Opened medicine management UI")
+        except Exception as e:
+            logging.error("Failed to open medicine management: %s", e)
+
+    def mark_medicine_completed(self, meal_time: str) -> None:
+        """Mark medicine as completed for a specific meal time."""
+        try:
+            self.medicine_manager.mark_completed(meal_time)
+            meal_label = MedicineTimeLabels.get(meal_time, meal_time.title())
+
+            # Show confirmation notification
+            notification = Notification(
+                app_id=APP_REMINDER_APP_ID,
+                title=f"✅ {meal_label} Medicine Completed",
+                msg=f"Marked {meal_label} medicine as taken for today.",
+            )
+            notification.show()
+
+            logging.info("Marked %s medicine as completed", meal_time)
+            self.update_menu()
+        except Exception as e:
+            logging.error("Failed to mark medicine completed: %s", e)
+
+    def toggle_medicine_enabled(self) -> None:
+        """Toggle medicine reminders on/off."""
+        self.config.medicine_enabled = not self.config.medicine_enabled
+        logging.info(
+            "Medicine reminders %s",
+            "enabled" if self.config.medicine_enabled else "disabled",
+        )
+
+        # Show notification
+        status = "enabled" if self.config.medicine_enabled else "disabled"
+        notification = Notification(
+            app_id=APP_REMINDER_APP_ID,
+            title="💊 Medicine Reminders",
+            msg=f"Medicine reminders have been {status}.",
+        )
+        notification.show()
+
+        self.update_menu()
+
     def _build_reminder_states(self) -> dict:
         """Build reminder states dictionary from current config and timer states.
 
@@ -358,6 +544,11 @@ class NotifyMeApp:
     def update_menu(self) -> None:
         """Update the system tray menu to reflect current state."""
         if self.icon:
+            # Get today's medicine completions
+
+            today = datetime.now().strftime("%Y-%m-%d")
+            medicine_completions = self.medicine_manager.completions.get(today, {})
+
             self.icon.menu = self.menu_manager.create_menu(
                 reminder_states=self._build_reminder_states(),
                 is_paused=self.timers.is_global_paused,
@@ -365,6 +556,8 @@ class NotifyMeApp:
                 tts_enabled=self.config.tts_enabled,
                 update_available=self.updater.is_update_available(),
                 latest_version=self.updater.get_latest_version(),
+                medicine_enabled=self.config.medicine_enabled,
+                medicine_completions=medicine_completions,
             )
 
     def update_icon_title(self) -> None:
@@ -393,7 +586,8 @@ class NotifyMeApp:
         status_parts = []
         for reminder_type in ALL_REMINDER_TYPES:
             status_parts.append(
-                f"{reminder_type.title()}: {self.config.get_reminder_interval_minutes(reminder_type)}min"
+                f"{reminder_type.title()}: "
+                f"{self.config.get_reminder_interval_minutes(reminder_type)}min"
             )
         return ", ".join(status_parts)
 
@@ -409,6 +603,11 @@ class NotifyMeApp:
         """Run the application with system tray icon and timers."""
         # Create the icon
         icon_image = self.system.create_icon_image()
+
+        # Get today's medicine completions
+        today = datetime.now().strftime("%Y-%m-%d")
+        medicine_completions = self.medicine_manager.completions.get(today, {})
+
         self.icon = Icon(
             APP_NAME,
             icon_image,
@@ -418,6 +617,8 @@ class NotifyMeApp:
                 is_paused=False,
                 sound_enabled=self.config.sound_enabled,
                 tts_enabled=self.config.tts_enabled,
+                medicine_enabled=self.config.medicine_enabled,
+                medicine_completions=medicine_completions,
             ),
         )
 

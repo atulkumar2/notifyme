@@ -64,8 +64,7 @@ def get_resource_path(filename: str) -> Path:
 def get_idle_seconds() -> float | None:
     """Return system idle time in seconds, or None if unavailable."""
     try:
-        info = LASTINPUTINFO()
-        info.cbSize = ctypes.sizeof(LASTINPUTINFO)
+        info = LASTINPUTINFO(cbSize=ctypes.sizeof(LASTINPUTINFO))
         if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(info)):
             return None
         tick_ms = ctypes.windll.kernel32.GetTickCount64()

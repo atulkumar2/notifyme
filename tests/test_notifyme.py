@@ -419,7 +419,7 @@ class TestTimerWorkers(unittest.TestCase):
         self.app.offset_seconds_map[REMINDER_BLINK] = 0
 
         # Mock to stop after first iteration
-        def stop_after_first(*args):
+        def stop_after_first(*_args):
             self.app.is_running = False
 
         mock_sleep.side_effect = stop_after_first
@@ -465,7 +465,7 @@ class TestTimerWorkers(unittest.TestCase):
 
         call_count = {"count": 0}
 
-        def stop_after_second(*args):
+        def stop_after_second(*_args):
             call_count["count"] += 1
             if call_count["count"] >= 2:
                 self.app.is_running = False
@@ -540,7 +540,7 @@ class TestTimerWorkers(unittest.TestCase):
         self.app.interval_minutes_map[REMINDER_WATER] = 1
         self.app.offset_seconds_map[REMINDER_WATER] = 0
 
-        def stop_after_first(*args):
+        def stop_after_first(*_args):
             self.app.is_running = False
 
         mock_sleep.side_effect = stop_after_first

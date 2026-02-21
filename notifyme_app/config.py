@@ -43,6 +43,9 @@ class ConfigManager:
             # 'auto' prefers Hindi if a Hindi voice is available, otherwise English
             ConfigKeys.TTS_LANGUAGE: "auto",
             ConfigKeys.LAST_RUN: None,
+            # Medicine reminder settings
+            "medicine_enabled": True,
+            "medicine_reminder_interval": 20,  # minutes
         }
 
     def _get_default_reminder_config(self, reminder_type: str) -> dict[str, Any]:
@@ -294,4 +297,26 @@ class ConfigManager:
     def tts_language(self, value: str) -> None:
         """Set preferred TTS language."""
         self._set_global(ConfigKeys.TTS_LANGUAGE, value)
+        self.save_config()
+
+    @property
+    def medicine_enabled(self) -> bool:
+        """Get medicine reminder enabled state."""
+        return self._get_global("medicine_enabled", True)
+
+    @medicine_enabled.setter
+    def medicine_enabled(self, value: bool) -> None:
+        """Set medicine reminder enabled state."""
+        self._set_global("medicine_enabled", value)
+        self.save_config()
+
+    @property
+    def medicine_reminder_interval(self) -> int:
+        """Get medicine reminder interval in minutes."""
+        return self._get_global("medicine_reminder_interval", 20)
+
+    @medicine_reminder_interval.setter
+    def medicine_reminder_interval(self, value: int) -> None:
+        """Set medicine reminder interval in minutes."""
+        self._set_global("medicine_reminder_interval", value)
         self.save_config()

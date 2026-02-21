@@ -6,10 +6,10 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import cast
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from notifyme_app.constants import ALL_REMINDER_TYPES, MenuCallbacks
 from notifyme_app.menu import MenuManager, ReminderStateKeys
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 class TestMenuManager(unittest.TestCase):
@@ -59,7 +59,7 @@ class TestMenuManager(unittest.TestCase):
             callbacks[f"toggle_{reminder_type}_pause"] = lambda *_: None
             callbacks[f"toggle_{reminder_type}_sound"] = lambda *_: None
             callbacks[f"toggle_{reminder_type}_tts"] = lambda *_: None
-            callbacks[f"set_{reminder_type}_interval"] = _interval_factory
+            callbacks[f"set_{reminder_type}_interval"] = lambda *_: _interval_factory()
             callbacks[f"test_{reminder_type}_notification"] = lambda *_: None
 
         return callbacks

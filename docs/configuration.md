@@ -8,7 +8,7 @@
 
 Your settings are saved in:
 
-```
+```sh
 %APPDATA%\NotifyMe\config.json
 ```
 

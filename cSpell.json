@@ -3,7 +3,8 @@
   "language": "en",
   "dictionaries": [],
   "words": [
-    "LASTEXITCODE"
+    "LASTEXITCODE",
+    "textvariable"
   ],
   "ignorePaths": []
 }
