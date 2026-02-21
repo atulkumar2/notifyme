@@ -15,10 +15,16 @@ from PIL import Image
 from notifyme import APP_VERSION, NotifyMeApp, get_app_data_dir, get_resource_path
 from notifyme_app.constants import (
     APP_NAME,
+    REMINDER_BLINK,
+    REMINDER_PRANAYAMA,
+    REMINDER_WALKING,
+    REMINDER_WATER,
     ConfigKeys,
 )
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# pylint: disable=protected-access, too-many-public-methods, too-many-instance-attributes
 
 
 class TestGetAppDataDir(unittest.TestCase):
@@ -325,7 +331,7 @@ class TestNotifyMeApp(unittest.TestCase):
         mock_toast = MagicMock()
         mock_notification.return_value = mock_toast
 
-        self.app.show_blink_notification()
+        self.app.show_reminder_notification(REMINDER_BLINK)
 
         call_args = mock_notification.call_args[1]
         self.assertEqual(call_args["title"], "Eye Blink Reminder")
@@ -336,7 +342,7 @@ class TestNotifyMeApp(unittest.TestCase):
         mock_toast = MagicMock()
         mock_notification.return_value = mock_toast
 
-        self.app.show_walking_notification()
+        self.app.show_reminder_notification(REMINDER_WALKING)
 
         call_args = mock_notification.call_args[1]
         self.assertEqual(call_args["title"], "Walking Reminder")
@@ -347,7 +353,7 @@ class TestNotifyMeApp(unittest.TestCase):
         mock_toast = MagicMock()
         mock_notification.return_value = mock_toast
 
-        self.app.show_water_notification()
+        self.app.show_reminder_notification(REMINDER_WATER)
 
         call_args = mock_notification.call_args[1]
         self.assertEqual(call_args["title"], "Water Reminder")
@@ -358,7 +364,7 @@ class TestNotifyMeApp(unittest.TestCase):
         mock_toast = MagicMock()
         mock_notification.return_value = mock_toast
 
-        self.app.show_pranayama_notification()
+        self.app.show_reminder_notification(REMINDER_PRANAYAMA)
 
         call_args = mock_notification.call_args[1]
         self.assertEqual(call_args["title"], "Pranayama Reminder")
@@ -409,8 +415,8 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_first
 
-        with patch.object(self.app, "show_blink_notification"):
-            self.app.timer_worker()
+        with patch.object(self.app, "show_reminder_notification"):
+            self.app.reminder_timer_worker(REMINDER_BLINK)
             self.assertIsNotNone(self.app.next_reminder_time)
 
     @patch("notifyme.get_idle_seconds")
@@ -429,8 +435,8 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_first
 
-        with patch.object(self.app, "show_blink_notification") as mock_show:
-            self.app.timer_worker()
+        with patch.object(self.app, "show_reminder_notification") as mock_show:
+            self.app.reminder_timer_worker(REMINDER_BLINK)
             mock_show.assert_not_called()
             self.assertEqual(self.app.next_reminder_time, 1060.0)
             self.assertTrue(self.app._blink_idle_suppressed)
@@ -457,9 +463,9 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_second
 
-        with patch.object(self.app, "show_blink_notification") as mock_show:
-            self.app.timer_worker()
-            mock_show.assert_called_once()
+        with patch.object(self.app, "show_reminder_notification") as mock_show:
+            self.app.reminder_timer_worker(REMINDER_BLINK)
+            mock_show.assert_called_once_with(REMINDER_BLINK)
 
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
@@ -479,8 +485,8 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_first
 
-        with patch.object(self.app, "show_walking_notification") as mock_show:
-            self.app.walking_timer_worker()
+        with patch.object(self.app, "show_reminder_notification") as mock_show:
+            self.app.reminder_timer_worker(REMINDER_WALKING)
             mock_show.assert_not_called()
             self.assertEqual(self.app.next_walking_reminder_time, 2060.0)
             self.assertTrue(self.app._walking_idle_suppressed)
@@ -507,9 +513,9 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_second
 
-        with patch.object(self.app, "show_walking_notification") as mock_show:
-            self.app.walking_timer_worker()
-            mock_show.assert_called_once()
+        with patch.object(self.app, "show_reminder_notification") as mock_show:
+            self.app.reminder_timer_worker(REMINDER_WALKING)
+            mock_show.assert_called_once_with(REMINDER_WALKING)
 
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
@@ -527,8 +533,8 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_first
 
-        with patch.object(self.app, "show_water_notification") as mock_show:
-            self.app.water_timer_worker()
+        with patch.object(self.app, "show_reminder_notification") as mock_show:
+            self.app.reminder_timer_worker(REMINDER_WATER)
             mock_show.assert_not_called()
             self.assertEqual(self.app.next_water_reminder_time, 3060.0)
             self.assertTrue(self.app._water_idle_suppressed)
@@ -555,9 +561,9 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_second
 
-        with patch.object(self.app, "show_water_notification") as mock_show:
-            self.app.water_timer_worker()
-            mock_show.assert_called_once()
+        with patch.object(self.app, "show_reminder_notification") as mock_show:
+            self.app.reminder_timer_worker(REMINDER_WATER)
+            mock_show.assert_called_once_with(REMINDER_WATER)
 
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
@@ -577,8 +583,8 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_first
 
-        with patch.object(self.app, "show_pranayama_notification") as mock_show:
-            self.app.pranayama_timer_worker()
+        with patch.object(self.app, "show_reminder_notification") as mock_show:
+            self.app.reminder_timer_worker(REMINDER_PRANAYAMA)
             mock_show.assert_not_called()
             self.assertEqual(self.app.next_pranayama_reminder_time, 4120.0)
             self.assertTrue(self.app._pranayama_idle_suppressed)
@@ -605,9 +611,9 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_second
 
-        with patch.object(self.app, "show_pranayama_notification") as mock_show:
-            self.app.pranayama_timer_worker()
-            mock_show.assert_called_once()
+        with patch.object(self.app, "show_reminder_notification") as mock_show:
+            self.app.reminder_timer_worker(REMINDER_PRANAYAMA)
+            mock_show.assert_called_once_with(REMINDER_PRANAYAMA)
 
     @patch("notifyme.time.sleep")
     def test_timer_worker_checks_when_paused(self, mock_sleep):
@@ -621,8 +627,14 @@ class TestTimerWorkers(unittest.TestCase):
 
         mock_sleep.side_effect = stop_after_first
 
-        self.app.timer_worker()
+        self.app.reminder_timer_worker(REMINDER_BLINK)
         mock_sleep.assert_called_with(1)
+
+    @patch("notifyme.logging.warning")
+    def test_reminder_timer_worker_unknown_type_logs(self, mock_warning):
+        """Test unknown reminder types log a warning and return."""
+        self.app.reminder_timer_worker("unknown")
+        mock_warning.assert_called_once()
 
 
 if __name__ == "__main__":

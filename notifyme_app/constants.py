@@ -9,6 +9,12 @@ including reminder types, default intervals, messages, and URLs.
 APP_NAME = "NotifyMe"
 APP_REMINDER_APP_ID = f"{APP_NAME} Reminder"
 
+# Reminder types
+REMINDER_BLINK = "blink"
+REMINDER_WALKING = "walking"
+REMINDER_WATER = "water"
+REMINDER_PRANAYAMA = "pranayama"
+
 
 class ConfigKeys:
     """String keys for persisted configuration."""
@@ -62,10 +68,6 @@ class MenuCallbacks:
     PAUSE_REMINDERS = "pause_reminders"
     QUIT_APP = "quit_app"
     RESUME_REMINDERS = "resume_reminders"
-    SET_BLINK_INTERVAL = "set_blink_interval"
-    SET_PRANAYAMA_INTERVAL = "set_pranayama_interval"
-    SET_WALKING_INTERVAL = "set_walking_interval"
-    SET_WATER_INTERVAL = "set_water_interval"
     SHOW_ABOUT = "show_about"
     SNOOZE_REMINDER = "snooze_reminder"
     START_REMINDERS = "start_reminders"
@@ -92,12 +94,6 @@ class MenuCallbacks:
     TOGGLE_WATER_SOUND = "toggle_water_sound"
     TOGGLE_WATER_TTS = "toggle_water_tts"
 
-
-# Reminder types
-REMINDER_BLINK = "blink"
-REMINDER_WALKING = "walking"
-REMINDER_WATER = "water"
-REMINDER_PRANAYAMA = "pranayama"
 
 # All available reminder types (for iteration)
 ALL_REMINDER_TYPES = [

@@ -10,6 +10,7 @@ import logging
 from typing import Any
 
 from notifyme_app.constants import (
+    ALL_REMINDER_TYPES,
     DEFAULT_INTERVALS_MIN,
     REMINDER_BLINK,
     REMINDER_PRANAYAMA,
@@ -28,36 +29,26 @@ class ConfigManager:
         self.config_file = get_config_path()
         self._config = self._load_config()
 
-    def _get_default_config(self) -> dict[str, Any]:
+    def _get_default_config(self) -> dict[str, int | bool | str | None]:
         """Return default configuration values."""
-        return {
-            ConfigKeys.BLINK_INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
-            ConfigKeys.WALKING_INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[
-                REMINDER_WALKING
-            ],
-            ConfigKeys.WATER_INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[REMINDER_WATER],
-            ConfigKeys.PRANAYAMA_INTERVAL_MINUTES: DEFAULT_INTERVALS_MIN[
-                REMINDER_PRANAYAMA
-            ],
+        defaults: dict[str, int | bool | str | None] = {
             ConfigKeys.SOUND_ENABLED: False,
-            ConfigKeys.BLINK_SOUND_ENABLED: True,
-            ConfigKeys.WALKING_SOUND_ENABLED: True,
-            ConfigKeys.WATER_SOUND_ENABLED: True,
-            ConfigKeys.PRANAYAMA_SOUND_ENABLED: True,
             # Text-to-Speech configuration (offline via pyttsx3 / SAPI5 on Windows)
             ConfigKeys.TTS_ENABLED: True,
-            ConfigKeys.BLINK_TTS_ENABLED: True,
-            ConfigKeys.WALKING_TTS_ENABLED: True,
-            ConfigKeys.WATER_TTS_ENABLED: True,
-            ConfigKeys.PRANAYAMA_TTS_ENABLED: True,
             # 'auto' prefers Hindi if a Hindi voice is available, otherwise English
             ConfigKeys.TTS_LANGUAGE: "auto",
-            ConfigKeys.BLINK_HIDDEN: False,
-            ConfigKeys.WALKING_HIDDEN: False,
-            ConfigKeys.WATER_HIDDEN: False,
-            ConfigKeys.PRANAYAMA_HIDDEN: False,
             ConfigKeys.LAST_RUN: None,
         }
+
+        for reminder_type in ALL_REMINDER_TYPES:
+            defaults[self._reminder_key(reminder_type, "interval_minutes")] = (
+                DEFAULT_INTERVALS_MIN[reminder_type]
+            )
+            defaults[self._reminder_key(reminder_type, "sound_enabled")] = True
+            defaults[self._reminder_key(reminder_type, "tts_enabled")] = True
+            defaults[self._reminder_key(reminder_type, "hidden")] = False
+
+        return defaults
 
     def _load_config(self) -> dict[str, Any]:
         """Load configuration from the JSON config file."""
@@ -109,58 +100,85 @@ class ConfigManager:
         self._config.update(updates)
         self.save_config()
 
-    # Convenience properties for commonly used settings
-    @property
-    def interval_minutes(self) -> int:
-        """Get blink reminder interval in minutes."""
+    def _reminder_key(self, reminder_type: str, suffix: str) -> str:
+        """Build reminder-specific configuration keys from type and suffix."""
+        return f"{reminder_type}_{suffix}"
+
+    def get_interval_minutes(self, reminder_type: str) -> int:
+        """Get reminder interval in minutes for a reminder type."""
         return self.get(
-            ConfigKeys.BLINK_INTERVAL_MINUTES,
-            DEFAULT_INTERVALS_MIN[REMINDER_BLINK],
+            self._reminder_key(reminder_type, "interval_minutes"),
+            DEFAULT_INTERVALS_MIN.get(reminder_type, 20),
         )
 
-    @interval_minutes.setter
-    def interval_minutes(self, value: int) -> None:
+    def set_interval_minutes(self, reminder_type: str, value: int) -> None:
+        """Set reminder interval in minutes for a reminder type."""
+        self.set(self._reminder_key(reminder_type, "interval_minutes"), value)
+
+    def get_sound_enabled(self, reminder_type: str) -> bool:
+        """Get reminder-specific sound enabled state."""
+        return self.get(self._reminder_key(reminder_type, "sound_enabled"), True)
+
+    def set_sound_enabled(self, reminder_type: str, value: bool) -> None:
+        """Set reminder-specific sound enabled state."""
+        self.set(self._reminder_key(reminder_type, "sound_enabled"), value)
+
+    def get_tts_enabled(self, reminder_type: str) -> bool:
+        """Get reminder-specific TTS enabled state."""
+        return self.get(self._reminder_key(reminder_type, "tts_enabled"), True)
+
+    def set_tts_enabled(self, reminder_type: str, value: bool) -> None:
+        """Set reminder-specific TTS enabled state."""
+        self.set(self._reminder_key(reminder_type, "tts_enabled"), value)
+
+    def get_hidden(self, reminder_type: str) -> bool:
+        """Get reminder hidden state for a reminder type."""
+        return self.get(self._reminder_key(reminder_type, "hidden"), False)
+
+    def set_hidden(self, reminder_type: str, value: bool) -> None:
+        """Set reminder hidden state for a reminder type."""
+        self.set(self._reminder_key(reminder_type, "hidden"), value)
+
+    # Convenience properties for commonly used settings
+    @property
+    def blink_interval_minutes(self) -> int:
+        """Get blink reminder interval in minutes."""
+        return self.get_interval_minutes(REMINDER_BLINK)
+
+    @blink_interval_minutes.setter
+    def blink_interval_minutes(self, value: int) -> None:
         """Set blink reminder interval in minutes."""
-        self.set(ConfigKeys.BLINK_INTERVAL_MINUTES, value)
+        self.set_interval_minutes(REMINDER_BLINK, value)
 
     @property
     def walking_interval_minutes(self) -> int:
         """Get walking reminder interval in minutes."""
-        return self.get(
-            ConfigKeys.WALKING_INTERVAL_MINUTES,
-            DEFAULT_INTERVALS_MIN[REMINDER_WALKING],
-        )
+        return self.get_interval_minutes(REMINDER_WALKING)
 
     @walking_interval_minutes.setter
     def walking_interval_minutes(self, value: int) -> None:
         """Set walking reminder interval in minutes."""
-        self.set(ConfigKeys.WALKING_INTERVAL_MINUTES, value)
+        self.set_interval_minutes(REMINDER_WALKING, value)
 
     @property
     def water_interval_minutes(self) -> int:
         """Get water reminder interval in minutes."""
-        return self.get(
-            ConfigKeys.WATER_INTERVAL_MINUTES,
-            DEFAULT_INTERVALS_MIN[REMINDER_WATER],
-        )
+        return self.get_interval_minutes(REMINDER_WATER)
 
     @water_interval_minutes.setter
     def water_interval_minutes(self, value: int) -> None:
         """Set water reminder interval in minutes."""
-        self.set(ConfigKeys.WATER_INTERVAL_MINUTES, value)
+        self.set_interval_minutes(REMINDER_WATER, value)
 
     @property
     def pranayama_interval_minutes(self) -> int:
         """Get pranayama reminder interval in minutes."""
-        return self.get(
-            ConfigKeys.PRANAYAMA_INTERVAL_MINUTES,
-            DEFAULT_INTERVALS_MIN[REMINDER_PRANAYAMA],
-        )
+        return self.get_interval_minutes(REMINDER_PRANAYAMA)
 
     @pranayama_interval_minutes.setter
     def pranayama_interval_minutes(self, value: int) -> None:
         """Set pranayama reminder interval in minutes."""
-        self.set(ConfigKeys.PRANAYAMA_INTERVAL_MINUTES, value)
+        self.set_interval_minutes(REMINDER_PRANAYAMA, value)
 
     @property
     def sound_enabled(self) -> bool:
@@ -175,82 +193,82 @@ class ConfigManager:
     @property
     def blink_sound_enabled(self) -> bool:
         """Get blink sound enabled state."""
-        return self.get(ConfigKeys.BLINK_SOUND_ENABLED, True)
+        return self.get_sound_enabled(REMINDER_BLINK)
 
     @blink_sound_enabled.setter
     def blink_sound_enabled(self, value: bool) -> None:
         """Set blink sound enabled state."""
-        self.set(ConfigKeys.BLINK_SOUND_ENABLED, value)
+        self.set_sound_enabled(REMINDER_BLINK, value)
 
     @property
     def walking_sound_enabled(self) -> bool:
         """Get walking sound enabled state."""
-        return self.get(ConfigKeys.WALKING_SOUND_ENABLED, True)
+        return self.get_sound_enabled(REMINDER_WALKING)
 
     @walking_sound_enabled.setter
     def walking_sound_enabled(self, value: bool) -> None:
         """Set walking sound enabled state."""
-        self.set(ConfigKeys.WALKING_SOUND_ENABLED, value)
+        self.set_sound_enabled(REMINDER_WALKING, value)
 
     @property
     def water_sound_enabled(self) -> bool:
         """Get water sound enabled state."""
-        return self.get(ConfigKeys.WATER_SOUND_ENABLED, True)
+        return self.get_sound_enabled(REMINDER_WATER)
 
     @water_sound_enabled.setter
     def water_sound_enabled(self, value: bool) -> None:
         """Set water sound enabled state."""
-        self.set(ConfigKeys.WATER_SOUND_ENABLED, value)
+        self.set_sound_enabled(REMINDER_WATER, value)
 
     @property
     def pranayama_sound_enabled(self) -> bool:
         """Get pranayama sound enabled state."""
-        return self.get(ConfigKeys.PRANAYAMA_SOUND_ENABLED, True)
+        return self.get_sound_enabled(REMINDER_PRANAYAMA)
 
     @pranayama_sound_enabled.setter
     def pranayama_sound_enabled(self, value: bool) -> None:
         """Set pranayama sound enabled state."""
-        self.set(ConfigKeys.PRANAYAMA_SOUND_ENABLED, value)
+        self.set_sound_enabled(REMINDER_PRANAYAMA, value)
 
     @property
     def blink_hidden(self) -> bool:
         """Get blink reminder hidden state."""
-        return self.get(ConfigKeys.BLINK_HIDDEN, False)
+        return self.get_hidden(REMINDER_BLINK)
 
     @blink_hidden.setter
     def blink_hidden(self, value: bool) -> None:
         """Set blink reminder hidden state."""
-        self.set(ConfigKeys.BLINK_HIDDEN, value)
+        self.set_hidden(REMINDER_BLINK, value)
 
     @property
     def walking_hidden(self) -> bool:
         """Get walking reminder hidden state."""
-        return self.get(ConfigKeys.WALKING_HIDDEN, False)
+        return self.get_hidden(REMINDER_WALKING)
 
     @walking_hidden.setter
     def walking_hidden(self, value: bool) -> None:
         """Set walking reminder hidden state."""
-        self.set(ConfigKeys.WALKING_HIDDEN, value)
+        self.set_hidden(REMINDER_WALKING, value)
 
     @property
     def water_hidden(self) -> bool:
         """Get water reminder hidden state."""
-        return self.get(ConfigKeys.WATER_HIDDEN, False)
+        return self.get_hidden(REMINDER_WATER)
 
     @water_hidden.setter
     def water_hidden(self, value: bool) -> None:
         """Set water reminder hidden state."""
-        self.set(ConfigKeys.WATER_HIDDEN, value)
+        self.set_hidden(REMINDER_WATER, value)
 
     @property
     def pranayama_hidden(self) -> bool:
         """Get pranayama reminder hidden state."""
-        return self.get(ConfigKeys.PRANAYAMA_HIDDEN, False)
+        return self.get_hidden(REMINDER_PRANAYAMA)
 
     @pranayama_hidden.setter
     def pranayama_hidden(self, value: bool) -> None:
         """Set pranayama reminder hidden state."""
-        self.set(ConfigKeys.PRANAYAMA_HIDDEN, value)
+        self.set_hidden(REMINDER_PRANAYAMA, value)
 
     # Text-to-Speech properties
     @property
@@ -266,42 +284,42 @@ class ConfigManager:
     @property
     def blink_tts_enabled(self) -> bool:
         """Get blink reminder TTS enabled state."""
-        return self.get(ConfigKeys.BLINK_TTS_ENABLED, True)
+        return self.get_tts_enabled(REMINDER_BLINK)
 
     @blink_tts_enabled.setter
     def blink_tts_enabled(self, value: bool) -> None:
         """Set blink reminder TTS enabled state."""
-        self.set(ConfigKeys.BLINK_TTS_ENABLED, value)
+        self.set_tts_enabled(REMINDER_BLINK, value)
 
     @property
     def walking_tts_enabled(self) -> bool:
         """Get walking reminder TTS enabled state."""
-        return self.get(ConfigKeys.WALKING_TTS_ENABLED, True)
+        return self.get_tts_enabled(REMINDER_WALKING)
 
     @walking_tts_enabled.setter
     def walking_tts_enabled(self, value: bool) -> None:
         """Set walking reminder TTS enabled state."""
-        self.set(ConfigKeys.WALKING_TTS_ENABLED, value)
+        self.set_tts_enabled(REMINDER_WALKING, value)
 
     @property
     def water_tts_enabled(self) -> bool:
         """Get water reminder TTS enabled state."""
-        return self.get(ConfigKeys.WATER_TTS_ENABLED, True)
+        return self.get_tts_enabled(REMINDER_WATER)
 
     @water_tts_enabled.setter
     def water_tts_enabled(self, value: bool) -> None:
         """Set water reminder TTS enabled state."""
-        self.set(ConfigKeys.WATER_TTS_ENABLED, value)
+        self.set_tts_enabled(REMINDER_WATER, value)
 
     @property
     def pranayama_tts_enabled(self) -> bool:
         """Get pranayama reminder TTS enabled state."""
-        return self.get(ConfigKeys.PRANAYAMA_TTS_ENABLED, True)
+        return self.get_tts_enabled(REMINDER_PRANAYAMA)
 
     @pranayama_tts_enabled.setter
     def pranayama_tts_enabled(self, value: bool) -> None:
         """Set pranayama reminder TTS enabled state."""
-        self.set(ConfigKeys.PRANAYAMA_TTS_ENABLED, value)
+        self.set_tts_enabled(REMINDER_PRANAYAMA, value)
 
     @property
     def tts_language(self) -> str:

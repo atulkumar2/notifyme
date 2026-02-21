@@ -25,7 +25,7 @@ Quick access: Right-click tray icon → "📂 Open Locations" → "⚙ Config Lo
 - **Recommended:** 15-20 min for screen work, 30+ min for mixed tasks
 
 ```json
-"interval_minutes": 20
+"blink_interval_minutes": 20
 ```
 
 ### 🚶 walking_interval_minutes
@@ -122,7 +122,7 @@ Each reminder type can have TTS independently enabled/disabled:
 
 ```json
 {
-  "interval_minutes": 15,
+  "blink_interval_minutes": 15,
   "walking_interval_minutes": 45,
   "water_interval_minutes": 20,
   "pranayama_interval_minutes": 120,
@@ -136,7 +136,7 @@ Each reminder type can have TTS independently enabled/disabled:
 
 ```json
 {
-  "interval_minutes": 25,
+  "blink_interval_minutes": 25,
   "walking_interval_minutes": 60,
   "water_interval_minutes": 30,
   "pranayama_interval_minutes": 120,
@@ -150,7 +150,7 @@ Each reminder type can have TTS independently enabled/disabled:
 
 ```json
 {
-  "interval_minutes": 25,
+  "blink_interval_minutes": 25,
   "walking_interval_minutes": 50,
   "water_interval_minutes": 25,
   "pranayama_interval_minutes": 120,
@@ -164,7 +164,7 @@ Each reminder type can have TTS independently enabled/disabled:
 
 ```json
 {
-  "interval_minutes": 20,
+  "blink_interval_minutes": 20,
   "walking_interval_minutes": 60,
   "water_interval_minutes": 30,
   "pranayama_interval_minutes": 120,

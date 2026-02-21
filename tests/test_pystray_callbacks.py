@@ -26,7 +26,7 @@ try:
     callbacks["test_water_notification"]("mock_icon")
     print("  Success!")
 except Exception as e:
-    if "show_water_notification" in str(e):
+    if "show_reminder_notification" in str(e):
         print("  Callback invoked successfully (notification manager not mocked)")
     else:
         print(f"  Error: {e}")

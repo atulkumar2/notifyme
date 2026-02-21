@@ -420,7 +420,7 @@ The app stores your preferences in `config.json`:
 
 ```json
 {
-  "interval_minutes": 20,
+  "blink_interval_minutes": 20,
   "walking_interval_minutes": 60,
   "water_interval_minutes": 30,
   "pranayama_interval_minutes": 120,

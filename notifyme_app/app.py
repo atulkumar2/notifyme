@@ -25,7 +25,7 @@ from notifyme_app.constants import (
     REMINDER_WATER,
     MenuCallbacks,
 )
-from notifyme_app.menu import MenuManager
+from notifyme_app.menu import MenuManager, ReminderStateKeys
 from notifyme_app.notifications import NotificationManager
 from notifyme_app.system import SystemManager
 from notifyme_app.timers import TimerManager
@@ -67,7 +67,7 @@ class NotifyMeApp:
         """Set up reminder timers with callbacks."""
         self.timers.create_timer(
             REMINDER_BLINK,
-            self.config.interval_minutes,
+            self.config.blink_interval_minutes,
             self._on_blink_reminder,
         )
         self.timers.create_timer(
@@ -92,8 +92,8 @@ class NotifyMeApp:
             sound_enabled = (
                 self.config.sound_enabled and self.config.blink_sound_enabled
             )
-            message = self.notifications.show_blink_notification(
-                self.last_blink_shown_at, sound_enabled
+            message = self.notifications.show_reminder_notification(
+                REMINDER_BLINK, self.last_blink_shown_at, sound_enabled
             )
             self.last_blink_shown_at = time.time()
 
@@ -111,8 +111,8 @@ class NotifyMeApp:
             sound_enabled = (
                 self.config.sound_enabled and self.config.walking_sound_enabled
             )
-            message = self.notifications.show_walking_notification(
-                self.last_walking_shown_at, sound_enabled
+            message = self.notifications.show_reminder_notification(
+                REMINDER_WALKING, self.last_walking_shown_at, sound_enabled
             )
             self.last_walking_shown_at = time.time()
 
@@ -130,8 +130,8 @@ class NotifyMeApp:
             sound_enabled = (
                 self.config.sound_enabled and self.config.water_sound_enabled
             )
-            message = self.notifications.show_water_notification(
-                self.last_water_shown_at, sound_enabled
+            message = self.notifications.show_reminder_notification(
+                REMINDER_WATER, self.last_water_shown_at, sound_enabled
             )
             self.last_water_shown_at = time.time()
 
@@ -149,8 +149,8 @@ class NotifyMeApp:
             sound_enabled = (
                 self.config.sound_enabled and self.config.pranayama_sound_enabled
             )
-            message = self.notifications.show_pranayama_notification(
-                self.last_pranayama_shown_at, sound_enabled
+            message = self.notifications.show_reminder_notification(
+                REMINDER_PRANAYAMA, self.last_pranayama_shown_at, sound_enabled
             )
             self.last_pranayama_shown_at = time.time()
 
@@ -310,7 +310,14 @@ class NotifyMeApp:
         """
 
         def _set():
-            attr_type = f"{'walking_' if reminder_type == REMINDER_WALKING else 'water_' if reminder_type == REMINDER_WATER else 'pranayama_' if reminder_type == REMINDER_PRANAYAMA else ''}"
+            if reminder_type == REMINDER_WALKING:
+                attr_type = "walking_"
+            elif reminder_type == REMINDER_WATER:
+                attr_type = "water_"
+            elif reminder_type == REMINDER_PRANAYAMA:
+                attr_type = "pranayama_"
+            else:
+                attr_type = ""
             attr_name = f"{attr_type}interval_minutes"
             setattr(self.config, attr_name, minutes)
             self.timers.update_timer_interval(reminder_type, minutes)
@@ -333,10 +340,9 @@ class NotifyMeApp:
             )
 
             # Show the notification
-            show_method = getattr(
-                self.notifications, f"show_{reminder_type}_notification"
+            message = self.notifications.show_reminder_notification(
+                reminder_type, None, sound_enabled
             )
-            message = show_method(None, sound_enabled)
 
             # Optionally speak using TTS
             tts_attr = f"{reminder_type}_tts_enabled"
@@ -391,7 +397,7 @@ class NotifyMeApp:
         """
         # Map reminder types to their interval property names in config
         interval_property_map = {
-            REMINDER_BLINK: "interval_minutes",
+            REMINDER_BLINK: "blink_interval_minutes",
             REMINDER_WALKING: "walking_interval_minutes",
             REMINDER_WATER: "water_interval_minutes",
             REMINDER_PRANAYAMA: "pranayama_interval_minutes",
@@ -400,18 +406,22 @@ class NotifyMeApp:
         reminder_states = {}
         for reminder_type in ALL_REMINDER_TYPES:
             interval_property = interval_property_map.get(
-                reminder_type, "interval_minutes"
+                reminder_type, "blink_interval_minutes"
             )
             reminder_states[reminder_type] = {
-                "hidden": getattr(self.config, f"{reminder_type}_hidden", False),
-                "paused": self.timers.is_timer_paused(reminder_type),
-                "sound_enabled": getattr(
+                ReminderStateKeys.HIDDEN: getattr(
+                    self.config, f"{reminder_type}_hidden", False
+                ),
+                ReminderStateKeys.PAUSED: self.timers.is_timer_paused(reminder_type),
+                ReminderStateKeys.SOUND_ENABLED: getattr(
                     self.config, f"{reminder_type}_sound_enabled", True
                 ),
-                "tts_enabled": getattr(
+                ReminderStateKeys.TTS_ENABLED: getattr(
                     self.config, f"{reminder_type}_tts_enabled", True
                 ),
-                "interval_minutes": getattr(self.config, interval_property, 20),
+                ReminderStateKeys.INTERVAL_MINUTES: getattr(
+                    self.config, interval_property, 20
+                ),
             }
         return reminder_states
 
@@ -440,7 +450,7 @@ class NotifyMeApp:
         blink_status = (
             "⏸"
             if self.timers.is_timer_paused(REMINDER_BLINK)
-            else f"{self.config.interval_minutes}min"
+            else f"{self.config.blink_interval_minutes}min"
         )
         walk_status = (
             "⏸"
@@ -465,7 +475,7 @@ class NotifyMeApp:
 
     def get_initial_title(self) -> str:
         """Get the initial title for the system tray icon."""
-        blink_status = f"{self.config.interval_minutes}min"
+        blink_status = f"{self.config.blink_interval_minutes}min"
         walk_status = f"{self.config.walking_interval_minutes}min"
         water_status = f"{self.config.water_interval_minutes}min"
         pranayama_status = f"{self.config.pranayama_interval_minutes}min"
@@ -514,7 +524,7 @@ class NotifyMeApp:
                 "Blink interval: %s minutes, Walking interval: %s minutes,"
                 " Water interval: %s minutes, Pranayama interval: %s minutes"
             ),
-            self.config.interval_minutes,
+            self.config.blink_interval_minutes,
             self.config.walking_interval_minutes,
             self.config.water_interval_minutes,
             self.config.pranayama_interval_minutes,

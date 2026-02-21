@@ -19,6 +19,16 @@ from notifyme_app.constants import (
 )
 
 
+class ReminderStateKeys:
+    """Keys used in reminder state dictionaries."""
+
+    HIDDEN = "hidden"
+    PAUSED = "paused"
+    SOUND_ENABLED = "sound_enabled"
+    TTS_ENABLED = "tts_enabled"
+    INTERVAL_MINUTES = "interval_minutes"
+
+
 class MenuManager:
     """Manages the system tray menu for the application."""
 
@@ -75,15 +85,17 @@ class MenuManager:
             state = reminder_states.get(
                 reminder_type,
                 {
-                    "hidden": False,
-                    "paused": False,
-                    "sound_enabled": True,
-                    "tts_enabled": True,
-                    "interval_minutes": config[ReminderConfigKeys.DEFAULT_INTERVAL],
+                    ReminderStateKeys.HIDDEN: False,
+                    ReminderStateKeys.PAUSED: False,
+                    ReminderStateKeys.SOUND_ENABLED: True,
+                    ReminderStateKeys.TTS_ENABLED: True,
+                    ReminderStateKeys.INTERVAL_MINUTES: config[
+                        ReminderConfigKeys.DEFAULT_INTERVAL
+                    ],
                 },
             )
 
-            if not state.get("hidden", False):
+            if not state.get(ReminderStateKeys.HIDDEN, False):
                 # Create menu for visible reminder
                 display_title = cast(str, config[ReminderConfigKeys.DISPLAY_TITLE])
                 interval_options = cast(
@@ -96,12 +108,12 @@ class MenuManager:
                 reminder_menu = self._create_reminder_menu(
                     display_title,
                     reminder_type,
-                    state.get("paused", False),
-                    state.get("sound_enabled", True),
+                    state.get(ReminderStateKeys.PAUSED, False),
+                    state.get(ReminderStateKeys.SOUND_ENABLED, True),
                     sound_enabled,
                     tts_enabled,
-                    state.get("tts_enabled", True),
-                    state.get("interval_minutes", default_interval),
+                    state.get(ReminderStateKeys.TTS_ENABLED, True),
+                    state.get(ReminderStateKeys.INTERVAL_MINUTES, default_interval),
                     interval_options,
                     is_paused,
                 )
@@ -119,35 +131,7 @@ class MenuManager:
         menu_items = [
             update_item,
             Menu.SEPARATOR,
-            MenuItem(
-                "⚙ Controls",
-                Menu(
-                    MenuItem(
-                        "▶ Start",
-                        self.callbacks[MenuCallbacks.START_REMINDERS],
-                        default=True,
-                    ),
-                    MenuItem(
-                        "⏸ Pause All",
-                        self.callbacks[MenuCallbacks.PAUSE_REMINDERS],
-                    ),
-                    MenuItem(
-                        "▶ Resume All",
-                        self.callbacks[MenuCallbacks.RESUME_REMINDERS],
-                    ),
-                    Menu.SEPARATOR,
-                    MenuItem(
-                        "🔊 Global Sound",
-                        self.callbacks[MenuCallbacks.TOGGLE_SOUND],
-                        checked=lambda _: sound_enabled,
-                    ),
-                    MenuItem(
-                        "🗣️ Global TTS",
-                        self.callbacks.get(MenuCallbacks.TOGGLE_TTS, lambda: None),
-                        checked=lambda _: tts_enabled,
-                    ),
-                ),
-            ),
+            self._create_global_controls_menu(is_paused, sound_enabled, tts_enabled),
             MenuItem(
                 "💤 Snooze (5 min)",
                 self.callbacks[MenuCallbacks.SNOOZE_REMINDER],
@@ -183,61 +167,103 @@ class MenuManager:
         menu_items.extend(
             [
                 Menu.SEPARATOR,
-                MenuItem(
-                    "❓ Help",
-                    Menu(
-                        MenuItem(
-                            "🌐 User Guide",
-                            self.callbacks[MenuCallbacks.OPEN_HELP],
-                        ),
-                        MenuItem(
-                            "📖 Online Documentation",
-                            self.callbacks[MenuCallbacks.OPEN_GITHUB_PAGES],
-                        ),
-                        Menu.SEPARATOR,
-                        MenuItem(
-                            "🔄 Check for Updates",
-                            self.callbacks[MenuCallbacks.CHECK_FOR_UPDATES_ASYNC],
-                        ),
-                        MenuItem(
-                            f"ℹ️ About {APP_NAME}",
-                            self.callbacks[MenuCallbacks.SHOW_ABOUT],
-                        ),
-                        Menu.SEPARATOR,
-                        MenuItem(
-                            "🐙 GitHub Repository",
-                            self.callbacks[MenuCallbacks.OPEN_GITHUB],
-                        ),
-                        MenuItem(
-                            "⬆ Releases",
-                            self.callbacks[MenuCallbacks.OPEN_GITHUB_RELEASES],
-                        ),
-                    ),
-                ),
+                self._create_help_menu_item(),
                 Menu.SEPARATOR,
-                MenuItem(
-                    "📂 Open Locations",
-                    Menu(
-                        MenuItem(
-                            "📄 Log Location",
-                            self.callbacks[MenuCallbacks.OPEN_LOG_LOCATION],
-                        ),
-                        MenuItem(
-                            "⚙ Config Location",
-                            self.callbacks[MenuCallbacks.OPEN_CONFIG_LOCATION],
-                        ),
-                        MenuItem(
-                            "📦 App Location",
-                            self.callbacks[MenuCallbacks.OPEN_EXE_LOCATION],
-                        ),
-                    ),
-                ),
+                self._create_open_locations_menu_item(),
                 Menu.SEPARATOR,
                 MenuItem("❌ Quit", self.callbacks[MenuCallbacks.QUIT_APP]),
             ]
         )
 
         return Menu(*menu_items)
+
+    def _create_global_controls_menu(
+        self, is_paused: bool, sound_enabled: bool, tts_enabled: bool
+    ) -> MenuItem:
+        """Create the global controls submenu entry."""
+        return MenuItem(
+            "⚙ Controls",
+            Menu(
+                MenuItem(
+                    "▶ Start",
+                    self.callbacks[MenuCallbacks.START_REMINDERS],
+                    default=True,
+                ),
+                MenuItem(
+                    "⏸ Pause All",
+                    self.callbacks[MenuCallbacks.PAUSE_REMINDERS],
+                ),
+                MenuItem(
+                    "▶ Resume All",
+                    self.callbacks[MenuCallbacks.RESUME_REMINDERS],
+                ),
+                Menu.SEPARATOR,
+                MenuItem(
+                    "🔊 Global Sound",
+                    self.callbacks[MenuCallbacks.TOGGLE_SOUND],
+                    checked=lambda _: sound_enabled,
+                ),
+                MenuItem(
+                    "🗣️ Global TTS",
+                    self.callbacks.get(MenuCallbacks.TOGGLE_TTS, lambda: None),
+                    checked=lambda _: tts_enabled,
+                ),
+            ),
+        )
+
+    def _create_help_menu_item(self) -> MenuItem:
+        """Create the help submenu entry."""
+        return MenuItem(
+            "❓ Help",
+            Menu(
+                MenuItem(
+                    "🌐 User Guide",
+                    self.callbacks[MenuCallbacks.OPEN_HELP],
+                ),
+                MenuItem(
+                    "📖 Online Documentation",
+                    self.callbacks[MenuCallbacks.OPEN_GITHUB_PAGES],
+                ),
+                Menu.SEPARATOR,
+                MenuItem(
+                    "🔄 Check for Updates",
+                    self.callbacks[MenuCallbacks.CHECK_FOR_UPDATES_ASYNC],
+                ),
+                MenuItem(
+                    f"ℹ️ About {APP_NAME}",
+                    self.callbacks[MenuCallbacks.SHOW_ABOUT],
+                ),
+                Menu.SEPARATOR,
+                MenuItem(
+                    "🐙 GitHub Repository",
+                    self.callbacks[MenuCallbacks.OPEN_GITHUB],
+                ),
+                MenuItem(
+                    "⬆ Releases",
+                    self.callbacks[MenuCallbacks.OPEN_GITHUB_RELEASES],
+                ),
+            ),
+        )
+
+    def _create_open_locations_menu_item(self) -> MenuItem:
+        """Create the open locations submenu entry."""
+        return MenuItem(
+            "📂 Open Locations",
+            Menu(
+                MenuItem(
+                    "📄 Log Location",
+                    self.callbacks[MenuCallbacks.OPEN_LOG_LOCATION],
+                ),
+                MenuItem(
+                    "⚙ Config Location",
+                    self.callbacks[MenuCallbacks.OPEN_CONFIG_LOCATION],
+                ),
+                MenuItem(
+                    "📦 App Location",
+                    self.callbacks[MenuCallbacks.OPEN_EXE_LOCATION],
+                ),
+            ),
+        )
 
     def _create_reminder_menu(
         self,

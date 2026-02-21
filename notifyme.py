@@ -99,6 +99,25 @@ class NotifyMeApp:
 
     # pylint: disable-missing-function-docstring, no-self-use, too-many-instance-attributes
 
+    _PAUSED_ATTR_MAP = {
+        REMINDER_BLINK: "is_blink_paused",
+        REMINDER_WALKING: "is_walking_paused",
+        REMINDER_WATER: "is_water_paused",
+        REMINDER_PRANAYAMA: "is_pranayama_paused",
+    }
+    _NEXT_TIME_ATTR_MAP = {
+        REMINDER_BLINK: "next_reminder_time",
+        REMINDER_WALKING: "next_walking_reminder_time",
+        REMINDER_WATER: "next_water_reminder_time",
+        REMINDER_PRANAYAMA: "next_pranayama_reminder_time",
+    }
+    _IDLE_SUPPRESSED_ATTR_MAP = {
+        REMINDER_BLINK: "_blink_idle_suppressed",
+        REMINDER_WALKING: "_walking_idle_suppressed",
+        REMINDER_WATER: "_water_idle_suppressed",
+        REMINDER_PRANAYAMA: "_pranayama_idle_suppressed",
+    }
+
     def __init__(self):
         self.is_running = False
         self.is_paused = False
@@ -326,42 +345,6 @@ class NotifyMeApp:
         """Save current configuration to file."""
         self.config_file.write_text(json.dumps(self.config, indent=2), encoding="utf-8")
 
-    def set_blink_interval(self, minutes: int):
-        """Set the interval for eye blink reminders."""
-
-        def _set():
-            self.blink_interval_minutes = minutes
-            self.config[ConfigKeys.BLINK_INTERVAL_MINUTES] = minutes
-
-        return _set
-
-    def set_walking_interval(self, minutes: int):
-        """Set the interval for walking reminders."""
-
-        def _set():
-            self.walking_interval_minutes = minutes
-            self.config[ConfigKeys.WALKING_INTERVAL_MINUTES] = minutes
-
-        return _set
-
-    def set_water_interval(self, minutes: int):
-        """Set the interval for water reminders."""
-
-        def _set():
-            self.water_interval_minutes = minutes
-            self.config[ConfigKeys.WATER_INTERVAL_MINUTES] = minutes
-
-        return _set
-
-    def set_pranayama_interval(self, minutes: int):
-        """Set the interval for pranayama reminders."""
-
-        def _set():
-            self.pranayama_interval_minutes = minutes
-            self.config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES] = minutes
-
-        return _set
-
     # Generic interval setting method using dictionary
 
     def _set_reminder_interval(self, reminder_type: str, minutes: int):
@@ -369,18 +352,12 @@ class NotifyMeApp:
 
         Returns a callable for use as a menu callback.
         """
-        # Mapping of reminder type to config key
-        config_key_map = {
-            REMINDER_BLINK: ConfigKeys.BLINK_INTERVAL_MINUTES,
-            REMINDER_WALKING: ConfigKeys.WALKING_INTERVAL_MINUTES,
-            REMINDER_WATER: ConfigKeys.WATER_INTERVAL_MINUTES,
-            REMINDER_PRANAYAMA: ConfigKeys.PRANAYAMA_INTERVAL_MINUTES,
-        }
 
         def _set():
             if reminder_type in self.interval_minutes_map:
                 self.interval_minutes_map[reminder_type] = minutes
-                self.config[config_key_map[reminder_type]] = minutes
+                config_key = f"{reminder_type}_interval_minutes"
+                self.config[config_key] = minutes
 
         return _set
 
@@ -388,10 +365,12 @@ class NotifyMeApp:
         """Start all reminder timers."""
         self.is_running = True
         self.is_paused = False
-        threading.Thread(target=self.timer_worker, daemon=True).start()
-        threading.Thread(target=self.walking_timer_worker, daemon=True).start()
-        threading.Thread(target=self.water_timer_worker, daemon=True).start()
-        threading.Thread(target=self.pranayama_timer_worker, daemon=True).start()
+        for reminder_type in self.interval_minutes_map:
+            threading.Thread(
+                target=self.reminder_timer_worker,
+                args=(reminder_type,),
+                daemon=True,
+            ).start()
 
     def pause_reminders(self) -> None:
         """Pause all reminder timers."""
@@ -402,22 +381,6 @@ class NotifyMeApp:
         self.is_paused = False
         for reminder_type in self.is_paused_map:
             self.is_paused_map[reminder_type] = False
-
-    def toggle_blink_pause(self) -> None:
-        """Toggle pause state for eye blink reminders."""
-        self.is_blink_paused = not self.is_blink_paused
-
-    def toggle_walking_pause(self) -> None:
-        """Toggle pause state for walking reminders."""
-        self.is_walking_paused = not self.is_walking_paused
-
-    def toggle_water_pause(self) -> None:
-        """Toggle pause state for water reminders."""
-        self.is_water_paused = not self.is_water_paused
-
-    def toggle_pranayama_pause(self) -> None:
-        """Toggle pause state for pranayama reminders."""
-        self.is_pranayama_paused = not self.is_pranayama_paused
 
     # Generic pause toggle method
     def _toggle_reminder_pause(self, reminder_type: str) -> None:
@@ -506,22 +469,6 @@ class NotifyMeApp:
         title, messages = notifications.get(reminder_type, ("Reminder", ["Reminder"]))
         self.show_notification(title, messages)
 
-    def show_blink_notification(self) -> None:
-        """Show a notification for eye blink reminders."""
-        self.show_reminder_notification(REMINDER_BLINK)
-
-    def show_walking_notification(self) -> None:
-        """Show a notification for walking reminders."""
-        self.show_reminder_notification(REMINDER_WALKING)
-
-    def show_water_notification(self) -> None:
-        """Show a notification for water reminders."""
-        self.show_reminder_notification(REMINDER_WATER)
-
-    def show_pranayama_notification(self) -> None:
-        """Show a notification for pranayama reminders."""
-        self.show_reminder_notification(REMINDER_PRANAYAMA)
-
     def create_icon_image(self):
         """Load and return the icon image for the system tray."""
         return Image.open(self.icon_file).resize((64, 64))
@@ -567,48 +514,19 @@ class NotifyMeApp:
 
             time.sleep(1)
 
-    def timer_worker(self) -> None:
-        """Worker thread for eye blink reminders."""
-        self._timer_loop(
-            self.blink_interval_minutes,
-            self.blink_offset_seconds,
-            "is_blink_paused",
-            "next_reminder_time",
-            "_blink_idle_suppressed",
-            self.show_blink_notification,
-        )
+    def reminder_timer_worker(self, reminder_type: str) -> None:
+        """Worker thread for a specific reminder type."""
+        if reminder_type not in self.interval_minutes_map:
+            logging.warning("Unknown reminder type for timer worker: %s", reminder_type)
+            return
 
-    def walking_timer_worker(self) -> None:
-        """Worker thread for walking reminders."""
         self._timer_loop(
-            self.walking_interval_minutes,
-            self.walking_offset_seconds,
-            "is_walking_paused",
-            "next_walking_reminder_time",
-            "_walking_idle_suppressed",
-            self.show_walking_notification,
-        )
-
-    def water_timer_worker(self) -> None:
-        """Worker thread for water reminders."""
-        self._timer_loop(
-            self.water_interval_minutes,
-            self.water_offset_seconds,
-            "is_water_paused",
-            "next_water_reminder_time",
-            "_water_idle_suppressed",
-            self.show_water_notification,
-        )
-
-    def pranayama_timer_worker(self) -> None:
-        """Worker thread for pranayama reminders."""
-        self._timer_loop(
-            self.pranayama_interval_minutes,
-            self.pranayama_offset_seconds,
-            "is_pranayama_paused",
-            "next_pranayama_reminder_time",
-            "_pranayama_idle_suppressed",
-            self.show_pranayama_notification,
+            self.interval_minutes_map[reminder_type],
+            self.offset_seconds_map[reminder_type],
+            self._PAUSED_ATTR_MAP[reminder_type],
+            self._NEXT_TIME_ATTR_MAP[reminder_type],
+            self._IDLE_SUPPRESSED_ATTR_MAP[reminder_type],
+            lambda: self.show_reminder_notification(reminder_type),
         )
 
 

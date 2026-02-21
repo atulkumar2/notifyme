@@ -15,12 +15,8 @@ from winotify import Notification, audio
 from notifyme_app.constants import (
     APP_NAME,
     APP_REMINDER_APP_ID,
-    REMINDER_BLINK,
     REMINDER_MESSAGES,
-    REMINDER_PRANAYAMA,
     REMINDER_TITLES,
-    REMINDER_WALKING,
-    REMINDER_WATER,
 )
 from notifyme_app.utils import format_elapsed, get_resource_path
 
@@ -91,45 +87,23 @@ class NotificationManager:
             logging.error("Error showing notification: %s", e)
             return message
 
-    def show_blink_notification(self, last_shown_at=None, sound_enabled: bool = False):
-        """Display a blink reminder notification and return the selected message."""
-        return self.show_notification(
-            REMINDER_TITLES[REMINDER_BLINK],
-            REMINDER_MESSAGES[REMINDER_BLINK],
-            last_shown_at,
-            sound_enabled,
-        )
+    def show_reminder_notification(
+        self,
+        reminder_type: str,
+        last_shown_at=None,
+        sound_enabled: bool = False,
+    ) -> str:
+        """Display a reminder notification for the specified reminder type."""
+        title = REMINDER_TITLES.get(reminder_type, "Reminder")
+        messages = REMINDER_MESSAGES.get(reminder_type, ["Time for a reminder"])
 
-    def show_walking_notification(
-        self, last_shown_at=None, sound_enabled: bool = False
-    ):
-        """Display a walking reminder notification and return the selected message."""
-        return self.show_notification(
-            REMINDER_TITLES[REMINDER_WALKING],
-            REMINDER_MESSAGES[REMINDER_WALKING],
-            last_shown_at,
-            sound_enabled,
-        )
+        if (
+            reminder_type not in REMINDER_TITLES
+            or reminder_type not in REMINDER_MESSAGES
+        ):
+            logging.warning("Unknown reminder type for notification: %s", reminder_type)
 
-    def show_water_notification(self, last_shown_at=None, sound_enabled: bool = False):
-        """Display a water drinking reminder notification and return the selected message."""
-        return self.show_notification(
-            REMINDER_TITLES[REMINDER_WATER],
-            REMINDER_MESSAGES[REMINDER_WATER],
-            last_shown_at,
-            sound_enabled,
-        )
-
-    def show_pranayama_notification(
-        self, last_shown_at=None, sound_enabled: bool = False
-    ):
-        """Display a pranayama reminder notification and return the selected message."""
-        return self.show_notification(
-            REMINDER_TITLES[REMINDER_PRANAYAMA],
-            REMINDER_MESSAGES[REMINDER_PRANAYAMA],
-            last_shown_at,
-            sound_enabled,
-        )
+        return self.show_notification(title, messages, last_shown_at, sound_enabled)
 
     def show_update_notification(self, latest_version: str) -> None:
         """Show a toast notification for an available app update."""
