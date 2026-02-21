@@ -53,10 +53,9 @@ class NotifyMeApp:
 
         # Application state
         self.icon = None
-        self.last_blink_shown_at = None
-        self.last_walking_shown_at = None
-        self.last_water_shown_at = None
-        self.last_pranayama_shown_at = None
+        self.last_reminder_shown_at: dict[str, float | None] = {
+            reminder_type: None for reminder_type in ALL_REMINDER_TYPES
+        }
 
         # Initialize timers
         self._setup_timers()
@@ -65,102 +64,45 @@ class NotifyMeApp:
 
     def _setup_timers(self) -> None:
         """Set up reminder timers with callbacks."""
-        self.timers.create_timer(
-            REMINDER_BLINK,
-            self.config.blink_interval_minutes,
-            self._on_blink_reminder,
-        )
-        self.timers.create_timer(
-            REMINDER_WALKING,
-            self.config.walking_interval_minutes,
-            self._on_walking_reminder,
-        )
-        self.timers.create_timer(
-            REMINDER_WATER,
-            self.config.water_interval_minutes,
-            self._on_water_reminder,
-        )
-        self.timers.create_timer(
-            REMINDER_PRANAYAMA,
-            self.config.pranayama_interval_minutes,
-            self._on_pranayama_reminder,
-        )
-
-    def _on_blink_reminder(self) -> None:
-        """Handle blink reminder trigger."""
-        if not self.config.blink_hidden:
-            sound_enabled = (
-                self.config.sound_enabled and self.config.blink_sound_enabled
+        for reminder_type in ALL_REMINDER_TYPES:
+            self.timers.create_timer(
+                reminder_type,
+                self.config.get_reminder_interval_minutes(reminder_type),
+                self._create_reminder_handler(reminder_type),
             )
-            message = self.notifications.show_reminder_notification(
-                REMINDER_BLINK, self.last_blink_shown_at, sound_enabled
-            )
-            self.last_blink_shown_at = time.time()
 
-            # Optionally speak the reminder using offline TTS
-            try:
-                if self.config.tts_enabled and self.config.blink_tts_enabled:
-                    speak_text = f"Blink reminder: {message}"
-                    speak_once(speak_text, lang=self.config.tts_language)
-            except Exception as e:
-                logging.error("Error invoking TTS for blink reminder: %s", e)
+    def _create_reminder_handler(self, reminder_type: str):
+        """Create a reminder handler for a specific reminder type.
 
-    def _on_walking_reminder(self) -> None:
-        """Handle walking reminder trigger."""
-        if not self.config.walking_hidden:
-            sound_enabled = (
-                self.config.sound_enabled and self.config.walking_sound_enabled
-            )
-            message = self.notifications.show_reminder_notification(
-                REMINDER_WALKING, self.last_walking_shown_at, sound_enabled
-            )
-            self.last_walking_shown_at = time.time()
+        Returns a callable that handles the reminder trigger.
+        """
 
-            try:
-                if self.config.tts_enabled and self.config.walking_tts_enabled:
-                    speak_once(
-                        f"Walking reminder: {message}", lang=self.config.tts_language
+        def handler() -> None:
+            if not self.config.get_reminder_hidden(reminder_type):
+                sound_enabled = (
+                    self.config.sound_enabled
+                    and self.config.get_reminder_sound_enabled(reminder_type)
+                )
+                message = self.notifications.show_reminder_notification(
+                    reminder_type,
+                    self.last_reminder_shown_at[reminder_type],
+                    sound_enabled,
+                )
+                self.last_reminder_shown_at[reminder_type] = time.time()
+
+                try:
+                    if self.config.tts_enabled or self.config.get_reminder_tts_enabled(
+                        reminder_type
+                    ):
+                        # Strip emoji icon from the beginning, keep the rest of the message
+                        tts_message = message.lstrip("🌿👁️🥤🙏 ").strip()
+                        speak_once(tts_message, lang=self.config.tts_language)
+                except Exception as e:
+                    logging.error(
+                        "Error invoking TTS for %s reminder: %s", reminder_type, e
                     )
-            except Exception as e:
-                logging.error("Error invoking TTS for walking reminder: %s", e)
 
-    def _on_water_reminder(self) -> None:
-        """Handle water reminder trigger."""
-        if not self.config.water_hidden:
-            sound_enabled = (
-                self.config.sound_enabled and self.config.water_sound_enabled
-            )
-            message = self.notifications.show_reminder_notification(
-                REMINDER_WATER, self.last_water_shown_at, sound_enabled
-            )
-            self.last_water_shown_at = time.time()
-
-            try:
-                if self.config.tts_enabled and self.config.water_tts_enabled:
-                    speak_once(
-                        f"Water reminder: {message}", lang=self.config.tts_language
-                    )
-            except Exception as e:
-                logging.error("Error invoking TTS for water reminder: %s", e)
-
-    def _on_pranayama_reminder(self) -> None:
-        """Handle pranayama reminder trigger."""
-        if not self.config.pranayama_hidden:
-            sound_enabled = (
-                self.config.sound_enabled and self.config.pranayama_sound_enabled
-            )
-            message = self.notifications.show_reminder_notification(
-                REMINDER_PRANAYAMA, self.last_pranayama_shown_at, sound_enabled
-            )
-            self.last_pranayama_shown_at = time.time()
-
-            try:
-                if self.config.tts_enabled and self.config.pranayama_tts_enabled:
-                    speak_once(
-                        f"Pranayama reminder: {message}", lang=self.config.tts_language
-                    )
-            except Exception as e:
-                logging.error("Error invoking TTS for pranayama reminder: %s", e)
+        return handler
 
     def _get_menu_callbacks(self) -> dict:
         """Get callback functions for menu items.
@@ -260,9 +202,8 @@ class NotifyMeApp:
 
     def _toggle_reminder_sound(self, reminder_type: str) -> None:
         """Toggle sound for a specific reminder type."""
-        attr_name = f"{reminder_type}_sound_enabled"
-        current = getattr(self.config, attr_name, True)
-        setattr(self.config, attr_name, not current)
+        current = self.config.get_reminder_sound_enabled(reminder_type)
+        self.config.set_reminder_sound_enabled(reminder_type, not current)
         new_state = "enabled" if not current else "disabled"
         logging.info("%s sound %s", reminder_type.title(), new_state)
         self.update_menu()
@@ -278,9 +219,8 @@ class NotifyMeApp:
 
     def _toggle_reminder_tts(self, reminder_type: str) -> None:
         """Toggle TTS for a specific reminder type."""
-        attr_name = f"{reminder_type}_tts_enabled"
-        current = getattr(self.config, attr_name, True)
-        setattr(self.config, attr_name, not current)
+        current = self.config.get_reminder_tts_enabled(reminder_type)
+        self.config.set_reminder_tts_enabled(reminder_type, not current)
         new_state = "enabled" if not current else "disabled"
         logging.info("%s TTS %s", reminder_type.title(), new_state)
         self.update_menu()
@@ -288,9 +228,8 @@ class NotifyMeApp:
     # Visibility control methods
     def _toggle_reminder_hidden(self, reminder_type: str) -> None:
         """Toggle visibility for a specific reminder type."""
-        attr_name = f"{reminder_type}_hidden"
-        current = getattr(self.config, attr_name, False)
-        setattr(self.config, attr_name, not current)
+        current = self.config.get_reminder_hidden(reminder_type)
+        self.config.set_reminder_hidden(reminder_type, not current)
         new_state = "hidden" if not current else "visible"
         logging.info("%s reminder %s", reminder_type.title(), new_state)
         self.update_menu()
@@ -310,16 +249,7 @@ class NotifyMeApp:
         """
 
         def _set():
-            if reminder_type == REMINDER_WALKING:
-                attr_type = "walking_"
-            elif reminder_type == REMINDER_WATER:
-                attr_type = "water_"
-            elif reminder_type == REMINDER_PRANAYAMA:
-                attr_type = "pranayama_"
-            else:
-                attr_type = ""
-            attr_name = f"{attr_type}interval_minutes"
-            setattr(self.config, attr_name, minutes)
+            self.config.set_reminder_interval_minutes(reminder_type, minutes)
             self.timers.update_timer_interval(reminder_type, minutes)
             logging.info(
                 "%s interval set to %s minutes", reminder_type.title(), minutes
@@ -334,9 +264,9 @@ class NotifyMeApp:
         logging.info("User requested test %s notification", reminder_type)
         try:
             # Show notification sound based on global or reminder-specific setting
-            sound_attr = f"{reminder_type}_sound_enabled"
-            sound_enabled = self.config.sound_enabled or getattr(
-                self.config, sound_attr, True
+            sound_enabled = (
+                self.config.sound_enabled
+                or self.config.get_reminder_sound_enabled(reminder_type)
             )
 
             # Show the notification
@@ -345,13 +275,13 @@ class NotifyMeApp:
             )
 
             # Optionally speak using TTS
-            tts_attr = f"{reminder_type}_tts_enabled"
-            tts_preview = self.config.tts_enabled or getattr(
-                self.config, tts_attr, True
-            )
-            if message and tts_preview:
+            if self.config.tts_enabled or self.config.get_reminder_tts_enabled(
+                reminder_type
+            ):
+                # Strip emoji icon from the beginning, keep the rest of the message
+                tts_message = message.lstrip("🌿👁️🥤🙏 ").strip()
                 speak_once(
-                    f"{reminder_type.title()} reminder: {message}",
+                    tts_message,
                     lang=self.config.tts_language,
                 )
             logging.info("Test %s notification displayed successfully", reminder_type)
@@ -447,42 +377,25 @@ class NotifyMeApp:
             return
 
         # Build status for each reminder type
-        blink_status = (
-            "⏸"
-            if self.timers.is_timer_paused(REMINDER_BLINK)
-            else f"{self.config.blink_interval_minutes}min"
-        )
-        walk_status = (
-            "⏸"
-            if self.timers.is_timer_paused(REMINDER_WALKING)
-            else f"{self.config.walking_interval_minutes}min"
-        )
-        water_status = (
-            "⏸"
-            if self.timers.is_timer_paused(REMINDER_WATER)
-            else f"{self.config.water_interval_minutes}min"
-        )
-        pranayama_status = (
-            "⏸"
-            if self.timers.is_timer_paused(REMINDER_PRANAYAMA)
-            else f"{self.config.pranayama_interval_minutes}min"
-        )
+        status_parts = []
+        for reminder_type in ALL_REMINDER_TYPES:
+            status = (
+                "⏸"
+                if self.timers.is_timer_paused(reminder_type)
+                else f"{self.config.get_reminder_interval_minutes(reminder_type)}min"
+            )
+            status_parts.append(f"{reminder_type.title()}: {status}")
 
-        self.icon.title = (
-            f"Blink: {blink_status}, Walk: {walk_status},"
-            f" Water: {water_status}, Pranayama: {pranayama_status}"
-        )
+        self.icon.title = ", ".join(status_parts)
 
     def get_initial_title(self) -> str:
         """Get the initial title for the system tray icon."""
-        blink_status = f"{self.config.blink_interval_minutes}min"
-        walk_status = f"{self.config.walking_interval_minutes}min"
-        water_status = f"{self.config.water_interval_minutes}min"
-        pranayama_status = f"{self.config.pranayama_interval_minutes}min"
-        return (
-            f"Blink: {blink_status}, Walk: {walk_status},"
-            f" Water: {water_status}, Pranayama: {pranayama_status}"
-        )
+        status_parts = []
+        for reminder_type in ALL_REMINDER_TYPES:
+            status_parts.append(
+                f"{reminder_type.title()}: {self.config.get_reminder_interval_minutes(reminder_type)}min"
+            )
+        return ", ".join(status_parts)
 
     def quit_app(self) -> None:
         """Quit the application."""
@@ -524,10 +437,10 @@ class NotifyMeApp:
                 "Blink interval: %s minutes, Walking interval: %s minutes,"
                 " Water interval: %s minutes, Pranayama interval: %s minutes"
             ),
-            self.config.blink_interval_minutes,
-            self.config.walking_interval_minutes,
-            self.config.water_interval_minutes,
-            self.config.pranayama_interval_minutes,
+            self.config.get_reminder_interval_minutes(REMINDER_BLINK),
+            self.config.get_reminder_interval_minutes(REMINDER_WALKING),
+            self.config.get_reminder_interval_minutes(REMINDER_WATER),
+            self.config.get_reminder_interval_minutes(REMINDER_PRANAYAMA),
         )
         logging.info("%s version: %s", APP_NAME, self.updater.get_current_version())
         print(f"{APP_NAME} is running. Press Ctrl+C to quit.")

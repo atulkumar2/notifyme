@@ -21,23 +21,23 @@ def verify_menu_feature():
     app = NotifyMeApp()
 
     print("✅ Test 1: Initial state - all reminders unpausedcd")
-    print(f"   - Blink paused: {app.is_blink_paused}")
-    print(f"   - Walking paused: {app.is_walking_paused}")
-    print(f"   - Water paused: {app.is_water_paused}\n")
+    print(f"   - Blink paused: {app.is_paused_map['blink']}")
+    print(f"   - Walking paused: {app.is_paused_map['walking']}")
+    print(f"   - Water paused: {app.is_paused_map['water']}\n")
 
     print("✅ Test 2: Pause blink reminder")
     app._toggle_reminder_pause("blink")
-    print(f"   - Blink paused: {app.is_blink_paused}")
+    print(f"   - Blink paused: {app.is_paused_map['blink']}")
     print("   - Menu will show Blink Reminder as GREYED OUT\n")
 
     print("✅ Test 3: Pause walking reminder")
     app._toggle_reminder_pause("walking")
-    print(f"   - Walking paused: {app.is_walking_paused}")
+    print(f"   - Walking paused: {app.is_paused_map['walking']}")
     print("   - Menu will show Walking Reminder as GREYED OUT\n")
 
     print("✅ Test 4: Resume blink reminder")
     app._toggle_reminder_pause("blink")
-    print(f"   - Blink paused: {app.is_blink_paused}")
+    print(f"   - Blink paused: {app.is_paused_map['blink']}")
     print("   - Menu will show Blink Reminder as ENABLED\n")
 
     print("✅ Test 5: Pause all reminders")

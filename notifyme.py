@@ -26,12 +26,21 @@ from notifyme_app.constants import (
     DEFAULT_INTERVALS_MIN,
     REMINDER_BLINK,
     REMINDER_PRANAYAMA,
+    REMINDER_TITLES,
     REMINDER_WALKING,
     REMINDER_WATER,
     ConfigKeys,
+    ReminderLabels,
 )
-from notifyme_app.utils import get_config_path
-from notifyme_app.utils import get_idle_seconds as _get_idle_seconds
+from notifyme_app.utils import (
+    get_config_path,
+    get_exe_path,
+    get_local_help_path,
+    get_log_file_path,
+)
+from notifyme_app.utils import (
+    get_idle_seconds as _get_idle_seconds,
+)
 
 try:
     from pystray import Menu as _PystrayMenu
@@ -99,25 +108,6 @@ class NotifyMeApp:
 
     # pylint: disable-missing-function-docstring, no-self-use, too-many-instance-attributes
 
-    _PAUSED_ATTR_MAP = {
-        REMINDER_BLINK: "is_blink_paused",
-        REMINDER_WALKING: "is_walking_paused",
-        REMINDER_WATER: "is_water_paused",
-        REMINDER_PRANAYAMA: "is_pranayama_paused",
-    }
-    _NEXT_TIME_ATTR_MAP = {
-        REMINDER_BLINK: "next_reminder_time",
-        REMINDER_WALKING: "next_walking_reminder_time",
-        REMINDER_WATER: "next_water_reminder_time",
-        REMINDER_PRANAYAMA: "next_pranayama_reminder_time",
-    }
-    _IDLE_SUPPRESSED_ATTR_MAP = {
-        REMINDER_BLINK: "_blink_idle_suppressed",
-        REMINDER_WALKING: "_walking_idle_suppressed",
-        REMINDER_WATER: "_water_idle_suppressed",
-        REMINDER_PRANAYAMA: "_pranayama_idle_suppressed",
-    }
-
     def __init__(self):
         self.is_running = False
         self.is_paused = False
@@ -140,7 +130,7 @@ class NotifyMeApp:
             REMINDER_PRANAYAMA: 0,
         }
 
-        self.next_reminder_time_map = {
+        self.next_reminder_time_map: dict[str, float | None] = {
             REMINDER_BLINK: None,
             REMINDER_WALKING: None,
             REMINDER_WATER: None,
@@ -159,171 +149,6 @@ class NotifyMeApp:
         self.icon_file = get_resource_path("icon.png")
         self.icon_file_ico = get_resource_path("icon.ico")
         self.icon = None
-
-    # Properties for backward compatibility with individual interval minute attributes
-    @property
-    def blink_interval_minutes(self) -> int:
-        return self.interval_minutes_map[REMINDER_BLINK]
-
-    @blink_interval_minutes.setter
-    def blink_interval_minutes(self, value: int) -> None:
-        self.interval_minutes_map[REMINDER_BLINK] = value
-
-    @property
-    def walking_interval_minutes(self) -> int:
-        return self.interval_minutes_map[REMINDER_WALKING]
-
-    @walking_interval_minutes.setter
-    def walking_interval_minutes(self, value: int) -> None:
-        self.interval_minutes_map[REMINDER_WALKING] = value
-
-    @property
-    def water_interval_minutes(self) -> int:
-        return self.interval_minutes_map[REMINDER_WATER]
-
-    @water_interval_minutes.setter
-    def water_interval_minutes(self, value: int) -> None:
-        self.interval_minutes_map[REMINDER_WATER] = value
-
-    @property
-    def pranayama_interval_minutes(self) -> int:
-        return self.interval_minutes_map[REMINDER_PRANAYAMA]
-
-    @pranayama_interval_minutes.setter
-    def pranayama_interval_minutes(self, value: int) -> None:
-        self.interval_minutes_map[REMINDER_PRANAYAMA] = value
-
-    # Properties for backward compatibility with individual pause state attributes
-    @property
-    def is_blink_paused(self) -> bool:
-        return self.is_paused_map[REMINDER_BLINK]
-
-    @is_blink_paused.setter
-    def is_blink_paused(self, value: bool) -> None:
-        self.is_paused_map[REMINDER_BLINK] = value
-
-    @property
-    def is_walking_paused(self) -> bool:
-        return self.is_paused_map[REMINDER_WALKING]
-
-    @is_walking_paused.setter
-    def is_walking_paused(self, value: bool) -> None:
-        self.is_paused_map[REMINDER_WALKING] = value
-
-    @property
-    def is_water_paused(self) -> bool:
-        return self.is_paused_map[REMINDER_WATER]
-
-    @is_water_paused.setter
-    def is_water_paused(self, value: bool) -> None:
-        self.is_paused_map[REMINDER_WATER] = value
-
-    @property
-    def is_pranayama_paused(self) -> bool:
-        return self.is_paused_map[REMINDER_PRANAYAMA]
-
-    @is_pranayama_paused.setter
-    def is_pranayama_paused(self, value: bool) -> None:
-        self.is_paused_map[REMINDER_PRANAYAMA] = value
-
-    # Properties for backward compatibility with individual offset attributes
-    @property
-    def blink_offset_seconds(self) -> int:
-        return self.offset_seconds_map[REMINDER_BLINK]
-
-    @blink_offset_seconds.setter
-    def blink_offset_seconds(self, value: int) -> None:
-        self.offset_seconds_map[REMINDER_BLINK] = value
-
-    @property
-    def walking_offset_seconds(self) -> int:
-        return self.offset_seconds_map[REMINDER_WALKING]
-
-    @walking_offset_seconds.setter
-    def walking_offset_seconds(self, value: int) -> None:
-        self.offset_seconds_map[REMINDER_WALKING] = value
-
-    @property
-    def water_offset_seconds(self) -> int:
-        return self.offset_seconds_map[REMINDER_WATER]
-
-    @water_offset_seconds.setter
-    def water_offset_seconds(self, value: int) -> None:
-        self.offset_seconds_map[REMINDER_WATER] = value
-
-    @property
-    def pranayama_offset_seconds(self) -> int:
-        return self.offset_seconds_map[REMINDER_PRANAYAMA]
-
-    @pranayama_offset_seconds.setter
-    def pranayama_offset_seconds(self, value: int) -> None:
-        self.offset_seconds_map[REMINDER_PRANAYAMA] = value
-
-    # Properties for backward compatibility with individual next reminder time attributes
-    @property
-    def next_reminder_time(self):
-        return self.next_reminder_time_map[REMINDER_BLINK]
-
-    @next_reminder_time.setter
-    def next_reminder_time(self, value) -> None:
-        self.next_reminder_time_map[REMINDER_BLINK] = value
-
-    @property
-    def next_walking_reminder_time(self):
-        return self.next_reminder_time_map[REMINDER_WALKING]
-
-    @next_walking_reminder_time.setter
-    def next_walking_reminder_time(self, value) -> None:
-        self.next_reminder_time_map[REMINDER_WALKING] = value
-
-    @property
-    def next_water_reminder_time(self):
-        return self.next_reminder_time_map[REMINDER_WATER]
-
-    @next_water_reminder_time.setter
-    def next_water_reminder_time(self, value) -> None:
-        self.next_reminder_time_map[REMINDER_WATER] = value
-
-    @property
-    def next_pranayama_reminder_time(self):
-        return self.next_reminder_time_map[REMINDER_PRANAYAMA]
-
-    @next_pranayama_reminder_time.setter
-    def next_pranayama_reminder_time(self, value) -> None:
-        self.next_reminder_time_map[REMINDER_PRANAYAMA] = value
-
-    # Properties for backward compatibility with individual idle suppression attributes
-    @property
-    def _blink_idle_suppressed(self) -> bool:
-        return self.idle_suppressed_map[REMINDER_BLINK]
-
-    @_blink_idle_suppressed.setter
-    def _blink_idle_suppressed(self, value: bool) -> None:
-        self.idle_suppressed_map[REMINDER_BLINK] = value
-
-    @property
-    def _walking_idle_suppressed(self) -> bool:
-        return self.idle_suppressed_map[REMINDER_WALKING]
-
-    @_walking_idle_suppressed.setter
-    def _walking_idle_suppressed(self, value: bool) -> None:
-        self.idle_suppressed_map[REMINDER_WALKING] = value
-
-    @property
-    def _water_idle_suppressed(self) -> bool:
-        return self.idle_suppressed_map[REMINDER_WATER]
-
-    @_water_idle_suppressed.setter
-    def _water_idle_suppressed(self, value: bool) -> None:
-        self.idle_suppressed_map[REMINDER_WATER] = value
-
-    @property
-    def _pranayama_idle_suppressed(self) -> bool:
-        return self.idle_suppressed_map[REMINDER_PRANAYAMA]
-
-    @_pranayama_idle_suppressed.setter
-    def _pranayama_idle_suppressed(self, value: bool) -> None:
-        self.idle_suppressed_map[REMINDER_PRANAYAMA] = value
 
     def get_default_config(self) -> dict:
         """Return default configuration."""
@@ -400,13 +225,11 @@ class NotifyMeApp:
 
     def open_log_location(self) -> None:
         """Open the folder containing the log file."""
-        subprocess.run(
-            ["explorer", "/select,", str(APP_DATA_DIR / "notifyme.log")], check=False
-        )
+        subprocess.run(["explorer", "/select,", str(get_log_file_path())], check=False)
 
     def open_exe_location(self) -> None:
         """Open the folder containing the executable."""
-        subprocess.run(["explorer", "/select,", str(Path(sys.executable))], check=False)
+        subprocess.run(["explorer", "/select,", str(get_exe_path())], check=False)
 
     def open_config_location(self) -> None:
         """Open the folder containing the configuration file."""
@@ -414,8 +237,7 @@ class NotifyMeApp:
 
     def open_help(self) -> None:
         """Open the help documentation in the default web browser."""
-        help_dir = get_resource_path("help")
-        webbrowser.open(str(help_dir / "index.html"))
+        webbrowser.open(str(get_local_help_path()))
 
     def update_icon_title(self) -> None:
         """Update the system tray icon title based on current state."""
@@ -427,29 +249,27 @@ class NotifyMeApp:
 
         status_parts = []
         reminder_labels = {
-            REMINDER_BLINK: "Blink",
-            REMINDER_WALKING: "Walk",
-            REMINDER_WATER: "Water",
-            REMINDER_PRANAYAMA: "Pranayama",
+            REMINDER_BLINK: ReminderLabels[REMINDER_BLINK],
+            REMINDER_WALKING: ReminderLabels[REMINDER_WALKING],
+            REMINDER_WATER: ReminderLabels[REMINDER_WATER],
+            REMINDER_PRANAYAMA: ReminderLabels[REMINDER_PRANAYAMA],
         }
 
         for reminder_type, label in reminder_labels.items():
             is_paused = self.is_paused_map[reminder_type]
-            status = (
-                "⏸" if is_paused else f"{self.interval_minutes_map[reminder_type]}min"
-            )
+            interval_minutes = self.interval_minutes_map[reminder_type]
+            status = "⏸" if is_paused else f"{interval_minutes}min"
             status_parts.append(f"{label}: {status}")
 
         self.icon.title = ", ".join(status_parts)
 
     def get_initial_title(self) -> str:
         """Get the initial title for the system tray icon."""
-        return (
-            f"Blink: {self.interval_minutes_map[REMINDER_BLINK]}min, "
-            f"Walk: {self.interval_minutes_map[REMINDER_WALKING]}min, "
-            f"Water: {self.interval_minutes_map[REMINDER_WATER]}min, "
-            f"Pranayama: {self.interval_minutes_map[REMINDER_PRANAYAMA]}min"
-        )
+        retval = ""
+        for reminder_type, label in ReminderLabels.items():
+            interval_minutes = self.interval_minutes_map.get(reminder_type, 0)
+            retval += f"{label}: {interval_minutes}min, "
+        return retval.rstrip(", ")
 
     def show_notification(self, title: str, messages: Iterable[str]) -> None:
         """Show a notification with the given title and messages."""
@@ -461,10 +281,10 @@ class NotifyMeApp:
     def show_reminder_notification(self, reminder_type: str) -> None:
         """Show a notification for a specific reminder type."""
         notifications = {
-            REMINDER_BLINK: ("Eye Blink Reminder", ["Blink now"]),
-            REMINDER_WALKING: ("Walking Reminder", ["Time to walk"]),
-            REMINDER_WATER: ("Water Reminder", ["Drink water"]),
-            REMINDER_PRANAYAMA: ("Pranayama Reminder", ["Breathe"]),
+            REMINDER_BLINK: (REMINDER_TITLES[REMINDER_BLINK], ["Blink now"]),
+            REMINDER_WALKING: (REMINDER_TITLES[REMINDER_WALKING], ["Time to walk"]),
+            REMINDER_WATER: (REMINDER_TITLES[REMINDER_WATER], ["Drink water"]),
+            REMINDER_PRANAYAMA: (REMINDER_TITLES[REMINDER_PRANAYAMA], ["Breathe"]),
         }
         title, messages = notifications.get(reminder_type, ("Reminder", ["Reminder"]))
         self.show_notification(title, messages)
@@ -479,38 +299,38 @@ class NotifyMeApp:
 
     def _timer_loop(
         self,
-        interval_minutes: int,
-        offset_seconds: int,
-        paused_attr: str,
-        next_time_attr: str,
-        idle_suppressed_attr: str,
+        reminder_type: str,
         show_callback,
     ) -> None:
         while self.is_running:
-            if self.is_paused or getattr(self, paused_attr):
+            if self.is_paused or self.is_paused_map.get(reminder_type, False):
                 time.sleep(1)
                 continue
 
             now = time.time()
+            interval_minutes = self.interval_minutes_map[reminder_type]
+            offset_seconds = self.offset_seconds_map[reminder_type]
             interval_seconds = int(interval_minutes * 60)
             idle_seconds = get_idle_seconds()
 
             if idle_seconds is not None and idle_seconds >= interval_seconds:
-                setattr(self, idle_suppressed_attr, True)
-                setattr(self, next_time_attr, now + idle_seconds)
+                self.idle_suppressed_map[reminder_type] = True
+                self.next_reminder_time_map[reminder_type] = now + idle_seconds
                 time.sleep(1)
                 continue
 
-            next_time = getattr(self, next_time_attr)
+            next_time = self.next_reminder_time_map.get(reminder_type)
             if next_time is None:
-                setattr(self, next_time_attr, now + interval_seconds + offset_seconds)
+                self.next_reminder_time_map[reminder_type] = (
+                    now + interval_seconds + offset_seconds
+                )
                 time.sleep(1)
                 continue
 
             if now >= next_time:
                 show_callback()
-                setattr(self, next_time_attr, now + interval_seconds)
-                setattr(self, idle_suppressed_attr, False)
+                self.next_reminder_time_map[reminder_type] = now + interval_seconds
+                self.idle_suppressed_map[reminder_type] = False
 
             time.sleep(1)
 
@@ -521,23 +341,18 @@ class NotifyMeApp:
             return
 
         self._timer_loop(
-            self.interval_minutes_map[reminder_type],
-            self.offset_seconds_map[reminder_type],
-            self._PAUSED_ATTR_MAP[reminder_type],
-            self._NEXT_TIME_ATTR_MAP[reminder_type],
-            self._IDLE_SUPPRESSED_ATTR_MAP[reminder_type],
+            reminder_type,
             lambda: self.show_reminder_notification(reminder_type),
         )
 
 
 def setup_logging():
     """Set up logging with rotating file handler."""
-    app_data_dir = get_app_data_dir()
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
     handler = RotatingFileHandler(
-        app_data_dir / "notifyme.log",
+        get_log_file_path(),
         maxBytes=5 * 1024 * 1024,
         backupCount=5,
         encoding="utf-8",

@@ -15,6 +15,13 @@ REMINDER_WALKING = "walking"
 REMINDER_WATER = "water"
 REMINDER_PRANAYAMA = "pranayama"
 
+ReminderLabels = {
+    REMINDER_BLINK: "Blink",
+    REMINDER_WALKING: "Walk",
+    REMINDER_WATER: "Water",
+    REMINDER_PRANAYAMA: "Pranayama",
+}
+
 
 class ConfigKeys:
     """String keys for persisted configuration."""

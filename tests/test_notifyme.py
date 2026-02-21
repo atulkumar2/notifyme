@@ -90,10 +90,10 @@ class TestNotifyMeApp(unittest.TestCase):
 
     def test_initialization(self):
         """Test app initialization with default values."""
-        self.assertEqual(self.app.blink_interval_minutes, 20)
-        self.assertEqual(self.app.walking_interval_minutes, 60)
-        self.assertEqual(self.app.water_interval_minutes, 30)
-        self.assertEqual(self.app.pranayama_interval_minutes, 120)
+        self.assertEqual(self.app.interval_minutes_map[REMINDER_BLINK], 20)
+        self.assertEqual(self.app.interval_minutes_map[REMINDER_WALKING], 60)
+        self.assertEqual(self.app.interval_minutes_map[REMINDER_WATER], 30)
+        self.assertEqual(self.app.interval_minutes_map[REMINDER_PRANAYAMA], 120)
         self.assertFalse(self.app.is_running)
         self.assertFalse(self.app.is_paused)
 
@@ -139,28 +139,28 @@ class TestNotifyMeApp(unittest.TestCase):
         """Test setting blink reminder interval."""
         set_func = self.app._set_reminder_interval("blink", 30)
         set_func()
-        self.assertEqual(self.app.blink_interval_minutes, 30)
+        self.assertEqual(self.app.interval_minutes_map[REMINDER_BLINK], 30)
         self.assertEqual(self.app.config[ConfigKeys.BLINK_INTERVAL_MINUTES], 30)
 
     def test_set_walking_interval(self):
         """Test setting walking reminder interval."""
         set_func = self.app._set_reminder_interval("walking", 90)
         set_func()
-        self.assertEqual(self.app.walking_interval_minutes, 90)
+        self.assertEqual(self.app.interval_minutes_map[REMINDER_WALKING], 90)
         self.assertEqual(self.app.config[ConfigKeys.WALKING_INTERVAL_MINUTES], 90)
 
     def test_set_water_interval(self):
         """Test setting water reminder interval."""
         set_func = self.app._set_reminder_interval("water", 45)
         set_func()
-        self.assertEqual(self.app.water_interval_minutes, 45)
+        self.assertEqual(self.app.interval_minutes_map[REMINDER_WATER], 45)
         self.assertEqual(self.app.config[ConfigKeys.WATER_INTERVAL_MINUTES], 45)
 
     def test_set_pranayama_interval(self):
         """Test setting pranayama reminder interval."""
         set_func = self.app._set_reminder_interval("pranayama", 180)
         set_func()
-        self.assertEqual(self.app.pranayama_interval_minutes, 180)
+        self.assertEqual(self.app.interval_minutes_map[REMINDER_PRANAYAMA], 180)
         self.assertEqual(self.app.config[ConfigKeys.PRANAYAMA_INTERVAL_MINUTES], 180)
 
     def test_start_reminders(self):
@@ -173,57 +173,66 @@ class TestNotifyMeApp(unittest.TestCase):
     def test_pause_reminders(self):
         """Test pausing all reminders."""
         self.app.is_running = True
-        self.app.is_blink_paused = True
-        self.app.is_walking_paused = False
-        self.app.is_water_paused = True
-        self.app.is_pranayama_paused = True
+        self.app.is_paused_map[REMINDER_BLINK] = True
+        self.app.is_paused_map[REMINDER_WALKING] = False
+        self.app.is_paused_map[REMINDER_WATER] = True
+        self.app.is_paused_map[REMINDER_PRANAYAMA] = True
         self.app.pause_reminders()
         self.assertTrue(self.app.is_paused)
-        self.assertTrue(self.app.is_blink_paused)
-        self.assertFalse(self.app.is_walking_paused)
-        self.assertTrue(self.app.is_water_paused)
-        self.assertTrue(self.app.is_pranayama_paused)
+        self.assertTrue(self.app.is_paused_map[REMINDER_BLINK])
+        self.assertFalse(self.app.is_paused_map[REMINDER_WALKING])
+        self.assertTrue(self.app.is_paused_map[REMINDER_WATER])
+        self.assertTrue(self.app.is_paused_map[REMINDER_PRANAYAMA])
 
     def test_resume_reminders(self):
         """Test resuming all reminders clears all pause states."""
         self.app.is_running = False
         self.app.is_paused = True
-        self.app.is_blink_paused = True
-        self.app.is_walking_paused = True
-        self.app.is_water_paused = True
-        self.app.is_pranayama_paused = True
+        self.app.is_paused_map[REMINDER_BLINK] = True
+        self.app.is_paused_map[REMINDER_WALKING] = True
+        self.app.is_paused_map[REMINDER_WATER] = True
+        self.app.is_paused_map[REMINDER_PRANAYAMA] = True
         self.app.resume_reminders()
         self.assertFalse(self.app.is_paused)
-        self.assertFalse(self.app.is_blink_paused)
-        self.assertFalse(self.app.is_walking_paused)
-        self.assertFalse(self.app.is_water_paused)
-        self.assertFalse(self.app.is_pranayama_paused)
+        self.assertFalse(self.app.is_paused_map[REMINDER_BLINK])
+        self.assertFalse(self.app.is_paused_map[REMINDER_WALKING])
+        self.assertFalse(self.app.is_paused_map[REMINDER_WATER])
+        self.assertFalse(self.app.is_paused_map[REMINDER_PRANAYAMA])
 
     def test_toggle_blink_pause(self):
         """Test toggling blink reminder pause."""
-        initial_state = self.app.is_blink_paused
+        initial_state = self.app.is_paused_map[REMINDER_BLINK]
         self.app._toggle_reminder_pause("blink")
-        self.assertEqual(self.app.is_blink_paused, not initial_state)
+        self.assertEqual(self.app.is_paused_map[REMINDER_BLINK], not initial_state)
         self.app._toggle_reminder_pause("blink")
-        self.assertEqual(self.app.is_blink_paused, initial_state)
+        self.assertEqual(self.app.is_paused_map[REMINDER_BLINK], initial_state)
 
     def test_toggle_walking_pause(self):
         """Test toggling walking reminder pause."""
-        initial_state = self.app.is_walking_paused
+        initial_state = self.app.is_paused_map[REMINDER_WALKING]
         self.app._toggle_reminder_pause("walking")
-        self.assertEqual(self.app.is_walking_paused, not initial_state)
+        self.assertEqual(
+            self.app.is_paused_map[REMINDER_WALKING],
+            not initial_state,
+        )
 
     def test_toggle_water_pause(self):
         """Test toggling water reminder pause."""
-        initial_state = self.app.is_water_paused
+        initial_state = self.app.is_paused_map[REMINDER_WATER]
         self.app._toggle_reminder_pause("water")
-        self.assertEqual(self.app.is_water_paused, not initial_state)
+        self.assertEqual(
+            self.app.is_paused_map[REMINDER_WATER],
+            not initial_state,
+        )
 
     def test_toggle_pranayama_pause(self):
         """Test toggling pranayama reminder pause."""
-        initial_state = self.app.is_pranayama_paused
+        initial_state = self.app.is_paused_map[REMINDER_PRANAYAMA]
         self.app._toggle_reminder_pause("pranayama")
-        self.assertEqual(self.app.is_pranayama_paused, not initial_state)
+        self.assertEqual(
+            self.app.is_paused_map[REMINDER_PRANAYAMA],
+            not initial_state,
+        )
 
     def test_stop_reminders(self):
         """Test stopping reminders."""
@@ -283,10 +292,10 @@ class TestNotifyMeApp(unittest.TestCase):
         """Test icon title when reminders are running."""
         self.app.icon = MagicMock()
         self.app.is_paused = False
-        self.app.blink_interval_minutes = 20
-        self.app.walking_interval_minutes = 60
-        self.app.water_interval_minutes = 30
-        self.app.pranayama_interval_minutes = 120
+        self.app.interval_minutes_map[REMINDER_BLINK] = 20
+        self.app.interval_minutes_map[REMINDER_WALKING] = 60
+        self.app.interval_minutes_map[REMINDER_WATER] = 30
+        self.app.interval_minutes_map[REMINDER_PRANAYAMA] = 120
         self.app.update_icon_title()
         self.assertIn("20min", self.app.icon.title)
         self.assertIn("60min", self.app.icon.title)
@@ -297,16 +306,16 @@ class TestNotifyMeApp(unittest.TestCase):
         """Test icon title when individual reminders are paused."""
         self.app.icon = MagicMock()
         self.app.is_paused = False
-        self.app.is_blink_paused = True
+        self.app.is_paused_map[REMINDER_BLINK] = True
         self.app.update_icon_title()
         self.assertIn("⏸", self.app.icon.title)
 
     def test_get_initial_title(self):
         """Test initial title shows reminder intervals."""
-        self.app.blink_interval_minutes = 20
-        self.app.walking_interval_minutes = 60
-        self.app.water_interval_minutes = 30
-        self.app.pranayama_interval_minutes = 120
+        self.app.interval_minutes_map[REMINDER_BLINK] = 20
+        self.app.interval_minutes_map[REMINDER_WALKING] = 60
+        self.app.interval_minutes_map[REMINDER_WATER] = 30
+        self.app.interval_minutes_map[REMINDER_PRANAYAMA] = 120
         title = self.app.get_initial_title()
         self.assertIn("20min", title)
         self.assertIn("60min", title)
@@ -406,8 +415,8 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.return_value = 1000.0
         mock_idle.return_value = None
         self.app.is_running = True
-        self.app.blink_interval_minutes = 1  # 1 minute for quick test
-        self.app.blink_offset_seconds = 0
+        self.app.interval_minutes_map[REMINDER_BLINK] = 1  # 1 minute for quick test
+        self.app.offset_seconds_map[REMINDER_BLINK] = 0
 
         # Mock to stop after first iteration
         def stop_after_first(*args):
@@ -417,7 +426,7 @@ class TestTimerWorkers(unittest.TestCase):
 
         with patch.object(self.app, "show_reminder_notification"):
             self.app.reminder_timer_worker(REMINDER_BLINK)
-            self.assertIsNotNone(self.app.next_reminder_time)
+            self.assertIsNotNone(self.app.next_reminder_time_map[REMINDER_BLINK])
 
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
@@ -427,8 +436,8 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.return_value = 1000.0
         mock_idle.return_value = 60.0
         self.app.is_running = True
-        self.app.blink_interval_minutes = 1
-        self.app.blink_offset_seconds = 0
+        self.app.interval_minutes_map[REMINDER_BLINK] = 1
+        self.app.offset_seconds_map[REMINDER_BLINK] = 0
 
         def stop_after_first(*args):
             self.app.is_running = False
@@ -438,8 +447,8 @@ class TestTimerWorkers(unittest.TestCase):
         with patch.object(self.app, "show_reminder_notification") as mock_show:
             self.app.reminder_timer_worker(REMINDER_BLINK)
             mock_show.assert_not_called()
-            self.assertEqual(self.app.next_reminder_time, 1060.0)
-            self.assertTrue(self.app._blink_idle_suppressed)
+            self.assertEqual(self.app.next_reminder_time_map[REMINDER_BLINK], 1060.0)
+            self.assertTrue(self.app.idle_suppressed_map[REMINDER_BLINK])
 
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
@@ -451,8 +460,8 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.side_effect = [1000.0, 1061.0]
         mock_idle.side_effect = [60.0, 0.0]
         self.app.is_running = True
-        self.app.blink_interval_minutes = 1
-        self.app.blink_offset_seconds = 0
+        self.app.interval_minutes_map[REMINDER_BLINK] = 1
+        self.app.offset_seconds_map[REMINDER_BLINK] = 0
 
         call_count = {"count": 0}
 
@@ -477,8 +486,8 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.return_value = 2000.0
         mock_idle.return_value = 60.0
         self.app.is_running = True
-        self.app.walking_interval_minutes = 1
-        self.app.walking_offset_seconds = 0
+        self.app.interval_minutes_map[REMINDER_WALKING] = 1
+        self.app.offset_seconds_map[REMINDER_WALKING] = 0
 
         def stop_after_first(*args):
             self.app.is_running = False
@@ -488,8 +497,11 @@ class TestTimerWorkers(unittest.TestCase):
         with patch.object(self.app, "show_reminder_notification") as mock_show:
             self.app.reminder_timer_worker(REMINDER_WALKING)
             mock_show.assert_not_called()
-            self.assertEqual(self.app.next_walking_reminder_time, 2060.0)
-            self.assertTrue(self.app._walking_idle_suppressed)
+            self.assertEqual(
+                self.app.next_reminder_time_map[REMINDER_WALKING],
+                2060.0,
+            )
+            self.assertTrue(self.app.idle_suppressed_map[REMINDER_WALKING])
 
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
@@ -501,8 +513,8 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.side_effect = [2000.0, 2061.0]
         mock_idle.side_effect = [60.0, 0.0]
         self.app.is_running = True
-        self.app.walking_interval_minutes = 1
-        self.app.walking_offset_seconds = 0
+        self.app.interval_minutes_map[REMINDER_WALKING] = 1
+        self.app.offset_seconds_map[REMINDER_WALKING] = 0
 
         call_count = {"count": 0}
 
@@ -525,8 +537,8 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.return_value = 3000.0
         mock_idle.return_value = 60.0
         self.app.is_running = True
-        self.app.water_interval_minutes = 1
-        self.app.water_offset_seconds = 0
+        self.app.interval_minutes_map[REMINDER_WATER] = 1
+        self.app.offset_seconds_map[REMINDER_WATER] = 0
 
         def stop_after_first(*args):
             self.app.is_running = False
@@ -536,8 +548,11 @@ class TestTimerWorkers(unittest.TestCase):
         with patch.object(self.app, "show_reminder_notification") as mock_show:
             self.app.reminder_timer_worker(REMINDER_WATER)
             mock_show.assert_not_called()
-            self.assertEqual(self.app.next_water_reminder_time, 3060.0)
-            self.assertTrue(self.app._water_idle_suppressed)
+            self.assertEqual(
+                self.app.next_reminder_time_map[REMINDER_WATER],
+                3060.0,
+            )
+            self.assertTrue(self.app.idle_suppressed_map[REMINDER_WATER])
 
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
@@ -549,8 +564,8 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.side_effect = [3000.0, 3061.0]
         mock_idle.side_effect = [60.0, 0.0]
         self.app.is_running = True
-        self.app.water_interval_minutes = 1
-        self.app.water_offset_seconds = 0
+        self.app.interval_minutes_map[REMINDER_WATER] = 1
+        self.app.offset_seconds_map[REMINDER_WATER] = 0
 
         call_count = {"count": 0}
 
@@ -575,8 +590,8 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.return_value = 4000.0
         mock_idle.return_value = 120.0
         self.app.is_running = True
-        self.app.pranayama_interval_minutes = 2
-        self.app.pranayama_offset_seconds = 0
+        self.app.interval_minutes_map[REMINDER_PRANAYAMA] = 2
+        self.app.offset_seconds_map[REMINDER_PRANAYAMA] = 0
 
         def stop_after_first(*args):
             self.app.is_running = False
@@ -586,8 +601,11 @@ class TestTimerWorkers(unittest.TestCase):
         with patch.object(self.app, "show_reminder_notification") as mock_show:
             self.app.reminder_timer_worker(REMINDER_PRANAYAMA)
             mock_show.assert_not_called()
-            self.assertEqual(self.app.next_pranayama_reminder_time, 4120.0)
-            self.assertTrue(self.app._pranayama_idle_suppressed)
+            self.assertEqual(
+                self.app.next_reminder_time_map[REMINDER_PRANAYAMA],
+                4120.0,
+            )
+            self.assertTrue(self.app.idle_suppressed_map[REMINDER_PRANAYAMA])
 
     @patch("notifyme.get_idle_seconds")
     @patch("notifyme.time.sleep")
@@ -599,8 +617,8 @@ class TestTimerWorkers(unittest.TestCase):
         mock_time.side_effect = [4000.0, 4121.0]
         mock_idle.side_effect = [120.0, 0.0]
         self.app.is_running = True
-        self.app.pranayama_interval_minutes = 2
-        self.app.pranayama_offset_seconds = 0
+        self.app.interval_minutes_map[REMINDER_PRANAYAMA] = 2
+        self.app.offset_seconds_map[REMINDER_PRANAYAMA] = 0
 
         call_count = {"count": 0}
 

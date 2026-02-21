@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from notifyme_app.app import NotifyMeApp
+from notifyme_app.constants import REMINDER_BLINK
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -27,7 +28,7 @@ class TestNotificationSoundPreview(unittest.TestCase):
         app = NotifyMeApp()
         # Ensure global sound is disabled but blink sound is enabled
         app.config.sound_enabled = False
-        app.config.blink_sound_enabled = True
+        app.config.set_reminder_sound_enabled(REMINDER_BLINK, True)
 
         app._test_reminder_notification("blink")
 

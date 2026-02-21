@@ -35,6 +35,21 @@ def get_config_path() -> Path:
     return get_app_data_dir() / "config.json"
 
 
+def get_log_file_path() -> Path:
+    """Return the log file path in the app data directory."""
+    return get_app_data_dir() / "notifyme.log"
+
+
+def get_exe_path() -> Path:
+    """Return the path to the Python executable."""
+    return Path(sys.executable)
+
+
+def get_local_help_path() -> Path:
+    """Return the path to the help HTML file."""
+    return get_resource_path("help") / "index.html"
+
+
 def get_resource_path(filename: str) -> Path:
     """Return path to a bundled or local resource (PyInstaller compatible)."""
     if getattr(sys, "frozen", False):
