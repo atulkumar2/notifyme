@@ -94,6 +94,15 @@ Verify notifications work correctly before relying on reminders:
 - **💧 Test Water** - Sends test water reminder
 - **🧘 Test Pranayama** - Sends test pranayama reminder
 
+### 💊 Medicine Reminders
+
+Manage medicine schedules from the tray menu:
+
+- **➕ Add Medicine** - Open a simplified add dialog (no extra screens)
+- **⚙️ Manage Medicines** - Open the full list to edit or delete medicines
+- **✓ Enable Medicine Reminders** - Toggle medicine reminders on/off
+- **☑️ Mark [Meal] Complete** - Mark breakfast, lunch, or dinner as completed
+
 ### 📂 Open Locations
 
 - **📄 Log Location** - View application activity logs

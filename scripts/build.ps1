@@ -57,7 +57,7 @@ try {
 
     # Build the executable to temporary location
     Write-Host "Running PyInstaller..."
-    & .\.venv\Scripts\python.exe -m PyInstaller --distpath $TempDist NotifyMe.spec
+    & .\.venv\Scripts\python.exe -m PyInstaller --distpath $TempDist -y NotifyMe.spec
     if ($LASTEXITCODE -ne 0) {
         throw "PyInstaller failed"
     }
@@ -76,7 +76,7 @@ try {
     if ($Process) {
         Write-Host "Closing running NotifyMe.exe..."
         $Process | Stop-Process -Force -ErrorAction SilentlyContinue
-        Start-Sleep -Seconds 1
+        Start-Sleep -Milliseconds 500
     }
 
     # Remove previous build artifact if present (retry a few times in case it is locked)
@@ -91,7 +91,7 @@ try {
                 if ($i -eq 5) {
                     throw "Failed to remove $FinalDist\NotifyMe.exe (file is locked)"
                 }
-                Start-Sleep -Seconds 1
+                Start-Sleep -Milliseconds 200
             }
         }
     }

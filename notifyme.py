@@ -365,11 +365,48 @@ def setup_logging():
     logger.addHandler(handler)
 
 
+def shutdown_logging():
+    """Properly shutdown logging handlers."""
+    logger = logging.getLogger()
+    for handler in logger.handlers[:]:
+        handler.flush()
+        handler.close()
+        logger.removeHandler(handler)
+
+
 def main():
     """Main entry point for the application."""
-    setup_logging()
-    app = _RuntimeNotifyMeApp()
-    app.run()
+    try:
+        # Check for special command-line flags
+        if "--add-medicine" in sys.argv:
+            # Launch standalone medicine add dialog
+            setup_logging()
+            import tkinter as tk
+
+            from notifyme_app.medicine import MedicineManager
+            from notifyme_app.medicine_ui import MedicineDialog
+
+            try:
+                medicine_manager = MedicineManager()
+                root = tk.Tk()
+                root.withdraw()
+                root.update()  # Process any pending events
+                dialog = MedicineDialog(root, on_save=medicine_manager.add_medicine)
+                dialog.lift()
+                dialog.attributes("-topmost", True)  # Keep on top
+                dialog.focus_set()
+                root.wait_window(dialog)
+                root.destroy()
+            except Exception as e:
+                logging.error("Failed to run add medicine dialog: %s", e, exc_info=True)
+            return
+
+        # Normal application launch
+        setup_logging()
+        app = _RuntimeNotifyMeApp()
+        app.run()
+    finally:
+        shutdown_logging()
 
 
 if __name__ == "__main__":

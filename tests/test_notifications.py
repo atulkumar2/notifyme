@@ -9,9 +9,9 @@ from unittest.mock import MagicMock, patch
 
 from winotify import audio
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from notifyme_app.notifications import NotificationManager
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 class TestNotificationManager(unittest.TestCase):

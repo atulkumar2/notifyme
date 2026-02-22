@@ -369,6 +369,10 @@ class MenuManager:
         # Build submenu
         submenu_items = [
             MenuItem(
+                "➕ Add Medicine",
+                self.callbacks.get(MenuCallbacks.ADD_MEDICINE, lambda: None),
+            ),
+            MenuItem(
                 "⚙️ Manage Medicines",
                 self.callbacks.get(MenuCallbacks.MANAGE_MEDICINES, lambda: None),
             ),

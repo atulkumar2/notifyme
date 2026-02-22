@@ -31,6 +31,24 @@ class TestMenuManager(unittest.TestCase):
         labels = self._collect_menu_labels(menu)
         self.assertTrue(any("Global TTS" in label for label in labels))
 
+    def test_medicine_menu_includes_quick_add(self) -> None:
+        """Ensure medicine menu includes the quick add action."""
+        menu_manager = MenuManager(self._build_callbacks())
+        reminder_states = self._build_reminder_states()
+
+        menu = menu_manager.create_menu(
+            reminder_states=reminder_states,
+            is_paused=False,
+            sound_enabled=False,
+            tts_enabled=True,
+            update_available=False,
+            medicine_enabled=True,
+            medicine_completions={},
+        )
+
+        labels = self._collect_menu_labels(menu)
+        self.assertTrue(any("Add Medicine" in label for label in labels))
+
     def _build_callbacks(self) -> dict:
         callbacks = {
             MenuCallbacks.OPEN_GITHUB_RELEASES: lambda *_: None,
@@ -49,6 +67,8 @@ class TestMenuManager(unittest.TestCase):
             MenuCallbacks.OPEN_CONFIG_LOCATION: lambda *_: None,
             MenuCallbacks.OPEN_EXE_LOCATION: lambda *_: None,
             MenuCallbacks.QUIT_APP: lambda *_: None,
+            MenuCallbacks.ADD_MEDICINE: lambda *_: None,
+            MenuCallbacks.MANAGE_MEDICINES: lambda *_: None,
         }
 
         def _interval_factory(*_args, **_kwargs):

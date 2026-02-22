@@ -39,6 +39,7 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
   - **Per-Reminder Sound Control**: Individual sound settings for each reminder type
   - **Hide/Show Reminders**: Hide specific reminder types from the menu while keeping them active
   - **Flexible Pause/Resume**: Pause all reminders at once, or pause each reminder type individually
+- **Medicine Reminders**: Add medicines quickly from the tray menu, manage schedules, and mark meals complete
 - **Smart Features**:
   - **Startup Help**: Automatically opens help page when first launched
   - **Welcome Notification**: Friendly introduction when app starts
@@ -259,6 +260,13 @@ When you first run NotifyMe:
 2. Open **"⚙ Controls"** and click **"▶ Start"** to begin receiving reminders
 3. You'll receive blink reminders every 20 minutes, walking reminders every 60 minutes, water reminders every 30 minutes, and pranayama reminders every 120 minutes (defaults)
 4. Hover over the system tray icon to see the current status of all reminders
+
+### Medicine Reminders
+
+1. Right-click the system tray icon
+2. Open **"💊 Medicine Reminders"**
+3. Click **"➕ Add Medicine"** to add a reminder without opening the full management window
+4. Use **"⚙️ Manage Medicines"** if you want to edit or delete existing entries
 
 ### Sound Controls
 

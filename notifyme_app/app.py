@@ -215,6 +215,7 @@ class NotifyMeApp:
             MenuCallbacks.CHECK_FOR_UPDATES_ASYNC: self.updater.check_for_updates_async,
             MenuCallbacks.SHOW_ABOUT: self.show_about,
             # Medicine callbacks
+            MenuCallbacks.ADD_MEDICINE: self.add_medicine_quick,
             MenuCallbacks.MANAGE_MEDICINES: self.manage_medicines,
             MenuCallbacks.MARK_BREAKFAST_COMPLETED: lambda *_, **__: (
                 self.mark_medicine_completed(MEDICINE_BREAKFAST)
@@ -409,6 +410,53 @@ class NotifyMeApp:
             logging.error("Failed to show about dialog: %s", e)
 
     # Medicine reminder methods
+    def add_medicine_quick(self) -> None:
+        """Open a simplified add-medicine dialog."""
+        try:
+            standalone_module = Path(__file__).parent / "medicine_ui_standalone.py"
+            env = os.environ.copy()
+
+            # Determine the Python executable to use
+            if getattr(sys, "frozen", False):
+                # In frozen mode, try to find python in the environment
+                # or use the embedded python
+                import shutil
+
+                executable = shutil.which("python") or shutil.which("python3")
+                if not executable:
+                    # If no python found, fall back to main exe with --add-medicine flag
+                    exe_path = Path(sys.executable)
+                    logging.info(
+                        "Launching frozen exe with --add-medicine flag: %s", exe_path
+                    )
+                    # Don't hide the window for the add-medicine dialog
+                    subprocess.Popen([str(exe_path), "--add-medicine"])
+                    logging.info("Opened add medicine dialog (frozen)")
+                    return
+            else:
+                executable = sys.executable
+                if sys.platform == "win32" and executable.endswith("python.exe"):
+                    executable = executable.replace("python.exe", "pythonw.exe")
+
+            logging.info("Launching medicine dialog with: %s", executable)
+            kwargs = {
+                "cwd": str(Path(__file__).parent.parent),
+                "env": env,
+                "stdin": subprocess.DEVNULL,
+                "stdout": subprocess.DEVNULL,
+                "stderr": subprocess.PIPE,  # Capture stderr to log errors
+            }
+
+            if sys.platform == "win32":
+                kwargs["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
+
+            subprocess.Popen(
+                [executable, "-u", str(standalone_module), "--add"], **kwargs
+            )
+            logging.info("Opened add medicine dialog")
+        except Exception as e:
+            logging.error("Failed to open add medicine dialog: %s", e, exc_info=True)
+
     def manage_medicines(self) -> None:
         """Open the medicine management window in a separate subprocess."""
         try:

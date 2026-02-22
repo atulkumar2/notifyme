@@ -17,7 +17,7 @@ Write-Host "Running NotifyMe tests..."
 Write-Host ""
 
 try {
-    & uv run python -m pytest tests/test_notifyme.py -v
+    & uv run python -m pytest tests/ -v
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""

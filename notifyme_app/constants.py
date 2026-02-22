@@ -147,6 +147,7 @@ class MenuCallbacks:
     TOGGLE_WATER_SOUND = "toggle_water_sound"
     TOGGLE_WATER_TTS = "toggle_water_tts"
     # Medicine reminder callbacks
+    ADD_MEDICINE = "add_medicine"
     MANAGE_MEDICINES = "manage_medicines"
     MARK_BREAKFAST_COMPLETED = "mark_breakfast_completed"
     MARK_LUNCH_COMPLETED = "mark_lunch_completed"
