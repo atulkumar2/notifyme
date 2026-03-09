@@ -35,6 +35,33 @@ MedicineTimeLabels = {
     MEDICINE_DINNER: "Dinner",
 }
 
+# Medicine frequencies
+MEDICINE_FREQ_DAILY = "daily"
+MEDICINE_FREQ_HOURLY = "hourly"
+
+# Days of the week (short)
+DAYS_OF_WEEK_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+# Special disease type
+DISEASE_OTHER = "Other"
+
+
+class MedicineFields:
+    """Keys for medicine dictionary serialization."""
+
+    NAME = "name"
+    DOSAGE = "dosage"
+    DISEASE = "disease"
+    MEAL_TIMES = "meal_times"
+    DURATION_DAYS = "duration_days"
+    START_DATE = "start_date"
+    CUSTOM_DISEASE = "custom_disease"
+    FREQUENCY = "frequency"
+    HOURLY_INTERVAL = "hourly_interval"
+    DAYS_OF_WEEK = "days_of_week"
+    STATUS = "status"
+
+
 # Common disease types for medicine
 COMMON_DISEASES = [
     "Diabetes",
@@ -49,7 +76,7 @@ COMMON_DISEASES = [
     "Vitamin Deficiency",
     "Pain Relief",
     "Antibiotic",
-    "Other",
+    DISEASE_OTHER,
 ]
 
 

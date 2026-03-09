@@ -11,6 +11,9 @@ from typing import Any
 
 from notifyme_app.constants import (
     DEFAULT_MEDICINE_TIME_WINDOWS,
+    DISEASE_OTHER,
+    MEDICINE_FREQ_DAILY,
+    MedicineFields,
 )
 from notifyme_app.logger import get_logger
 from notifyme_app.utils import get_app_data_dir
@@ -28,6 +31,9 @@ class Medicine:
         duration_days: int = 0,
         start_date: str | None = None,
         custom_disease: str | None = None,
+        frequency: str = MEDICINE_FREQ_DAILY,
+        hourly_interval: int | None = None,
+        days_of_week: list[int] | None = None,
     ):
         """
         Initialize a medicine.
@@ -40,6 +46,9 @@ class Medicine:
             duration_days: Duration in days (0 = continuous)
             start_date: Start date in YYYY-MM-DD format (defaults to today)
             custom_disease: Custom disease name if disease is "Other"
+            frequency: Frequency type ("daily" or "hourly")
+            hourly_interval: Interval in hours if frequency is "hourly"
+            days_of_week: List of days (0=Mon to 6=Sun) the medicine should be taken
         """
         self.name = name
         self.dosage = dosage
@@ -48,30 +57,39 @@ class Medicine:
         self.duration_days = duration_days
         self.start_date = start_date or datetime.now().strftime("%Y-%m-%d")
         self.custom_disease = custom_disease
+        self.frequency = frequency
+        self.hourly_interval = hourly_interval
+        self.days_of_week = days_of_week if days_of_week is not None else [0, 1, 2, 3, 4, 5, 6]
 
     def to_dict(self) -> dict[str, Any]:
         """Convert medicine to dictionary."""
         return {
-            "name": self.name,
-            "dosage": self.dosage,
-            "disease": self.disease,
-            "meal_times": self.meal_times,
-            "duration_days": self.duration_days,
-            "start_date": self.start_date,
-            "custom_disease": self.custom_disease,
+            MedicineFields.NAME: self.name,
+            MedicineFields.DOSAGE: self.dosage,
+            MedicineFields.DISEASE: self.disease,
+            MedicineFields.MEAL_TIMES: self.meal_times,
+            MedicineFields.DURATION_DAYS: self.duration_days,
+            MedicineFields.START_DATE: self.start_date,
+            MedicineFields.CUSTOM_DISEASE: self.custom_disease,
+            MedicineFields.FREQUENCY: self.frequency,
+            MedicineFields.HOURLY_INTERVAL: self.hourly_interval,
+            MedicineFields.DAYS_OF_WEEK: self.days_of_week,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Medicine":
         """Create medicine from dictionary."""
         return cls(
-            name=data["name"],
-            dosage=data["dosage"],
-            disease=data["disease"],
-            meal_times=data["meal_times"],
-            duration_days=data.get("duration_days", 0),
-            start_date=data.get("start_date"),
-            custom_disease=data.get("custom_disease"),
+            name=data[MedicineFields.NAME],
+            dosage=data[MedicineFields.DOSAGE],
+            disease=data[MedicineFields.DISEASE],
+            meal_times=data[MedicineFields.MEAL_TIMES],
+            duration_days=data.get(MedicineFields.DURATION_DAYS, 0),
+            start_date=data.get(MedicineFields.START_DATE),
+            custom_disease=data.get(MedicineFields.CUSTOM_DISEASE),
+            frequency=data.get(MedicineFields.FREQUENCY, MEDICINE_FREQ_DAILY),
+            hourly_interval=data.get(MedicineFields.HOURLY_INTERVAL),
+            days_of_week=data.get(MedicineFields.DAYS_OF_WEEK),
         )
 
     def is_active(self) -> bool:
@@ -85,7 +103,7 @@ class Medicine:
 
     def get_display_disease(self) -> str:
         """Get the display name for the disease."""
-        if self.disease == "Other" and self.custom_disease:
+        if self.disease == DISEASE_OTHER and self.custom_disease:
             return self.custom_disease
         return self.disease
 

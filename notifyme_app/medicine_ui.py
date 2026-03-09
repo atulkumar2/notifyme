@@ -15,6 +15,12 @@ from notifyme_app.logger import get_logger
 from notifyme_app.constants import (
     ALL_MEDICINE_TIMES,
     COMMON_DISEASES,
+    DAYS_OF_WEEK_SHORT,
+    DISEASE_OTHER,
+    MEDICINE_FREQ_DAILY,
+    MEDICINE_FREQ_HOURLY,
+    APP_NAME,
+    MedicineFields,
     MedicineTimeLabels,
 )
 from notifyme_app.medicine import Medicine, MedicineManager
@@ -44,6 +50,27 @@ class MedicineEditFrame(ttk.Frame):
         self.on_save = on_save
         self.on_cancel = on_cancel
 
+        # Initialize UI components/variables to avoid linting warnings
+        self.name_entry: ttk.Entry = None
+        self.dosage_entry: ttk.Entry = None
+        self.disease_var: tk.StringVar = None
+        self.custom_disease_label: ttk.Label = None
+        self.custom_disease_entry: ttk.Entry = None
+        self.meal_time_vars: dict[str, tk.BooleanVar] = {}
+        self.freq_var: tk.StringVar = None
+        self.hourly_label: ttk.Label = None
+        self.hourly_spinbox: ttk.Spinbox = None
+        self.days_label: ttk.Label = None
+        self.days_frame: ttk.Frame = None
+        self.day_vars: list[tk.BooleanVar] = []
+        self.duration_spinbox: ttk.Spinbox = None
+        self.year_var: tk.StringVar = None
+        self.year_combo: ttk.Combobox = None
+        self.month_var: tk.StringVar = None
+        self.month_combo: ttk.Combobox = None
+        self.day_var: tk.StringVar = None
+        self.day_combo: ttk.Combobox = None
+
         self._create_widgets()
 
         if medicine:
@@ -54,14 +81,16 @@ class MedicineEditFrame(ttk.Frame):
         # Title
         title_label = ttk.Label(
             self,
-            text="Medicine Details",
+            text=f"{APP_NAME} - Medicine Details",
             font=("Arial", 14, "bold"),
             padding=(0, 0, 0, 10),
         )
         title_label.grid(row=0, column=0, columnspan=2, sticky=tk.W)
 
         # Medicine Name
-        ttk.Label(self, text="Medicine Name:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(self, text="Medicine Name:").grid(
+            row=1, column=0, sticky=tk.W, pady=5
+        )
         self.name_entry = ttk.Entry(self, width=40)
         self.name_entry.grid(row=1, column=1, sticky=tk.EW, pady=5)
 
@@ -69,9 +98,9 @@ class MedicineEditFrame(ttk.Frame):
         ttk.Label(self, text="Dosage:").grid(row=2, column=0, sticky=tk.W, pady=5)
         self.dosage_entry = ttk.Entry(self, width=40)
         self.dosage_entry.grid(row=2, column=1, sticky=tk.EW, pady=5)
-        ttk.Label(self, text="(e.g., '1 tablet', '5ml', '500mg')", font=("Arial", 9)).grid(
-            row=3, column=0, columnspan=2, sticky=tk.W, pady=(0, 10)
-        )
+        ttk.Label(
+            self, text="(e.g., '1 tablet', '5ml', '500mg')", font=("Arial", 9)
+        ).grid(row=3, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
 
         # Disease Type
         ttk.Label(self, text="Disease Type:").grid(row=4, column=0, sticky=tk.W, pady=5)
@@ -85,44 +114,83 @@ class MedicineEditFrame(ttk.Frame):
         )
         disease_combo.grid(row=4, column=1, sticky=tk.EW, pady=5)
 
-        # Custom Disease (shown when "Other" is selected)
-        ttk.Label(self, text="Custom Disease:").grid(row=5, column=0, sticky=tk.W, pady=5)
+        # custom disease (shown when DISEASE_OTHER is selected)
+        self.custom_disease_label = ttk.Label(self, text="Custom Disease:")
         self.custom_disease_entry = ttk.Entry(self, width=40)
-        self.custom_disease_entry.grid(row=5, column=1, sticky=tk.EW, pady=5)
+        # We don't grid them yet, will be done in _on_disease_selected
 
         # Binding to show/hide custom disease
         disease_combo.bind("<<ComboboxSelected>>", self._on_disease_selected)
 
         # Meal Times
         ttk.Label(self, text="Take with meals:").grid(
-            row=6, column=0, columnspan=2, sticky=tk.W, pady=(15, 5)
+            row=6, column=0, sticky=tk.W, pady=(15, 5)
         )
+        meal_frame = ttk.Frame(self)
+        meal_frame.grid(row=6, column=1, sticky=tk.W, pady=(15, 5))
 
         self.meal_time_vars = {}
-        for idx, meal_time in enumerate(ALL_MEDICINE_TIMES):
+        for meal_time in ALL_MEDICINE_TIMES:
             meal_label = MedicineTimeLabels.get(meal_time, meal_time.title())
             var = tk.BooleanVar()
             self.meal_time_vars[meal_time] = var
-            check = ttk.Checkbutton(self, text=meal_label, variable=var)
-            check.grid(row=7 + idx, column=0, columnspan=2, sticky=tk.W, pady=2)
+            check = ttk.Checkbutton(meal_frame, text=meal_label, variable=var)
+            check.pack(side=tk.LEFT, padx=(0, 15))
+
+        # Scheduling Frequency
+        ttk.Label(self, text="Frequency:").grid(row=7, column=0, sticky=tk.W, pady=5)
+        self.freq_var = tk.StringVar(value=MEDICINE_FREQ_DAILY)
+        freq_frame = ttk.Frame(self)
+        freq_frame.grid(row=7, column=1, sticky=tk.W, pady=5)
+        ttk.Radiobutton(
+            freq_frame,
+            text="Daily",
+            variable=self.freq_var,
+            value=MEDICINE_FREQ_DAILY,
+            command=self._on_freq_change,
+        ).pack(side=tk.LEFT, padx=(0, 15))
+        ttk.Radiobutton(
+            freq_frame,
+            text="Every X Hours",
+            variable=self.freq_var,
+            value=MEDICINE_FREQ_HOURLY,
+            command=self._on_freq_change,
+        ).pack(side=tk.LEFT)
+
+        # Hourly Interval (Dynamic)
+        self.hourly_label = ttk.Label(self, text="Every (hours):")
+        self.hourly_spinbox = ttk.Spinbox(self, from_=1, to=24, width=5)
+        self.hourly_spinbox.set(4)
+
+        # Days of the Week (Daily only)
+        self.days_label = ttk.Label(self, text="On Days:")
+        self.days_frame = ttk.Frame(self)
+        self.day_vars = []
+        for day in DAYS_OF_WEEK_SHORT:
+            var = tk.BooleanVar(value=True)
+            self.day_vars.append(var)
+            check = ttk.Checkbutton(self.days_frame, text=day, variable=var)
+            check.pack(side=tk.LEFT, padx=(0, 5))
+
+        # Grid scheduling options (initial state: daily)
+        self.days_label.grid(row=8, column=0, sticky=tk.W, pady=5)
+        self.days_frame.grid(row=8, column=1, sticky=tk.W, pady=5)
 
         # Duration
-        ttk.Label(self, text="Duration:").grid(row=10, column=0, sticky=tk.W, pady=(15, 5))
-        ttk.Label(self, text="Days (0 = continuous):").grid(
-            row=11, column=0, sticky=tk.W, pady=5
+        ttk.Label(self, text="Duration:").grid(
+            row=10, column=0, sticky=tk.W, pady=(15, 5)
         )
-        self.duration_spinbox = ttk.Spinbox(self, from_=0, to=3650, width=10)
-        self.duration_spinbox.set(0)
-        self.duration_spinbox.grid(row=11, column=1, sticky=tk.W, pady=5)
+        duration_frame = ttk.Frame(self)
+        duration_frame.grid(row=10, column=1, sticky=tk.W, pady=(15, 5))
 
-        # Start Date
+        self.duration_spinbox = ttk.Spinbox(duration_frame, from_=0, to=3650, width=5)
+        self.duration_spinbox.set(0)
+        self.duration_spinbox.pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(duration_frame, text="Days (0 = continuous)").pack(side=tk.LEFT)
+
+        # Start Date (Date Chooser fallback)
         ttk.Label(self, text="Start Date:").grid(row=12, column=0, sticky=tk.W, pady=5)
-        self.date_entry = ttk.Entry(self, width=40)
-        self.date_entry.insert(0, datetime.now().strftime("%Y-%m-%d"))
-        self.date_entry.grid(row=12, column=1, sticky=tk.EW, pady=5)
-        ttk.Label(self, text="(YYYY-MM-DD)", font=("Arial", 9)).grid(
-            row=13, column=0, columnspan=2, sticky=tk.W, pady=(0, 10)
-        )
+        self._create_date_chooser(row=12, col=1)
 
         # Buttons
         button_frame = ttk.Frame(self)
@@ -138,15 +206,83 @@ class MedicineEditFrame(ttk.Frame):
         # Configure grid weight
         self.columnconfigure(1, weight=1)
 
+    def _create_date_chooser(self, row: int, col: int) -> None:
+        """Create a custom date chooser using comboboxes."""
+        date_frame = ttk.Frame(self)
+        date_frame.grid(row=row, column=col, sticky=tk.W, pady=5)
+
+        # Year
+        current_year = datetime.now().year
+        self.year_var = tk.StringVar(value=str(current_year))
+        years = [str(y) for y in range(current_year, current_year + 11)]
+        self.year_combo = ttk.Combobox(
+            date_frame,
+            textvariable=self.year_var,
+            values=years,
+            width=6,
+            state="readonly",
+        )
+        self.year_combo.pack(side=tk.LEFT, padx=(0, 5))
+
+        # Month
+        self.month_var = tk.StringVar(value=datetime.now().strftime("%m"))
+        months = [f"{m:02d}" for m in range(1, 13)]
+        self.month_combo = ttk.Combobox(
+            date_frame,
+            textvariable=self.month_var,
+            values=months,
+            width=4,
+            state="readonly",
+        )
+        self.month_combo.pack(side=tk.LEFT, padx=(0, 5))
+
+        # Day
+        self.day_var = tk.StringVar(value=datetime.now().strftime("%d"))
+        days = [f"{d:02d}" for d in range(1, 32)]
+        self.day_combo = ttk.Combobox(
+            date_frame,
+            textvariable=self.day_var,
+            values=days,
+            width=4,
+            state="readonly",
+        )
+        self.day_combo.pack(side=tk.LEFT)
+
+    def _on_freq_change(self) -> None:
+        """Handle frequency type change."""
+        freq = self.freq_var.get()
+        if freq == MEDICINE_FREQ_HOURLY:
+            self.days_label.grid_forget()
+            self.days_frame.grid_forget()
+            self.hourly_label.grid(row=8, column=0, sticky=tk.W, pady=5)
+            self.hourly_spinbox.grid(row=8, column=1, sticky=tk.W, pady=5)
+        else:
+            self.hourly_label.grid_forget()
+            self.hourly_spinbox.grid_forget()
+            self.days_label.grid(row=8, column=0, sticky=tk.W, pady=5)
+            self.days_frame.grid(row=8, column=1, sticky=tk.W, pady=5)
+
+        # Force resize
+        if hasattr(self.master.master, "geometry"):
+            self.master.master.geometry("")
+
     def _on_disease_selected(self, _event=None) -> None:
         """Handle disease selection change."""
         disease = self.disease_var.get()
-        if disease == "Other":
+        if disease == DISEASE_OTHER:
+            self.custom_disease_label.grid(row=5, column=0, sticky=tk.W, pady=5)
+            self.custom_disease_entry.grid(row=5, column=1, sticky=tk.EW, pady=5)
             self.custom_disease_entry.config(state=tk.NORMAL)
             self.custom_disease_entry.focus()
         else:
+            self.custom_disease_label.grid_forget()
+            self.custom_disease_entry.grid_forget()
             self.custom_disease_entry.config(state=tk.DISABLED)
             self.custom_disease_entry.delete(0, tk.END)
+
+        # Force resize
+        if hasattr(self.master.master, "geometry"):
+            self.master.master.geometry("")
 
     def _populate_fields(self, medicine: Medicine) -> None:
         """Populate fields with existing medicine data."""
@@ -154,19 +290,41 @@ class MedicineEditFrame(ttk.Frame):
         self.dosage_entry.insert(0, medicine.dosage)
         self.disease_var.set(medicine.disease)
 
-        if medicine.disease == "Other" and medicine.custom_disease:
+        if medicine.disease == DISEASE_OTHER and medicine.custom_disease:
+            self.custom_disease_label.grid(row=5, column=0, sticky=tk.W, pady=5)
+            self.custom_disease_entry.grid(row=5, column=1, sticky=tk.EW, pady=5)
             self.custom_disease_entry.config(state=tk.NORMAL)
             self.custom_disease_entry.insert(0, medicine.custom_disease)
         else:
+            self.custom_disease_label.grid_forget()
+            self.custom_disease_entry.grid_forget()
             self.custom_disease_entry.config(state=tk.DISABLED)
 
         for meal_time, var in self.meal_time_vars.items():
             var.set(meal_time in medicine.meal_times)
 
+        # Scheduling fields
+        self.freq_var.set(medicine.frequency)
+        if medicine.frequency == MEDICINE_FREQ_HOURLY:
+            self.hourly_spinbox.set(str(medicine.hourly_interval or 4))
+        else:
+            # Populate day checkboxes
+            for i, var in enumerate(self.day_vars):
+                var.set(i in medicine.days_of_week)
+        self._on_freq_change()
+
         self.duration_spinbox.delete(0, tk.END)
         self.duration_spinbox.set(str(medicine.duration_days))
-        self.date_entry.delete(0, tk.END)
-        self.date_entry.insert(0, medicine.start_date)
+
+        # Populate date chooser
+        if medicine.start_date:
+            try:
+                dt = datetime.strptime(medicine.start_date, "%Y-%m-%d")
+                self.year_var.set(str(dt.year))
+                self.month_var.set(f"{dt.month:02d}")
+                self.day_var.set(f"{dt.day:02d}")
+            except ValueError:
+                pass
 
     def _cancel(self) -> None:
         """Cancel the edit and return to the list."""
@@ -180,38 +338,71 @@ class MedicineEditFrame(ttk.Frame):
         dosage = self.dosage_entry.get().strip()
         disease = self.disease_var.get()
         custom_disease = (
-            self.custom_disease_entry.get().strip() if disease == "Other" else None
+            self.custom_disease_entry.get().strip()
+            if disease == DISEASE_OTHER
+            else None
         )
 
         if not name:
-            messagebox.showwarning("Missing Field", "Please enter a medicine name.")
+            messagebox.showwarning(
+                f"{APP_NAME} - Missing Field", "Please enter a medicine name."
+            )
             return
 
         if not dosage:
-            messagebox.showwarning("Missing Field", "Please enter the dosage.")
+            messagebox.showwarning(
+                f"{APP_NAME} - Missing Field", "Please enter the dosage."
+            )
             return
 
         if not disease:
-            messagebox.showwarning("Missing Field", "Please select a disease type.")
+            messagebox.showwarning(
+                f"{APP_NAME} - Missing Field", "Please select a disease type."
+            )
             return
 
-        if disease == "Other" and not custom_disease:
-            messagebox.showwarning("Missing Field", "Please enter a custom disease name.")
+        if disease == DISEASE_OTHER and not custom_disease:
+            messagebox.showwarning(
+                f"{APP_NAME} - Missing Field", "Please enter a custom disease name."
+            )
             return
 
         # Get selected meal times
         meal_times = [mt for mt, var in self.meal_time_vars.items() if var.get()]
-        if not meal_times:
-            messagebox.showwarning(
-                "Missing Selection", "Please select at least one meal time."
-            )
-            return
+        # Meal times are optional now if frequency is hourly, but ideally user picks something.
+        # However, let's stick to the user's need for hourly.
 
-        # Validate date
+        frequency = self.freq_var.get()
+        hourly_interval = None
+        days_of_week = None
+
+        if frequency == MEDICINE_FREQ_HOURLY:
+            try:
+                hourly_interval = int(self.hourly_spinbox.get())
+            except ValueError:
+                messagebox.showerror(
+                    f"{APP_NAME} - Invalid Interval",
+                    "Please enter a valid hourly interval.",
+                )
+                return
+        else:
+            days_of_week = [i for i, var in enumerate(self.day_vars) if var.get()]
+            if not days_of_week:
+                messagebox.showwarning(
+                    f"{APP_NAME} - No Days", "Please select at least one day."
+                )
+                return
+
+        # Validate date from chooser
+        start_date = (
+            f"{self.year_var.get()}-{self.month_var.get()}-{self.day_var.get()}"
+        )
         try:
-            datetime.strptime(self.date_entry.get(), "%Y-%m-%d")
+            datetime.strptime(start_date, "%Y-%m-%d")
         except ValueError:
-            messagebox.showerror("Invalid Date", "Please use YYYY-MM-DD format.")
+            messagebox.showerror(
+                f"{APP_NAME} - Invalid Date", "The selected date is invalid."
+            )
             return
 
         # Validate duration
@@ -220,7 +411,9 @@ class MedicineEditFrame(ttk.Frame):
             if duration < 0:
                 raise ValueError
         except ValueError:
-            messagebox.showerror("Invalid Duration", "Duration must be a positive number.")
+            messagebox.showerror(
+                f"{APP_NAME} - Invalid Duration", "Duration must be a positive number."
+            )
             return
 
         # Create medicine object
@@ -230,8 +423,11 @@ class MedicineEditFrame(ttk.Frame):
             disease=disease,
             meal_times=meal_times,
             duration_days=duration,
-            start_date=self.date_entry.get(),
+            start_date=start_date,
             custom_disease=custom_disease,
+            frequency=frequency,
+            hourly_interval=hourly_interval,
+            days_of_week=days_of_week,
         )
 
         if self.on_save:
@@ -262,6 +458,8 @@ class MedicineListFrame(ttk.Frame):
         self.on_add = on_add
         self.on_edit = on_edit
 
+        self.tree: ttk.Treeview = None
+
         self._create_widgets()
         self.refresh()
 
@@ -286,23 +484,35 @@ class MedicineListFrame(ttk.Frame):
         tree_frame.pack(fill=tk.BOTH, expand=True)
 
         # Create treeview
-        columns = ("Name", "Dosage", "Disease", "Meals", "Duration", "Status")
-        self.tree = ttk.Treeview(tree_frame, columns=columns, height=15, show="headings")
+        columns = (
+            MedicineFields.NAME,
+            MedicineFields.DOSAGE,
+            MedicineFields.DISEASE,
+            MedicineFields.MEAL_TIMES,
+            MedicineFields.DURATION_DAYS,
+            MedicineFields.FREQUENCY,
+            MedicineFields.STATUS,
+        )
+        self.tree = ttk.Treeview(
+            tree_frame, columns=columns, height=15, show="headings"
+        )
 
         # Define headings and widths
-        self.tree.heading("Name", text="Medicine Name")
-        self.tree.heading("Dosage", text="Dosage")
-        self.tree.heading("Disease", text="Disease/Condition")
-        self.tree.heading("Meals", text="Meal Times")
-        self.tree.heading("Duration", text="Duration")
-        self.tree.heading("Status", text="Status")
+        self.tree.heading(MedicineFields.NAME, text="Medicine Name")
+        self.tree.heading(MedicineFields.DOSAGE, text="Dosage")
+        self.tree.heading(MedicineFields.DISEASE, text="Disease/Condition")
+        self.tree.heading(MedicineFields.MEAL_TIMES, text="Meal Times")
+        self.tree.heading(MedicineFields.DURATION_DAYS, text="Duration")
+        self.tree.heading(MedicineFields.FREQUENCY, text="Frequency")
+        self.tree.heading(MedicineFields.STATUS, text="Status")
 
-        self.tree.column("Name", width=120)
-        self.tree.column("Dosage", width=80)
-        self.tree.column("Disease", width=120)
-        self.tree.column("Meals", width=100)
-        self.tree.column("Duration", width=80)
-        self.tree.column("Status", width=80)
+        self.tree.column(MedicineFields.NAME, width=120)
+        self.tree.column(MedicineFields.DOSAGE, width=80)
+        self.tree.column(MedicineFields.DISEASE, width=120)
+        self.tree.column(MedicineFields.MEAL_TIMES, width=100)
+        self.tree.column(MedicineFields.DURATION_DAYS, width=80)
+        self.tree.column(MedicineFields.FREQUENCY, width=100)
+        self.tree.column(MedicineFields.STATUS, width=70)
 
         # Add scrollbars
         vsb = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
@@ -337,6 +547,20 @@ class MedicineListFrame(ttk.Frame):
                 else f"{medicine.duration_days} days"
             )
 
+            freq_str = (
+                "Daily"
+                if medicine.frequency == MEDICINE_FREQ_DAILY
+                else f"Every {medicine.hourly_interval}h"
+            )
+            if (
+                medicine.frequency == MEDICINE_FREQ_DAILY
+                and len(medicine.days_of_week) < 7
+            ):
+                days_str = ", ".join(
+                    [DAYS_OF_WEEK_SHORT[i] for i in medicine.days_of_week]
+                )
+                freq_str = f"Daily ({days_str})"
+
             self.tree.insert(
                 "",
                 tk.END,
@@ -347,6 +571,7 @@ class MedicineListFrame(ttk.Frame):
                     medicine.get_display_disease(),
                     meal_str,
                     duration_str,
+                    freq_str,
                     status,
                 ),
             )
@@ -355,7 +580,9 @@ class MedicineListFrame(ttk.Frame):
         """Handle edit button click."""
         selection = self.tree.selection()
         if not selection:
-            messagebox.showwarning("No Selection", "Please select a medicine to edit.")
+            messagebox.showwarning(
+                f"{APP_NAME} - No Selection", "Please select a medicine to edit."
+            )
             return
 
         item_id = int(selection[0])
@@ -366,19 +593,23 @@ class MedicineListFrame(ttk.Frame):
         """Delete the selected medicine."""
         selection = self.tree.selection()
         if not selection:
-            messagebox.showwarning("No Selection", "Please select a medicine to delete.")
+            messagebox.showwarning(
+                f"{APP_NAME} - No Selection", "Please select a medicine to delete."
+            )
             return
 
         item_id = int(selection[0])
         medicine = self.medicine_manager.medicines[item_id]
 
         if messagebox.askyesno(
-            "Confirm Delete",
+            f"{APP_NAME} - Confirm Delete",
             f"Are you sure you want to delete '{medicine.name}'?\n\nThis action cannot be undone.",
         ):
             self.medicine_manager.remove_medicine(item_id)
             self.refresh()
-            messagebox.showinfo("Success", f"'{medicine.name}' has been deleted.")
+            messagebox.showinfo(
+                f"{APP_NAME} - Success", f"'{medicine.name}' has been deleted."
+            )
 
 
 class MedicineMainApplication(tk.Tk):
@@ -391,9 +622,9 @@ class MedicineMainApplication(tk.Tk):
         self.medicine_manager = medicine_manager
         self.add_only = add_only
 
-        self.title("Medicine Management")
-        self.geometry("800x650")
-        self.minsize(600, 500)
+        self.title(f"{APP_NAME} - Medicine Management")
+        self.geometry("800x600")
+        self.minsize(600, 450)
 
         # Container for screens
         self.container = ttk.Frame(self)
@@ -414,13 +645,15 @@ class MedicineMainApplication(tk.Tk):
         self.current_frame = MedicineListFrame(
             self.container,
             self.medicine_manager,
-            on_add=lambda: self.show_edit(),
+            on_add=self.show_edit,
             on_edit=self.show_edit,
         )
         self.current_frame.pack(fill=tk.BOTH, expand=True)
-        self.title("Medicine Management - List")
+        self.title(f"{APP_NAME} - Medicine List")
 
-    def show_edit(self, medicine: Medicine | None = None, index: int | None = None) -> None:
+    def show_edit(
+        self, medicine: Medicine | None = None, index: int | None = None
+    ) -> None:
         """Show the medicine edit/add screen."""
         if self.current_frame:
             self.current_frame.destroy()
@@ -430,11 +663,15 @@ class MedicineMainApplication(tk.Tk):
                 # Update existing
                 self.medicine_manager.medicines[index] = new_medicine
                 self.medicine_manager.save_medicines()
-                messagebox.showinfo("Success", f"'{new_medicine.name}' updated.")
+                messagebox.showinfo(
+                    f"{APP_NAME} - Success", f"'{new_medicine.name}' updated."
+                )
             else:
                 # Add new
                 self.medicine_manager.add_medicine(new_medicine)
-                messagebox.showinfo("Success", f"'{new_medicine.name}' added.")
+                messagebox.showinfo(
+                    f"{APP_NAME} - Success", f"'{new_medicine.name}' added."
+                )
 
             if self.add_only:
                 self.destroy()
@@ -450,10 +687,15 @@ class MedicineMainApplication(tk.Tk):
         self.current_frame = MedicineEditFrame(
             self.container, medicine=medicine, on_save=on_save, on_cancel=on_cancel
         )
-        self.current_frame.pack(fill=tk.BOTH, expand=True)
+        # Don't expand vertically to avoid large empty space at bottom
+        self.current_frame.pack(fill=tk.X, side=tk.TOP, anchor=tk.N)
+
+        # Force window to shrink to fit content
+        self.update_idletasks()
+        self.geometry("")
 
         mode = "Edit" if medicine else "Add"
-        self.title(f"Medicine Management - {mode} Medicine")
+        self.title(f"{APP_NAME} - {mode} Medicine")
 
 
 def run_medicine_ui(add_only: bool = False) -> None:
@@ -472,4 +714,4 @@ def run_medicine_ui(add_only: bool = False) -> None:
         logger.info("Medicine UI mainloop exited")
     except Exception as e:
         logger.error("Failed to run medicine UI: %s", e, exc_info=True)
-        messagebox.showerror("Error", f"Failed to run medicine UI:\n{e}")
+        messagebox.showerror(f"{APP_NAME} - Error", f"Failed to run medicine UI:\n{e}")
