@@ -6,7 +6,6 @@ different components of the application including timers, notifications,
 configuration, and system tray integration.
 """
 
-import logging
 import os
 import subprocess
 import sys
@@ -20,6 +19,8 @@ from pystray import Icon
 from winotify import Notification
 
 from notifyme_app.config import ConfigManager
+from notifyme_app.logger import get_logger
+from notifyme_app.medicine_ui import run_medicine_ui
 from notifyme_app.constants import (
     ALL_MEDICINE_TIMES,
     ALL_REMINDER_TYPES,
@@ -53,6 +54,7 @@ class NotifyMeApp:
 
     def __init__(self):
         """Initialize the NotifyMe reminder application."""
+        self.logger = get_logger(__name__)
         # Initialize managers
         self.config = ConfigManager()
         self.notifications = NotificationManager()
@@ -72,12 +74,13 @@ class NotifyMeApp:
         self.last_medicine_reminder_at: dict[str, float | None] = {
             meal_time: None for meal_time in ALL_MEDICINE_TIMES
         }
+        self._medicine_mtime = None
 
         # Initialize timers
         self._setup_timers()
         self._setup_medicine_timers()
 
-        logging.info("Application initialized")
+        self.logger.info("Application initialized")
 
     def _setup_timers(self) -> None:
         """Set up reminder timers with callbacks."""
@@ -115,7 +118,7 @@ class NotifyMeApp:
                         tts_message = message.lstrip("🌿👁️🥤🙏 ").strip()
                         speak_once(tts_message, lang=self.config.tts_language)
                 except Exception as e:
-                    logging.error(
+                    self.logger.error(
                         "Error invoking TTS for %s reminder: %s", reminder_type, e
                     )
 
@@ -124,7 +127,7 @@ class NotifyMeApp:
     def _setup_medicine_timers(self) -> None:
         """Set up medicine reminder timers for each meal time."""
         if not self.config.medicine_enabled:
-            logging.info("Medicine reminders disabled")
+            self.logger.info("Medicine reminders disabled")
             return
 
         interval = self.config.medicine_reminder_interval
@@ -134,7 +137,7 @@ class NotifyMeApp:
                 interval,
                 self._create_medicine_handler(meal_time),
             )
-        logging.info("Medicine timers set up")
+        self.logger.info("Medicine timers set up")
 
     def _create_medicine_handler(self, meal_time: str):
         """Create a medicine reminder handler for a specific meal time."""
@@ -184,9 +187,9 @@ class NotifyMeApp:
                 )
                 speak_once(tts_message, lang=self.config.tts_language)
 
-            logging.info("Showed %s medicine notification", meal_time)
+            self.logger.info("Showed %s medicine notification", meal_time)
         except Exception as e:
-            logging.error("Failed to show medicine notification: %s", e)
+            self.logger.error("Failed to show medicine notification: %s", e)
 
     def _get_menu_callbacks(self) -> dict:
         """Get callback functions for menu items.
@@ -282,7 +285,7 @@ class NotifyMeApp:
     def snooze_reminder(self) -> None:
         """Snooze all reminders for 5 minutes."""
         self.timers.snooze_all(5)
-        logging.info("All reminders snoozed for 5 minutes")
+        self.logger.info("All reminders snoozed for 5 minutes")
 
     def stop_reminders(self) -> None:
         """Stop all reminder timers."""
@@ -294,7 +297,7 @@ class NotifyMeApp:
     def toggle_sound(self) -> None:
         """Toggle global sound on/off."""
         self.config.sound_enabled = not self.config.sound_enabled
-        logging.info(
+        self.logger.info(
             "Global sound %s", "enabled" if self.config.sound_enabled else "disabled"
         )
         self.update_menu()
@@ -304,14 +307,14 @@ class NotifyMeApp:
         current = self.config.get_reminder_sound_enabled(reminder_type)
         self.config.set_reminder_sound_enabled(reminder_type, not current)
         new_state = "enabled" if not current else "disabled"
-        logging.info("%s sound %s", reminder_type.title(), new_state)
+        self.logger.info("%s sound %s", reminder_type.title(), new_state)
         self.update_menu()
 
     # TTS control methods
     def toggle_tts(self) -> None:
         """Toggle global Text-to-Speech on/off."""
         self.config.tts_enabled = not self.config.tts_enabled
-        logging.info(
+        self.logger.info(
             "Global TTS %s", "enabled" if self.config.tts_enabled else "disabled"
         )
         self.update_menu()
@@ -321,7 +324,7 @@ class NotifyMeApp:
         current = self.config.get_reminder_tts_enabled(reminder_type)
         self.config.set_reminder_tts_enabled(reminder_type, not current)
         new_state = "enabled" if not current else "disabled"
-        logging.info("%s TTS %s", reminder_type.title(), new_state)
+        self.logger.info("%s TTS %s", reminder_type.title(), new_state)
         self.update_menu()
 
     # Visibility control methods
@@ -330,7 +333,7 @@ class NotifyMeApp:
         current = self.config.get_reminder_hidden(reminder_type)
         self.config.set_reminder_hidden(reminder_type, not current)
         new_state = "hidden" if not current else "visible"
-        logging.info("%s reminder %s", reminder_type.title(), new_state)
+        self.logger.info("%s reminder %s", reminder_type.title(), new_state)
         self.update_menu()
 
     # Pause control methods
@@ -345,13 +348,13 @@ class NotifyMeApp:
         """Set interval for a specific reminder type."""
         self.config.set_reminder_interval_minutes(reminder_type, minutes)
         self.timers.update_timer_interval(reminder_type, minutes)
-        logging.info("%s interval set to %s minutes", reminder_type.title(), minutes)
+        self.logger.info("%s interval set to %s minutes", reminder_type.title(), minutes)
         self.update_icon_title()
 
     # Test notification methods
     def _test_reminder_notification(self, reminder_type: str) -> None:
         """Trigger a test notification for a specific reminder type."""
-        logging.info("User requested test %s notification", reminder_type)
+        self.logger.info("User requested test %s notification", reminder_type)
         try:
             # Show notification sound based on global or reminder-specific setting
             sound_enabled = (
@@ -374,9 +377,9 @@ class NotifyMeApp:
                     tts_message,
                     lang=self.config.tts_language,
                 )
-            logging.info("Test %s notification displayed successfully", reminder_type)
+            self.logger.info("Test %s notification displayed successfully", reminder_type)
         except Exception as e:
-            logging.error("Failed to show test %s notification: %s", reminder_type, e)
+            self.logger.error("Failed to show test %s notification: %s", reminder_type, e)
 
     def show_about(self) -> None:
         """Show about dialog with application information."""
@@ -398,122 +401,73 @@ class NotifyMeApp:
                 "msg": message,
             }
 
-            icon_path = self.notifications._get_icon_path()
+            icon_path = self.notifications.get_icon_path()
             if icon_path:
                 toast_args["icon"] = icon_path
 
             toast = Notification(**toast_args)
             toast.show()
 
-            logging.info("Showed about dialog")
+            self.logger.info("Showed about dialog")
         except Exception as e:
-            logging.error("Failed to show about dialog: %s", e)
+            self.logger.error("Failed to show about dialog: %s", e)
 
     # Medicine reminder methods
     def add_medicine_quick(self) -> None:
         """Open a simplified add-medicine dialog."""
         try:
-            standalone_module = Path(__file__).parent / "medicine_ui_standalone.py"
-            env = os.environ.copy()
-
-            # Determine the Python executable to use
             if getattr(sys, "frozen", False):
-                # In frozen mode, try to find python in the environment
-                # or use the embedded python
-                import shutil
 
-                executable = shutil.which("python") or shutil.which("python3")
-                if not executable:
-                    # If no python found, fall back to main exe with --add-medicine flag
-                    exe_path = Path(sys.executable)
-                    logging.info(
-                        "Launching frozen exe with --add-medicine flag: %s", exe_path
-                    )
-                    # Don't hide the window for the add-medicine dialog
-                    subprocess.Popen([str(exe_path), "--add-medicine"])
-                    logging.info("Opened add medicine dialog (frozen)")
-                    return
+                def open_add_ui() -> None:
+                    run_medicine_ui(add_only=True)
+
+                thread = threading.Thread(target=open_add_ui, daemon=True)
+                thread.start()
+                self.logger.info("Opened add medicine dialog (frozen thread)")
             else:
-                executable = sys.executable
-                if sys.platform == "win32" and executable.endswith("python.exe"):
-                    executable = executable.replace("python.exe", "pythonw.exe")
+                exe = sys.executable
+                if sys.platform == "win32" and exe.endswith("python.exe"):
+                    exe = exe.replace("python.exe", "pythonw.exe")
 
-            logging.info("Launching medicine dialog with: %s", executable)
-            kwargs = {
-                "cwd": str(Path(__file__).parent.parent),
-                "env": env,
-                "stdin": subprocess.DEVNULL,
-                "stdout": subprocess.DEVNULL,
-                "stderr": subprocess.PIPE,  # Capture stderr to log errors
-            }
-
-            if sys.platform == "win32":
-                kwargs["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
-
-            subprocess.Popen(
-                [executable, "-u", str(standalone_module), "--add"], **kwargs
-            )
-            logging.info("Opened add medicine dialog")
+                self.logger.info("Launching add medicine dialog with executable: %s", exe)
+                kwargs = {
+                    "cwd": str(Path(__file__).parent.parent),
+                }
+                if sys.platform == "win32":
+                    kwargs["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
+                subprocess.Popen([exe, "notifyme.py", "--add-medicine"], **kwargs)
+                self.logger.info("Opened add medicine dialog")
         except Exception as e:
-            logging.error("Failed to open add medicine dialog: %s", e, exc_info=True)
+            self.logger.error("Failed to open add medicine dialog: %s", e, exc_info=True)
 
     def manage_medicines(self) -> None:
         """Open the medicine management window in a separate subprocess."""
         try:
-            # If running as a frozen/compiled app (PyInstaller), run in a thread instead
-            # of subprocess to avoid spawning a new instance of the entire app
             if getattr(sys, "frozen", False):
 
-                def open_medicine_ui() -> None:
-                    try:
-                        import tkinter as tk
+                def open_manage_ui() -> None:
+                    run_medicine_ui(add_only=False)
 
-                        from notifyme_app.medicine import MedicineManager
-                        from notifyme_app.medicine_ui import MedicineManagementWindow
-
-                        # Create a new root window
-                        root = tk.Tk()
-                        root.title("Medicine Management")
-                        root.geometry("800x600")
-
-                        # Create and display the medicine management window
-                        medicine_manager = MedicineManager()
-                        window = MedicineManagementWindow(root, medicine_manager)
-
-                        # Run the window's event loop
-                        root.mainloop()
-                    except Exception as e:
-                        logging.error("Error in medicine UI: %s", e, exc_info=True)
-
-                # Run in a daemon thread so it doesn't block the main app
-                thread = threading.Thread(target=open_medicine_ui, daemon=True)
+                thread = threading.Thread(target=open_manage_ui, daemon=True)
                 thread.start()
-                logging.info("Opened medicine management UI")
+                self.logger.info("Opened medicine management UI (frozen thread)")
             else:
-                # If running as a regular Python script, use subprocess
-                standalone_module = Path(__file__).parent / "medicine_ui_standalone.py"
-                env = os.environ.copy()
+                exe = sys.executable
+                if sys.platform == "win32" and exe.endswith("python.exe"):
+                    exe = exe.replace("python.exe", "pythonw.exe")
 
-                # Use pythonw.exe on Windows
-                executable = sys.executable
-                if sys.platform == "win32" and executable.endswith("python.exe"):
-                    executable = executable.replace("python.exe", "pythonw.exe")
-
+                self.logger.info(
+                    "Launching manage medicines dialog with executable: %s", exe
+                )
                 kwargs = {
                     "cwd": str(Path(__file__).parent.parent),
-                    "env": env,
-                    "stdin": subprocess.DEVNULL,
-                    "stdout": subprocess.DEVNULL,
-                    "stderr": subprocess.DEVNULL,
                 }
-
                 if sys.platform == "win32":
                     kwargs["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
-
-                subprocess.Popen([executable, "-u", str(standalone_module)], **kwargs)
-                logging.info("Opened medicine management UI")
+                subprocess.Popen([exe, "notifyme.py", "--manage-medicines"], **kwargs)
+                self.logger.info("Opened medicine management UI")
         except Exception as e:
-            logging.error("Failed to open medicine management: %s", e)
+            self.logger.error("Failed to open medicine management: %s", e)
 
     def mark_medicine_completed(self, meal_time: str) -> None:
         """Mark medicine as completed for a specific meal time."""
@@ -529,15 +483,15 @@ class NotifyMeApp:
             )
             notification.show()
 
-            logging.info("Marked %s medicine as completed", meal_time)
+            self.logger.info("Marked %s medicine as completed", meal_time)
             self.update_menu()
         except Exception as e:
-            logging.error("Failed to mark medicine completed: %s", e)
+            self.logger.error("Failed to mark medicine completed: %s", e)
 
     def toggle_medicine_enabled(self) -> None:
         """Toggle medicine reminders on/off."""
         self.config.medicine_enabled = not self.config.medicine_enabled
-        logging.info(
+        self.logger.info(
             "Medicine reminders %s",
             "enabled" if self.config.medicine_enabled else "disabled",
         )
@@ -639,13 +593,27 @@ class NotifyMeApp:
             )
         return ", ".join(status_parts)
 
+    def check_medicine_updates(self) -> None:
+        """Check if medicine storage has been updated by another process."""
+        path = self.medicine_manager.medicines_file
+        if path.exists():
+            try:
+                mtime = os.path.getmtime(path)
+                if self._medicine_mtime is not None and mtime > self._medicine_mtime:
+                    self.logger.info("Medicine storage updated externally, reloading...")
+                    self.medicine_manager.load_medicines()
+                    self.update_menu()
+                self._medicine_mtime = mtime
+            except Exception as e:
+                self.logger.error("Failed to check medicine updates: %s", e)
+
     def quit_app(self) -> None:
         """Quit the application."""
         self.stop_reminders()
         if self.icon:
             self.icon.stop()
         # No need to stop TTS manager - it's created on-demand and cleans itself up
-        logging.info("Application closed")
+        self.logger.info("Application closed")
 
     def run(self) -> None:
         """Run the application with system tray icon and timers."""
@@ -680,8 +648,8 @@ class NotifyMeApp:
         self.notifications.show_welcome_notification()
 
         # Run the icon in a separate thread so main thread can handle signals
-        logging.info("%s is running in the system tray", APP_NAME)
-        logging.info(
+        self.logger.info("%s is running in the system tray", APP_NAME)
+        self.logger.info(
             (
                 "Blink interval: %s minutes, Walking interval: %s minutes,"
                 " Water interval: %s minutes, Pranayama interval: %s minutes"
@@ -691,7 +659,7 @@ class NotifyMeApp:
             self.config.get_reminder_interval_minutes(REMINDER_WATER),
             self.config.get_reminder_interval_minutes(REMINDER_PRANAYAMA),
         )
-        logging.info("%s version: %s", APP_NAME, self.updater.get_current_version())
+        self.logger.info("%s version: %s", APP_NAME, self.updater.get_current_version())
         print(f"{APP_NAME} is running. Press Ctrl+C to quit.")
 
         self.icon.run_detached()
@@ -703,9 +671,10 @@ class NotifyMeApp:
                     timer.is_running for timer in self.timers.timers.values()
                 ) and (not self.icon or not self.icon.visible):
                     break
+                self.check_medicine_updates()
                 time.sleep(0.5)
         except KeyboardInterrupt:
             print("\nShutting down...")
-            logging.info("Received Ctrl+C, shutting down...")
+            self.logger.info("Received Ctrl+C, shutting down...")
         finally:
             self.quit_app()

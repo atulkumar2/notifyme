@@ -138,13 +138,20 @@ catch {
         Remove-Item -Path $TempDist -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
     }
 
-    if (-not $SkipPause) {
+    # Check if the script was launched from Windows Explorer
+    $ParentProcessId = (Get-CimInstance Win32_Process -Filter "ProcessId=$PID").ParentProcessId
+    $ParentProcessName = (Get-Process -Id $ParentProcessId).Name
+
+    if ($ParentProcessName -eq "explorer" -and -not $SkipPause) {
         Read-Host "Press Enter to exit"
     }
     exit 1
 }
 
-if (-not $SkipPause) {
+$ParentProcessId = (Get-CimInstance Win32_Process -Filter "ProcessId=$PID").ParentProcessId
+$ParentProcessName = (Get-Process -Id $ParentProcessId).Name
+
+if ($ParentProcessName -eq "explorer" -and -not $SkipPause) {
     Write-Host ""
     Read-Host "Press Enter to exit"
 }

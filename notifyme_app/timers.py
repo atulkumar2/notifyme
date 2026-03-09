@@ -5,12 +5,12 @@ This module handles the background timer threads that trigger reminders
 at specified intervals, with support for idle detection and pause states.
 """
 
-import logging
 import threading
 import time
 from collections.abc import Callable
 
 from notifyme_app.constants import DEFAULT_OFFSETS_SECONDS
+from notifyme_app.logger import get_logger
 from notifyme_app.utils import get_idle_seconds
 
 
@@ -50,29 +50,31 @@ class ReminderTimer:
             self.is_paused = False
             self.thread = threading.Thread(target=self._timer_worker, daemon=True)
             self.thread.start()
-            logging.info("%s timer started", self.reminder_type.capitalize())
+            get_logger(__name__).info(
+                "%s timer started", self.reminder_type.capitalize()
+            )
 
     def stop(self) -> None:
         """Stop the reminder timer."""
         self.is_running = False
         self.is_paused = False
-        logging.info("%s timer stopped", self.reminder_type.capitalize())
+        get_logger(__name__).info("%s timer stopped", self.reminder_type.capitalize())
 
     def pause(self) -> None:
         """Pause the reminder timer."""
         self.is_paused = True
-        logging.info("%s timer paused", self.reminder_type.capitalize())
+        get_logger(__name__).info("%s timer paused", self.reminder_type.capitalize())
 
     def resume(self) -> None:
         """Resume the reminder timer."""
         self.is_paused = False
-        logging.info("%s timer resumed", self.reminder_type.capitalize())
+        get_logger(__name__).info("%s timer resumed", self.reminder_type.capitalize())
 
     def snooze(self, minutes: int = 5) -> None:
         """Snooze the reminder for specified minutes."""
         if self.is_running and not self.is_paused:
             self.next_reminder_time = time.time() + (minutes * 60)
-            logging.info(
+            get_logger(__name__).info(
                 "%s timer snoozed for %d minutes",
                 self.reminder_type.capitalize(),
                 minutes,
@@ -81,7 +83,7 @@ class ReminderTimer:
     def update_interval(self, interval_minutes: int) -> None:
         """Update the reminder interval."""
         self.interval_minutes = interval_minutes
-        logging.info(
+        get_logger(__name__).info(
             "%s interval updated to %d minutes",
             self.reminder_type.capitalize(),
             interval_minutes,
@@ -95,7 +97,7 @@ class ReminderTimer:
 
         if idle_seconds >= interval_seconds:
             if not self.idle_suppressed:
-                logging.info(
+                get_logger(__name__).info(
                     "%s reminder reset due to user idle/lock",
                     self.reminder_type.capitalize(),
                 )
@@ -158,35 +160,35 @@ class TimerManager:
         self.is_global_paused = False
         for timer in self.timers.values():
             timer.start()
-        logging.info("All timers started")
+        get_logger(__name__).info("All timers started")
 
     def stop_all(self) -> None:
         """Stop all registered timers."""
         self.is_global_paused = False
         for timer in self.timers.values():
             timer.stop()
-        logging.info("All timers stopped")
+        get_logger(__name__).info("All timers stopped")
 
     def pause_all(self) -> None:
         """Pause all registered timers."""
         self.is_global_paused = True
         for timer in self.timers.values():
             timer.pause()
-        logging.info("All timers paused")
+        get_logger(__name__).info("All timers paused")
 
     def resume_all(self) -> None:
         """Resume all registered timers."""
         self.is_global_paused = False
         for timer in self.timers.values():
             timer.resume()
-        logging.info("All timers resumed")
+        get_logger(__name__).info("All timers resumed")
 
     def snooze_all(self, minutes: int = 5) -> None:
         """Snooze all active timers."""
         for timer in self.timers.values():
             if not timer.is_paused:
                 timer.snooze(minutes)
-        logging.info("All active timers snoozed for %d minutes", minutes)
+        get_logger(__name__).info("All active timers snoozed for %d minutes", minutes)
 
     def get_timer(self, reminder_type: str):
         """Get a specific timer by reminder type."""

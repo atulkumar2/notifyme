@@ -5,11 +5,12 @@ This module provides a tkinter-based GUI for managing medicines,
 including adding, editing, and deleting medicine entries.
 """
 
-import logging
 import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox, ttk
 from typing import Callable
+
+from notifyme_app.logger import get_logger
 
 from notifyme_app.constants import (
     ALL_MEDICINE_TIMES,
@@ -19,33 +20,29 @@ from notifyme_app.constants import (
 from notifyme_app.medicine import Medicine, MedicineManager
 
 
-class MedicineDialog(tk.Toplevel):
-    """Dialog for adding or editing a medicine entry."""
+class MedicineEditFrame(ttk.Frame):
+    """Frame for adding or editing a medicine entry."""
 
     def __init__(
         self,
-        parent: tk.Tk | tk.Toplevel,
+        parent: tk.Widget,
         medicine: Medicine | None = None,
         on_save: Callable[[Medicine], None] | None = None,
+        on_cancel: Callable[[], None] | None = None,
     ):
-        """Initialize the medicine dialog.
+        """Initialize the medicine edit frame.
 
         Args:
-            parent: Parent window
+            parent: Parent widget
             medicine: Medicine to edit (None for new medicine)
             on_save: Callback when medicine is saved
+            on_cancel: Callback when edit is cancelled
         """
-        super().__init__(parent)
-        self.title("Medicine Details")
-        self.geometry("500x650")
-        self.resizable(False, False)
+        super().__init__(parent, padding="10")
+        self.logger = get_logger(__name__)
         self.medicine = medicine
         self.on_save = on_save
-        self.result = None
-
-        # Make dialog modal
-        self.transient(parent)
-        self.grab_set()
+        self.on_cancel = on_cancel
 
         self._create_widgets()
 
@@ -53,52 +50,52 @@ class MedicineDialog(tk.Toplevel):
             self._populate_fields(medicine)
 
     def _create_widgets(self) -> None:
-        """Create the dialog widgets."""
-        main_frame = ttk.Frame(self, padding="10")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+        """Create the frame widgets."""
+        # Title
+        title_label = ttk.Label(
+            self,
+            text="Medicine Details",
+            font=("Arial", 14, "bold"),
+            padding=(0, 0, 0, 10),
+        )
+        title_label.grid(row=0, column=0, columnspan=2, sticky=tk.W)
 
         # Medicine Name
-        ttk.Label(main_frame, text="Medicine Name:").grid(
-            row=0, column=0, sticky=tk.W, pady=5
-        )
-        self.name_entry = ttk.Entry(main_frame, width=40)
-        self.name_entry.grid(row=0, column=1, sticky=tk.EW, pady=5)
+        ttk.Label(self, text="Medicine Name:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        self.name_entry = ttk.Entry(self, width=40)
+        self.name_entry.grid(row=1, column=1, sticky=tk.EW, pady=5)
 
         # Dosage
-        ttk.Label(main_frame, text="Dosage:").grid(row=1, column=0, sticky=tk.W, pady=5)
-        self.dosage_entry = ttk.Entry(main_frame, width=40)
-        self.dosage_entry.grid(row=1, column=1, sticky=tk.EW, pady=5)
-        ttk.Label(
-            main_frame, text="(e.g., '1 tablet', '5ml', '500mg')", font=("Arial", 9)
-        ).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
+        ttk.Label(self, text="Dosage:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        self.dosage_entry = ttk.Entry(self, width=40)
+        self.dosage_entry.grid(row=2, column=1, sticky=tk.EW, pady=5)
+        ttk.Label(self, text="(e.g., '1 tablet', '5ml', '500mg')", font=("Arial", 9)).grid(
+            row=3, column=0, columnspan=2, sticky=tk.W, pady=(0, 10)
+        )
 
         # Disease Type
-        ttk.Label(main_frame, text="Disease Type:").grid(
-            row=3, column=0, sticky=tk.W, pady=5
-        )
+        ttk.Label(self, text="Disease Type:").grid(row=4, column=0, sticky=tk.W, pady=5)
         self.disease_var = tk.StringVar()
         disease_combo = ttk.Combobox(
-            main_frame,
+            self,
             textvariable=self.disease_var,
             values=COMMON_DISEASES,
             state="readonly",
             width=37,
         )
-        disease_combo.grid(row=3, column=1, sticky=tk.EW, pady=5)
+        disease_combo.grid(row=4, column=1, sticky=tk.EW, pady=5)
 
         # Custom Disease (shown when "Other" is selected)
-        ttk.Label(main_frame, text="Custom Disease:").grid(
-            row=4, column=0, sticky=tk.W, pady=5
-        )
-        self.custom_disease_entry = ttk.Entry(main_frame, width=40)
-        self.custom_disease_entry.grid(row=4, column=1, sticky=tk.EW, pady=5)
+        ttk.Label(self, text="Custom Disease:").grid(row=5, column=0, sticky=tk.W, pady=5)
+        self.custom_disease_entry = ttk.Entry(self, width=40)
+        self.custom_disease_entry.grid(row=5, column=1, sticky=tk.EW, pady=5)
 
         # Binding to show/hide custom disease
         disease_combo.bind("<<ComboboxSelected>>", self._on_disease_selected)
 
         # Meal Times
-        ttk.Label(main_frame, text="Take with meals:").grid(
-            row=5, column=0, columnspan=2, sticky=tk.W, pady=(15, 5)
+        ttk.Label(self, text="Take with meals:").grid(
+            row=6, column=0, columnspan=2, sticky=tk.W, pady=(15, 5)
         )
 
         self.meal_time_vars = {}
@@ -106,44 +103,40 @@ class MedicineDialog(tk.Toplevel):
             meal_label = MedicineTimeLabels.get(meal_time, meal_time.title())
             var = tk.BooleanVar()
             self.meal_time_vars[meal_time] = var
-            check = ttk.Checkbutton(main_frame, text=meal_label, variable=var)
-            check.grid(row=6 + idx, column=0, columnspan=2, sticky=tk.W, pady=2)
+            check = ttk.Checkbutton(self, text=meal_label, variable=var)
+            check.grid(row=7 + idx, column=0, columnspan=2, sticky=tk.W, pady=2)
 
         # Duration
-        ttk.Label(main_frame, text="Duration:").grid(
-            row=9, column=0, sticky=tk.W, pady=(15, 5)
-        )
-        ttk.Label(main_frame, text="Days (0 = continuous):").grid(
-            row=10, column=0, sticky=tk.W, pady=5
-        )
-        self.duration_spinbox = ttk.Spinbox(main_frame, from_=0, to=3650, width=10)
-        self.duration_spinbox.set(0)
-        self.duration_spinbox.grid(row=10, column=1, sticky=tk.W, pady=5)
-
-        # Start Date
-        ttk.Label(main_frame, text="Start Date:").grid(
+        ttk.Label(self, text="Duration:").grid(row=10, column=0, sticky=tk.W, pady=(15, 5))
+        ttk.Label(self, text="Days (0 = continuous):").grid(
             row=11, column=0, sticky=tk.W, pady=5
         )
-        self.date_entry = ttk.Entry(main_frame, width=40)
+        self.duration_spinbox = ttk.Spinbox(self, from_=0, to=3650, width=10)
+        self.duration_spinbox.set(0)
+        self.duration_spinbox.grid(row=11, column=1, sticky=tk.W, pady=5)
+
+        # Start Date
+        ttk.Label(self, text="Start Date:").grid(row=12, column=0, sticky=tk.W, pady=5)
+        self.date_entry = ttk.Entry(self, width=40)
         self.date_entry.insert(0, datetime.now().strftime("%Y-%m-%d"))
-        self.date_entry.grid(row=11, column=1, sticky=tk.EW, pady=5)
-        ttk.Label(main_frame, text="(YYYY-MM-DD)", font=("Arial", 9)).grid(
-            row=12, column=0, columnspan=2, sticky=tk.W, pady=(0, 10)
+        self.date_entry.grid(row=12, column=1, sticky=tk.EW, pady=5)
+        ttk.Label(self, text="(YYYY-MM-DD)", font=("Arial", 9)).grid(
+            row=13, column=0, columnspan=2, sticky=tk.W, pady=(0, 10)
         )
 
         # Buttons
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=13, column=0, columnspan=2, sticky=tk.EW, pady=(20, 0))
+        button_frame = ttk.Frame(self)
+        button_frame.grid(row=14, column=0, columnspan=2, sticky=tk.EW, pady=(20, 0))
 
         ttk.Button(button_frame, text="Save", command=self._save).pack(
             side=tk.LEFT, padx=5
         )
-        ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(
+        ttk.Button(button_frame, text="Cancel", command=self._cancel).pack(
             side=tk.LEFT, padx=5
         )
 
         # Configure grid weight
-        main_frame.columnconfigure(1, weight=1)
+        self.columnconfigure(1, weight=1)
 
     def _on_disease_selected(self, _event=None) -> None:
         """Handle disease selection change."""
@@ -171,9 +164,14 @@ class MedicineDialog(tk.Toplevel):
             var.set(meal_time in medicine.meal_times)
 
         self.duration_spinbox.delete(0, tk.END)
-        self.duration_spinbox.insert(0, str(medicine.duration_days))
+        self.duration_spinbox.set(str(medicine.duration_days))
         self.date_entry.delete(0, tk.END)
         self.date_entry.insert(0, medicine.start_date)
+
+    def _cancel(self) -> None:
+        """Cancel the edit and return to the list."""
+        if self.on_cancel:
+            self.on_cancel()
 
     def _save(self) -> None:
         """Save and validate the medicine entry."""
@@ -198,9 +196,7 @@ class MedicineDialog(tk.Toplevel):
             return
 
         if disease == "Other" and not custom_disease:
-            messagebox.showwarning(
-                "Missing Field", "Please enter a custom disease name."
-            )
+            messagebox.showwarning("Missing Field", "Please enter a custom disease name.")
             return
 
         # Get selected meal times
@@ -224,9 +220,7 @@ class MedicineDialog(tk.Toplevel):
             if duration < 0:
                 raise ValueError
         except ValueError:
-            messagebox.showerror(
-                "Invalid Duration", "Duration must be a positive number."
-            )
+            messagebox.showerror("Invalid Duration", "Duration must be a positive number.")
             return
 
         # Create medicine object
@@ -240,64 +234,60 @@ class MedicineDialog(tk.Toplevel):
             custom_disease=custom_disease,
         )
 
-        self.result = medicine
         if self.on_save:
             self.on_save(medicine)
 
-        self.destroy()
 
+class MedicineListFrame(ttk.Frame):
+    """Frame for managing medicines list."""
 
-class MedicineManagementWindow(tk.Toplevel):
-    """Main window for managing medicines."""
-
-    def __init__(self, parent: tk.Tk | tk.Toplevel, medicine_manager: MedicineManager):
-        """Initialize the medicine management window.
+    def __init__(
+        self,
+        parent: tk.Widget,
+        medicine_manager: MedicineManager,
+        on_add: Callable[[], None],
+        on_edit: Callable[[Medicine, int], None],
+    ):
+        """Initialize the medicine list frame.
 
         Args:
-            parent: Parent window
+            parent: Parent widget
             medicine_manager: MedicineManager instance
+            on_add: Callback to show add frame
+            on_edit: Callback to show edit frame
         """
-        super().__init__(parent)
-        self.title("Medicine Management")
-        self.geometry("800x500")
-        self.resizable(True, True)
+        super().__init__(parent, padding="10")
+        self.logger = get_logger(__name__)
         self.medicine_manager = medicine_manager
-
-        # Make dialog modal
-        self.transient(parent)
-        self.grab_set()
+        self.on_add = on_add
+        self.on_edit = on_edit
 
         self._create_widgets()
-        self._refresh_list()
+        self.refresh()
 
     def _create_widgets(self) -> None:
         """Create the window widgets."""
         # Top frame for buttons
-        button_frame = ttk.Frame(self, padding="10")
-        button_frame.pack(fill=tk.X, side=tk.TOP)
+        button_frame = ttk.Frame(self)
+        button_frame.pack(fill=tk.X, side=tk.TOP, pady=(0, 10))
 
-        ttk.Button(
-            button_frame, text="➕ Add Medicine", command=self._add_medicine
-        ).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="✏️ Edit", command=self._edit_medicine).pack(
+        ttk.Button(button_frame, text="➕ Add Medicine", command=self.on_add).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(button_frame, text="✏️ Edit", command=self._on_edit_click).pack(
             side=tk.LEFT, padx=5
         )
         ttk.Button(button_frame, text="🗑️ Delete", command=self._delete_medicine).pack(
             side=tk.LEFT, padx=5
         )
-        ttk.Button(button_frame, text="Close", command=self.destroy).pack(
-            side=tk.RIGHT, padx=5
-        )
 
         # Treeview for medicines
-        tree_frame = ttk.Frame(self, padding="10")
+        tree_frame = ttk.Frame(self)
         tree_frame.pack(fill=tk.BOTH, expand=True)
 
         # Create treeview
         columns = ("Name", "Dosage", "Disease", "Meals", "Duration", "Status")
-        self.tree = ttk.Treeview(
-            tree_frame, columns=columns, height=15, show="headings"
-        )
+        self.tree = ttk.Treeview(tree_frame, columns=columns, height=15, show="headings")
 
         # Define headings and widths
         self.tree.heading("Name", text="Medicine Name")
@@ -327,7 +317,7 @@ class MedicineManagementWindow(tk.Toplevel):
         tree_frame.columnconfigure(0, weight=1)
         tree_frame.rowconfigure(0, weight=1)
 
-    def _refresh_list(self) -> None:
+    def refresh(self) -> None:
         """Refresh the medicine list."""
         # Clear existing items
         for item in self.tree.get_children():
@@ -361,78 +351,125 @@ class MedicineManagementWindow(tk.Toplevel):
                 ),
             )
 
-    def _add_medicine(self) -> None:
-        """Open dialog to add a new medicine."""
-        dialog = MedicineDialog(self, on_save=self._on_medicine_saved)
-        self.wait_window(dialog)
-
-    def _edit_medicine(self) -> None:
-        """Edit the selected medicine."""
+    def _on_edit_click(self) -> None:
+        """Handle edit button click."""
         selection = self.tree.selection()
         if not selection:
             messagebox.showwarning("No Selection", "Please select a medicine to edit.")
             return
 
-        item_id = selection[0]
-        medicine = self.medicine_manager.medicines[int(item_id)]
-
-        dialog = MedicineDialog(
-            self, medicine=medicine, on_save=self._on_medicine_saved
-        )
-        self.wait_window(dialog)
+        item_id = int(selection[0])
+        medicine = self.medicine_manager.medicines[item_id]
+        self.on_edit(medicine, item_id)
 
     def _delete_medicine(self) -> None:
         """Delete the selected medicine."""
         selection = self.tree.selection()
         if not selection:
-            messagebox.showwarning(
-                "No Selection", "Please select a medicine to delete."
-            )
+            messagebox.showwarning("No Selection", "Please select a medicine to delete.")
             return
 
-        item_id = selection[0]
-        medicine = self.medicine_manager.medicines[int(item_id)]
+        item_id = int(selection[0])
+        medicine = self.medicine_manager.medicines[item_id]
 
         if messagebox.askyesno(
             "Confirm Delete",
             f"Are you sure you want to delete '{medicine.name}'?\n\nThis action cannot be undone.",
         ):
-            self.medicine_manager.remove_medicine(int(item_id))
-            self._refresh_list()
+            self.medicine_manager.remove_medicine(item_id)
+            self.refresh()
             messagebox.showinfo("Success", f"'{medicine.name}' has been deleted.")
 
-    def _on_medicine_saved(self, medicine: Medicine) -> None:
-        """Handle medicine save event."""
-        selection = self.tree.selection()
 
-        if selection:
-            # Editing existing medicine
-            item_id = selection[0]
-            existing = self.medicine_manager.medicines[int(item_id)]
-            idx = self.medicine_manager.medicines.index(existing)
-            self.medicine_manager.medicines[idx] = medicine
-            messagebox.showinfo("Success", f"'{medicine.name}' has been updated.")
+class MedicineMainApplication(tk.Tk):
+    """Main application class for Medicine Management."""
+
+    def __init__(self, medicine_manager: MedicineManager, add_only: bool = False):
+        """Initialize the medicine application."""
+        super().__init__()
+        self.logger = get_logger(__name__)
+        self.medicine_manager = medicine_manager
+        self.add_only = add_only
+
+        self.title("Medicine Management")
+        self.geometry("800x650")
+        self.minsize(600, 500)
+
+        # Container for screens
+        self.container = ttk.Frame(self)
+        self.container.pack(fill=tk.BOTH, expand=True)
+
+        self.current_frame: ttk.Frame | None = None
+
+        if add_only:
+            self.show_edit()
         else:
-            # Adding new medicine
-            self.medicine_manager.add_medicine(medicine)
-            messagebox.showinfo("Success", f"'{medicine.name}' has been added.")
+            self.show_list()
 
-        self._refresh_list()
-        logging.info("Medicine saved: %s", medicine.name)
+    def show_list(self) -> None:
+        """Show the medicine list screen."""
+        if self.current_frame:
+            self.current_frame.destroy()
+
+        self.current_frame = MedicineListFrame(
+            self.container,
+            self.medicine_manager,
+            on_add=lambda: self.show_edit(),
+            on_edit=self.show_edit,
+        )
+        self.current_frame.pack(fill=tk.BOTH, expand=True)
+        self.title("Medicine Management - List")
+
+    def show_edit(self, medicine: Medicine | None = None, index: int | None = None) -> None:
+        """Show the medicine edit/add screen."""
+        if self.current_frame:
+            self.current_frame.destroy()
+
+        def on_save(new_medicine: Medicine) -> None:
+            if index is not None:
+                # Update existing
+                self.medicine_manager.medicines[index] = new_medicine
+                self.medicine_manager.save_medicines()
+                messagebox.showinfo("Success", f"'{new_medicine.name}' updated.")
+            else:
+                # Add new
+                self.medicine_manager.add_medicine(new_medicine)
+                messagebox.showinfo("Success", f"'{new_medicine.name}' added.")
+
+            if self.add_only:
+                self.destroy()
+            else:
+                self.show_list()
+
+        def on_cancel() -> None:
+            if self.add_only:
+                self.destroy()
+            else:
+                self.show_list()
+
+        self.current_frame = MedicineEditFrame(
+            self.container, medicine=medicine, on_save=on_save, on_cancel=on_cancel
+        )
+        self.current_frame.pack(fill=tk.BOTH, expand=True)
+
+        mode = "Edit" if medicine else "Add"
+        self.title(f"Medicine Management - {mode} Medicine")
 
 
-def open_medicine_management(
-    parent: tk.Tk | tk.Toplevel, medicine_manager: MedicineManager
-) -> None:
-    """Open the medicine management window.
-
-    Args:
-        parent: Parent window
-        medicine_manager: MedicineManager instance
-    """
+def run_medicine_ui(add_only: bool = False) -> None:
+    """Entry point to run the medicine management UI."""
+    logger = get_logger(__name__)
+    logger.info("Starting medicine UI (add_only=%s)", add_only)
     try:
-        MedicineManagementWindow(parent, medicine_manager)
-        logging.info("Opened medicine management window")
+        logger.debug("Initializing MedicineManager")
+        medicine_manager = MedicineManager()
+        logger.debug("MedicineManager initialized")
+
+        logger.debug("Initializing MedicineMainApplication")
+        app = MedicineMainApplication(medicine_manager, add_only=add_only)
+        logger.debug("MedicineMainApplication initialized, starting mainloop")
+        app.mainloop()
+        logger.info("Medicine UI mainloop exited")
     except Exception as e:
-        logging.error("Failed to open medicine management: %s", e)
-        messagebox.showerror("Error", f"Failed to open medicine management:\n{e}")
+        logger.error("Failed to run medicine UI: %s", e, exc_info=True)
+        messagebox.showerror("Error", f"Failed to run medicine UI:\n{e}")

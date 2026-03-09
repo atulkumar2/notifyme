@@ -6,7 +6,6 @@ and managing update notifications.
 """
 
 import json
-import logging
 import threading
 from datetime import datetime, timezone
 from urllib.request import Request, urlopen
@@ -18,6 +17,7 @@ from notifyme_app.constants import (
     UPDATE_CHECK_TIMEOUT_SECONDS,
 )
 from notifyme_app.utils import parse_version
+from notifyme_app.logger import get_logger
 
 
 class UpdateChecker:
@@ -59,7 +59,9 @@ class UpdateChecker:
             if parse_version(latest) > parse_version(current):
                 self.update_available = True
                 self.latest_version = latest
-                logging.info("Update available: %s (current: %s)", latest, current)
+                get_logger(__name__).info(
+                    "Update available: %s (current: %s)", latest, current
+                )
 
                 # Call update callback if provided
                 if self.update_callback:
@@ -67,10 +69,10 @@ class UpdateChecker:
             else:
                 self.update_available = False
                 self.latest_version = latest
-                logging.info("No update available (current: %s)", current)
+                get_logger(__name__).info("No update available (current: %s)", current)
 
         except Exception as e:
-            logging.error("Failed to check for updates: %s", e)
+            get_logger(__name__).error("Failed to check for updates: %s", e)
         finally:
             self.last_update_check_at = datetime.now(timezone.utc)
 

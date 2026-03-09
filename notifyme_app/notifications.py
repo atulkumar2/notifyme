@@ -5,7 +5,6 @@ This module handles displaying Windows toast notifications for different
 reminder types with appropriate messages and sound settings.
 """
 
-import logging
 import random
 import time
 
@@ -18,6 +17,7 @@ from notifyme_app.constants import (
     REMINDER_MESSAGES,
     REMINDER_TITLES,
 )
+from notifyme_app.logger import get_logger
 from notifyme_app.utils import format_elapsed, get_resource_path
 
 
@@ -26,6 +26,7 @@ class NotificationManager:
 
     def __init__(self):
         """Initialize the notification manager."""
+        self.logger = get_logger(__name__)
         self.icon_file = get_resource_path("icon.png")
         self.icon_file_ico = get_resource_path("icon.ico")
         self._ensure_ico_exists()
@@ -36,15 +37,15 @@ class NotificationManager:
             try:
                 img = Image.open(self.icon_file)
                 img.save(self.icon_file_ico, format="ICO")
-                logging.info("Created icon.ico from %s", self.icon_file.name)
+                self.logger.info("Created icon.ico from %s", self.icon_file.name)
             except Exception as e:
-                logging.error("Failed to create .ico file: %s", e)
+                self.logger.error("Failed to create .ico file: %s", e)
 
-    def _get_icon_path(self):
+    def get_icon_path(self):
         """Get the path to the notification icon."""
         if self.icon_file_ico.exists():
             return str(self.icon_file_ico)
-        elif self.icon_file.exists():
+        if self.icon_file.exists():
             return str(self.icon_file)
         return None
 
@@ -62,8 +63,8 @@ class NotificationManager:
             message = f"{message}\nLast reminder: {format_elapsed(elapsed)} ago."
 
         try:
-            icon_path = self._get_icon_path()
-            logging.info("Showing notification: %s", message)
+            icon_path = self.get_icon_path()
+            self.logger.info("Showing notification: %s", message)
 
             # Create notification using winotify
             toast_args = {
@@ -84,7 +85,7 @@ class NotificationManager:
             # Return the selected message so callers can optionally use it (e.g. for TTS)
             return message
         except Exception as e:
-            logging.error("Error showing notification: %s", e)
+            self.logger.error("Error showing notification: %s", e)
             return message
 
     def show_reminder_notification(
@@ -101,7 +102,9 @@ class NotificationManager:
             reminder_type not in REMINDER_TITLES
             or reminder_type not in REMINDER_MESSAGES
         ):
-            logging.warning("Unknown reminder type for notification: %s", reminder_type)
+            self.logger.warning(
+                "Unknown reminder type for notification: %s", reminder_type
+            )
 
         return self.show_notification(title, messages, last_shown_at, sound_enabled)
 
@@ -117,12 +120,12 @@ class NotificationManager:
             toast.set_audio(audio.Default, loop=False)
             toast.show()
         except Exception as e:
-            logging.error("Error showing update notification: %s", e)
+            self.logger.error("Error showing update notification: %s", e)
 
     def show_welcome_notification(self) -> None:
         """Show a welcome notification when the app starts."""
         try:
-            icon_path = self._get_icon_path()
+            icon_path = self.get_icon_path()
 
             message = (
                 f"{APP_NAME} is now installed and running in your system tray!\n"
@@ -142,6 +145,6 @@ class NotificationManager:
             toast.set_audio(audio.Default, loop=False)
             toast.show()
 
-            logging.info("Showed welcome notification")
+            self.logger.info("Showed welcome notification")
         except Exception as e:
-            logging.error("Error showing welcome notification: %s", e)
+            self.logger.error("Error showing welcome notification: %s", e)

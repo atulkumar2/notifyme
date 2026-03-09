@@ -5,13 +5,14 @@ This module handles medicine schedules, tracking, and completion status.
 """
 
 import json
-import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any
 
 from notifyme_app.constants import (
     DEFAULT_MEDICINE_TIME_WINDOWS,
 )
+from notifyme_app.logger import get_logger
 from notifyme_app.utils import get_app_data_dir
 
 
@@ -94,57 +95,71 @@ class MedicineManager:
 
     def __init__(self):
         """Initialize the medicine manager."""
+        self.logger = get_logger(__name__)
+        self.logger.debug("Initializing MedicineManager")
         self.medicines_file = get_app_data_dir() / "medicines.json"
         self.completion_file = get_app_data_dir() / "medicine_completion.json"
+        self.logger.debug("Medicines file: %s", self.medicines_file)
+        self.logger.debug("Completion file: %s", self.completion_file)
         self.medicines: list[Medicine] = []
         self.completions: dict[str, dict[str, str]] = {}
-        self._load_medicines()
-        self._load_completions()
+        self.load_medicines()
+        self.load_completions()
+        self.logger.debug("MedicineManager initialized successfully")
 
-    def _load_medicines(self) -> None:
+    def load_medicines(self) -> None:
         """Load medicines from file."""
+        self.logger.debug("Loading medicines from %s", self.medicines_file)
         if self.medicines_file.exists():
             try:
                 with open(self.medicines_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self.medicines = [Medicine.from_dict(m) for m in data]
-                logging.info("Loaded %d medicines", len(self.medicines))
+                self.logger.info("Loaded %d medicines", len(self.medicines))
             except Exception as e:
-                logging.error("Error loading medicines: %s", e)
+                self.logger.error("Error loading medicines: %s", e)
                 self.medicines = []
         else:
+            self.logger.debug("Medicines file does not exist")
             self.medicines = []
 
-    def _save_medicines(self) -> None:
+    def save_medicines(self) -> None:
         """Save medicines to file."""
         try:
-            with open(self.medicines_file, "w", encoding="utf-8") as f:
+            temp_file = self.medicines_file.with_suffix(".json.tmp")
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump([m.to_dict() for m in self.medicines], f, indent=4)
-            logging.info("Saved %d medicines", len(self.medicines))
+            os.replace(temp_file, self.medicines_file)
+            self.logger.info("Saved %d medicines", len(self.medicines))
         except Exception as e:
-            logging.error("Error saving medicines: %s", e)
+            self.logger.error("Error saving medicines: %s", e)
 
-    def _load_completions(self) -> None:
+    def load_completions(self) -> None:
         """Load completion tracking from file."""
+        self.logger.debug("Loading completions from %s", self.completion_file)
         if self.completion_file.exists():
             try:
                 with open(self.completion_file, encoding="utf-8") as f:
                     self.completions = json.load(f)
+                self.logger.debug("Loaded completions for %d dates", len(self.completions))
                 # Clean up old completions (older than 7 days)
                 self._cleanup_old_completions()
             except Exception as e:
-                logging.error("Error loading completions: %s", e)
+                self.logger.error("Error loading completions: %s", e)
                 self.completions = {}
         else:
+            self.logger.debug("Completions file does not exist")
             self.completions = {}
 
-    def _save_completions(self) -> None:
+    def save_completions(self) -> None:
         """Save completion tracking to file."""
         try:
-            with open(self.completion_file, "w", encoding="utf-8") as f:
+            temp_file = self.completion_file.with_suffix(".json.tmp")
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump(self.completions, f, indent=4)
+            os.replace(temp_file, self.completion_file)
         except Exception as e:
-            logging.error("Error saving completions: %s", e)
+            self.logger.error("Error saving completions: %s", e)
 
     def _cleanup_old_completions(self) -> None:
         """Remove completion records older than 7 days."""
@@ -153,20 +168,20 @@ class MedicineManager:
         for date in dates_to_remove:
             del self.completions[date]
         if dates_to_remove:
-            self._save_completions()
+            self.save_completions()
 
     def add_medicine(self, medicine: Medicine) -> None:
         """Add a new medicine."""
         self.medicines.append(medicine)
-        self._save_medicines()
-        logging.info("Added medicine: %s", medicine.name)
+        self.save_medicines()
+        self.logger.info("Added medicine: %s", medicine.name)
 
     def remove_medicine(self, index: int) -> None:
         """Remove a medicine by index."""
         if 0 <= index < len(self.medicines):
             medicine = self.medicines.pop(index)
-            self._save_medicines()
-            logging.info("Removed medicine: %s", medicine.name)
+            self.save_medicines()
+            self.logger.info("Removed medicine: %s", medicine.name)
 
     def get_active_medicines(self) -> list[Medicine]:
         """Get all active medicines."""
@@ -183,8 +198,8 @@ class MedicineManager:
             self.completions[today] = {}
 
         self.completions[today][meal_time] = datetime.now().strftime("%H:%M:%S")
-        self._save_completions()
-        logging.info("Marked %s medicine as completed for %s", meal_time, today)
+        self.save_completions()
+        self.logger.info("Marked %s medicine as completed for %s", meal_time, today)
 
     def is_completed_today(self, meal_time: str) -> bool:
         """Check if medicine for meal time is completed today."""
@@ -222,4 +237,4 @@ class MedicineManager:
         # For now, this modifies the in-memory constant
         # In future, could be persisted to config
         DEFAULT_MEDICINE_TIME_WINDOWS[meal_time] = {"start": start, "end": end}
-        logging.info("Updated %s time window: %s-%s", meal_time, start, end)
+        self.logger.info("Updated %s time window: %s-%s", meal_time, start, end)

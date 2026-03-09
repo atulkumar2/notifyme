@@ -13,12 +13,14 @@ needed and performs speech work in a single dedicated thread.
 
 from __future__ import annotations
 
-import logging
 import queue
 import threading
 from contextlib import contextmanager
 
 from notifyme_app.constants import APP_NAME
+from notifyme_app.logger import get_logger
+
+logger = get_logger(__name__)
 
 try:
     import pyttsx3
@@ -43,9 +45,9 @@ class TTSManager:
                 target=self._worker, daemon=True, name=f"{APP_NAME}-TTS"
             )
             self._thread.start()
-            logging.debug("TTS manager created")
+            logger.debug("TTS manager created")
         else:
-            logging.debug("pyttsx3 not available; TTS disabled")
+            logger.debug("pyttsx3 not available; TTS disabled")
 
     def _find_voice_for_lang(self, lang: str, voices: list):
         """Return a voice.id matching the requested language if available.
@@ -96,7 +98,7 @@ class TTSManager:
         if not text:
             return
         if not self._enabled:
-            logging.debug("TTS speak requested but disabled")
+            logger.debug("TTS speak requested but disabled")
             return
         self._queue.put((text, lang))
 
@@ -114,7 +116,7 @@ class TTSManager:
             # Create a fresh engine for each speak request
             engine = None
             try:
-                logging.debug("Creating fresh TTS engine for speech request")
+                logger.debug("Creating fresh TTS engine for speech request")
                 engine = pyttsx3.init("sapi5")
                 voices = engine.getProperty("voices") or []
 
@@ -122,16 +124,16 @@ class TTSManager:
                 if voice_id:
                     try:
                         engine.setProperty("voice", voice_id)
-                        logging.debug("Set voice to %s", voice_id)
+                        logger.debug("Set voice to %s", voice_id)
                     except Exception:
-                        logging.debug("Failed to set voice %s, using default", voice_id)
+                        logger.debug("Failed to set voice %s, using default", voice_id)
 
-                logging.debug("TTS speaking: %s (lang=%s)", text, lang)
+                logger.debug("TTS speaking: %s (lang=%s)", text, lang)
                 engine.say(text)
                 engine.runAndWait()
-                logging.debug("TTS speak completed successfully")
+                logger.debug("TTS speak completed successfully")
             except Exception as e:
-                logging.error("Error during TTS speak: %s", e)
+                logger.error("Error during TTS speak: %s", e)
             finally:
                 # Always clean up the engine
                 if engine:
@@ -144,11 +146,11 @@ class TTSManager:
         """Stop the TTS worker thread and clean up resources."""
         if not self._enabled or not self._thread:
             return
-        logging.debug("Stopping TTS manager")
+        logger.debug("Stopping TTS manager")
         self._stop_event.set()
         if self._thread.is_alive():
             self._thread.join(timeout=1.0)
-        logging.debug("TTS manager stopped")
+        logger.debug("TTS manager stopped")
 
     def __enter__(self):
         """Context manager entry: return self."""

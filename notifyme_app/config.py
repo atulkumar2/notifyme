@@ -6,7 +6,6 @@ including reminder intervals, sound settings, and visibility preferences.
 """
 
 import json
-import logging
 from typing import Any
 
 from notifyme_app.constants import (
@@ -16,6 +15,7 @@ from notifyme_app.constants import (
     ConfigSections,
     ReminderConfigFields,
 )
+from notifyme_app.logger import get_logger
 from notifyme_app.utils import get_config_path
 
 
@@ -24,6 +24,7 @@ class ConfigManager:
 
     def __init__(self):
         """Initialize the configuration manager."""
+        self.logger = get_logger(__name__)
         self.config_file = get_config_path()
         self._config = self._load_config()
 
@@ -76,7 +77,7 @@ class ConfigManager:
                     self.save_config()
                 return config
             except Exception as e:
-                logging.error("Error loading config: %s", e)
+                self.logger.error("Error loading config: %s", e)
                 return self._get_default_config()
         return self._get_default_config()
 
@@ -138,7 +139,7 @@ class ConfigManager:
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self._config, f, indent=4)
         except Exception as e:
-            logging.error("Error saving config: %s", e)
+            self.logger.error("Error saving config: %s", e)
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get a global configuration value."""
@@ -149,7 +150,7 @@ class ConfigManager:
         old_value = self._get_global(key)
         self._set_global(key, value)
         self.save_config()
-        logging.info("Configuration updated: %s = %s (was: %s)", key, value, old_value)
+        self.logger.info("Configuration updated: %s = %s (was: %s)", key, value, old_value)
 
     def get_all(self) -> dict[str, Any]:
         """Get all configuration values."""
@@ -174,7 +175,7 @@ class ConfigManager:
 
         for key, value in global_updates.items():
             old_value = self._get_global(key)
-            logging.info(
+            self.logger.info(
                 "Configuration updated: %s = %s (was: %s)", key, value, old_value
             )
         self._config[ConfigSections.GLOBAL].update(global_updates)

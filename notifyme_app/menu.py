@@ -5,7 +5,6 @@ This module handles the creation and management of the system tray menu,
 including dynamic menu generation based on visibility settings.
 """
 
-import logging
 from typing import cast
 
 from pystray import Menu, MenuItem
@@ -19,6 +18,7 @@ from notifyme_app.constants import (
     MenuCallbacks,
     ReminderConfigKeys,
 )
+from notifyme_app.logger import get_logger
 
 
 class ReminderStateKeys:
@@ -70,7 +70,9 @@ class MenuManager:
         Returns:
             Menu object for the system tray
         """
-        logging.debug("Creating system tray menu with current application state")
+        get_logger(__name__).debug(
+            "Creating system tray menu with current application state"
+        )
 
         # Update status
         if update_available and latest_version:
@@ -78,7 +80,7 @@ class MenuManager:
             update_item = MenuItem(
                 update_label, self.callbacks[MenuCallbacks.OPEN_GITHUB_RELEASES]
             )
-            logging.info("Update available: %s", latest_version)
+            get_logger(__name__).info("Update available: %s", latest_version)
         else:
             update_item = MenuItem("✅ Up to date", None, enabled=False)
 

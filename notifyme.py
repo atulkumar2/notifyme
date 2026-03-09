@@ -4,7 +4,6 @@ NotifyMe - Health reminder application entry point and compatibility layer.
 """
 
 import json
-import logging
 import os
 import subprocess
 import sys
@@ -12,13 +11,15 @@ import threading
 import time
 import webbrowser
 from collections.abc import Iterable
-from logging.handlers import RotatingFileHandler
 from pathlib import Path
+
 
 from PIL import Image
 from winotify import Notification, audio
 
 from notifyme_app import NotifyMeApp as _RuntimeNotifyMeApp
+from notifyme_app.logger import get_logger, setup_logging, shutdown_logging
+
 from notifyme_app.constants import (
     APP_NAME,
     APP_REMINDER_APP_ID,
@@ -32,14 +33,13 @@ from notifyme_app.constants import (
     ConfigKeys,
     ReminderLabels,
 )
+from notifyme_app.medicine_ui import run_medicine_ui
 from notifyme_app.utils import (
     get_config_path,
     get_exe_path,
-    get_local_help_path,
     get_log_file_path,
-)
-from notifyme_app.utils import (
     get_idle_seconds as _get_idle_seconds,
+    get_local_help_path,
 )
 
 try:
@@ -337,7 +337,9 @@ class NotifyMeApp:
     def reminder_timer_worker(self, reminder_type: str) -> None:
         """Worker thread for a specific reminder type."""
         if reminder_type not in self.interval_minutes_map:
-            logging.warning("Unknown reminder type for timer worker: %s", reminder_type)
+            get_logger(__name__).warning(
+                "Unknown reminder type for timer worker: %s", reminder_type
+            )
             return
 
         self._timer_loop(
@@ -346,66 +348,60 @@ class NotifyMeApp:
         )
 
 
-def setup_logging():
-    """Set up logging with rotating file handler."""
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+def cleanup_instances():
+    """Kill all running instances of NotifyMe."""
+    logger = get_logger(__name__)
+    logger.info("Cleaning up running instances of NotifyMe")
 
-    handler = RotatingFileHandler(
-        get_log_file_path(),
-        maxBytes=5 * 1024 * 1024,
-        backupCount=5,
-        encoding="utf-8",
-    )
-    formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-
-def shutdown_logging():
-    """Properly shutdown logging handlers."""
-    logger = logging.getLogger()
-    for handler in logger.handlers[:]:
-        handler.flush()
-        handler.close()
-        logger.removeHandler(handler)
+    try:
+        if sys.platform == "win32":
+            # Kill by image name. /F is force, /T is tree (kill child processes)
+            # We ignore the error if no instances are found
+            subprocess.run(
+                ["taskkill", "/F", "/IM", "NotifyMe.exe", "/T"],
+                capture_output=True,
+                check=False,
+            )
+            # Also try to kill any python processes running notifyme (best effort)
+            # This is trickier without psutil, but we can try to find processes
+            # by window title or just rely on the user killing the exe.
+            logger.info("Sent termination signal to NotifyMe.exe instances")
+        else:
+            logger.warning("Cleanup not implemented for this platform")
+    except Exception as e:
+        logger.error("Failed to cleanup instances: %s", e)
 
 
 def main():
     """Main entry point for the application."""
     try:
+        setup_logging()
+        logger = get_logger(__name__)
+
+        # Check for cleanup flag first
+        if "--cleanup" in sys.argv:
+            cleanup_instances()
+            sys.exit(0)
+
         # Check for special command-line flags
         if "--add-medicine" in sys.argv:
-            # Launch standalone medicine add dialog
-            setup_logging()
-            import tkinter as tk
+            logger.info("Starting add medicine UI")
+            run_medicine_ui(add_only=True)
+            logger.info("Add medicine UI closed")
+            sys.exit(0)
 
-            from notifyme_app.medicine import MedicineManager
-            from notifyme_app.medicine_ui import MedicineDialog
-
-            try:
-                medicine_manager = MedicineManager()
-                root = tk.Tk()
-                root.withdraw()
-                root.update()  # Process any pending events
-                dialog = MedicineDialog(root, on_save=medicine_manager.add_medicine)
-                dialog.lift()
-                dialog.attributes("-topmost", True)  # Keep on top
-                dialog.focus_set()
-                root.wait_window(dialog)
-                root.destroy()
-            except Exception as e:
-                logging.error("Failed to run add medicine dialog: %s", e, exc_info=True)
-            return
+        if "--manage-medicines" in sys.argv:
+            logger.info("Starting manage medicines UI")
+            run_medicine_ui(add_only=False)
+            logger.info("Manage medicines UI closed")
+            sys.exit(0)
 
         # Normal application launch
-        setup_logging()
+        logger.info("Starting main application")
         app = _RuntimeNotifyMeApp()
         app.run()
     finally:
+        logger.info("Shutting down main application")
         shutdown_logging()
 
 

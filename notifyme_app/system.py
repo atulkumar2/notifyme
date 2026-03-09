@@ -5,7 +5,6 @@ This module handles system-level operations like opening files in Explorer,
 launching web browsers, and managing system tray icons.
 """
 
-import logging
 import subprocess
 import sys
 import tempfile
@@ -21,6 +20,8 @@ from notifyme_app.constants import (
     GITHUB_REPO_URL,
     HELP_ERROR_HTML,
 )
+from notifyme_app.logger import get_logger
+
 from notifyme_app.utils import get_app_data_dir, get_config_path, get_resource_path
 
 
@@ -37,7 +38,7 @@ class SystemManager:
             try:
                 return Image.open(self.icon_file)
             except Exception as e:
-                logging.error("Error loading icon: %s", e)
+                get_logger(__name__).error("Error loading icon: %s", e)
 
         # Fallback: Create a simple icon programmatically
         width = 64
@@ -58,9 +59,9 @@ class SystemManager:
         try:
             # Open Explorer and select the log file
             subprocess.run(["explorer", "/select,", str(log_path)], check=False)
-            logging.info("Opened log location: %s", get_app_data_dir())
+            get_logger(__name__).info("Opened log location: %s", get_app_data_dir())
         except Exception as e:
-            logging.error("Failed to open log location: %s", e)
+            get_logger(__name__).error("Failed to open log location: %s", e)
 
     def open_exe_location(self) -> None:
         """Open the EXE/script location in Explorer."""
@@ -73,9 +74,9 @@ class SystemManager:
         try:
             # Open Explorer and select the executable/script
             subprocess.run(["explorer", "/select,", str(exe_path)], check=False)
-            logging.info("Opened EXE location: %s", exe_path.parent)
+            get_logger(__name__).info("Opened EXE location: %s", exe_path.parent)
         except Exception as e:
-            logging.error("Failed to open EXE location: %s", e)
+            get_logger(__name__).error("Failed to open EXE location: %s", e)
 
     def open_config_location(self) -> None:
         """Open the config file location in Explorer."""
@@ -83,9 +84,9 @@ class SystemManager:
         try:
             # Open Explorer and select the config file
             subprocess.run(["explorer", "/select,", str(config_path)], check=False)
-            logging.info("Opened config location: %s", config_path.parent)
+            get_logger(__name__).info("Opened config location: %s", config_path.parent)
         except Exception as e:
-            logging.error("Failed to open config location: %s", e)
+            get_logger(__name__).error("Failed to open config location: %s", e)
 
     def open_help(self) -> None:
         """
@@ -96,10 +97,10 @@ class SystemManager:
         # Try online help first
         try:
             webbrowser.open(GITHUB_PAGES_USAGE_URL)
-            logging.info("Opened online help: usage.html")
+            get_logger(__name__).info("Opened online help: usage.html")
             return
         except Exception as e:
-            logging.error("Failed to open online help: %s", e)
+            get_logger(__name__).error("Failed to open online help: %s", e)
 
         # Offline help paths to try (in order of priority)
         help_search_paths = []
@@ -113,17 +114,17 @@ class SystemManager:
                 Path(__file__).parent.parent / "help" / "index.html"
             )
         except Exception:
-            logging.debug("Could not determine project root help path")
+            get_logger(__name__).debug("Could not determine project root help path")
 
         # Try to open offline help
         for help_path in help_search_paths:
             if help_path.exists():
                 try:
                     webbrowser.open(help_path.as_uri())
-                    logging.info("Opened offline help: %s", help_path)
+                    get_logger(__name__).info("Opened offline help: %s", help_path)
                     return
                 except Exception as e:
-                    logging.error("Failed to open offline help: %s", e)
+                    get_logger(__name__).error("Failed to open offline help: %s", e)
 
         # Final fallback: show error
         try:
@@ -134,18 +135,18 @@ class SystemManager:
                 f.write(error_html)
                 temp_path = Path(f.name)
             webbrowser.open(temp_path.as_uri())
-            logging.info("Displayed help error message")
+            get_logger(__name__).info("Displayed help error message")
         except Exception as final_error:
-            logging.error("Failed to display help error: %s", final_error)
+            get_logger(__name__).error("Failed to display help error: %s", final_error)
 
     def show_startup_help(self) -> None:
         """Show help page on startup."""
         try:
             # Try online help first
             webbrowser.open(GITHUB_PAGES_USAGE_URL)
-            logging.info("Opened startup help: online usage.html")
+            get_logger(__name__).info("Opened startup help: online usage.html")
         except Exception as e:
-            logging.error("Failed to open online startup help: %s", e)
+            get_logger(__name__).error("Failed to open online startup help: %s", e)
             # Fall back to offline help
             self.open_help()
 
@@ -153,22 +154,24 @@ class SystemManager:
         """Open the GitHub repository in the default browser."""
         try:
             webbrowser.open(GITHUB_REPO_URL)
-            logging.info("Opened GitHub repository")
+            get_logger(__name__).info("Opened GitHub repository")
         except Exception as e:
-            logging.error("Failed to open GitHub repository: %s", e)
+            get_logger(__name__).error("Failed to open GitHub repository: %s", e)
 
     def open_github_releases(self) -> None:
         """Open the GitHub releases page in the default browser."""
         try:
             webbrowser.open(GITHUB_RELEASES_URL)
-            logging.info("Opened GitHub releases")
+            get_logger(__name__).info("Opened GitHub releases")
         except Exception as e:
-            logging.error("Failed to open GitHub releases: %s", e)
+            get_logger(__name__).error("Failed to open GitHub releases: %s", e)
 
     def open_github_pages(self) -> None:
         """Open the GitHub Pages documentation in the default browser."""
         try:
             webbrowser.open(GITHUB_PAGES_URL)
-            logging.info("Opened GitHub Pages documentation")
+            get_logger(__name__).info("Opened GitHub Pages documentation")
         except Exception as e:
-            logging.error("Failed to open GitHub Pages documentation: %s", e)
+            get_logger(__name__).error(
+                "Failed to open GitHub Pages documentation: %s", e
+            )
