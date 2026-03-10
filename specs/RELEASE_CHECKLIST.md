@@ -6,10 +6,15 @@
 >   - `pyproject.toml`
 >   - `notifyme_app/__init__.py`
 >   - `constants.py`
-> - Build output in `dist/`:
+> - Windows build output in `dist/`:
 >   - `notifyme.exe`
+> - Linux build output in `dist/`:
+>   - `NotifyMe` (binary)
+> - Others:
 >   - `SHA256SUMS.txt`
-> - Build entrypoint: `scripts/build.ps1` or `scripts/build.bat`
+> - Build entrypoints:
+>   - Windows: `scripts/build.ps1` or `scripts/build.bat`
+>   - Linux: `scripts/build.sh`
 
 ## 0) Decide the release version
 
@@ -50,12 +55,13 @@
 
 ## 5) Build artifacts
 
-- [ ] Run build from repo root:
-  - **PowerShell** (recommended): `.\scripts\build.ps1`
-  - **Batch**: `.\scripts\build.bat`
-  - Or: `.\build.ps1` (root-level wrapper)
+- [ ] Run build from repo root (on target OS):
+  - **Windows PowerShell**: `.\scripts\build.ps1`
+  - **Windows Batch**: `.\scripts\build.bat`
+  - **Linux Shell**: `./scripts/build.sh`
 - [ ] Confirm build outputs exist:
-  - [ ] `dist/notifyme.exe`
+  - [ ] Windows: `dist/notifyme.exe`
+  - [ ] Linux: `dist/NotifyMe`
   - [ ] `dist/SHA256SUMS.txt`
 - [ ] Basic binary smoke test:
   - [ ] Launch `dist/notifyme.exe`
@@ -80,7 +86,8 @@
 - [ ] Create GitHub Release for tag `vX.Y.Z`
 - [ ] Paste release notes (or link to `docs/releases/vX.Y.Z.md`)
 - [ ] Attach artifacts from `dist/`:
-  - [ ] `notifyme.exe`
+  - [ ] `notifyme.exe` (Windows)
+  - [ ] `NotifyMe` (Linux)
   - [ ] `SHA256SUMS.txt`
 
 ## 9) Post-release verification
@@ -99,7 +106,10 @@ git status
 git pull origin main
 git add -A
 git commit -m "chore: bump version to vX.Y.Z"
+# On Windows:
 .\scripts\build.ps1
+# On Linux:
+./scripts/build.sh
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
 git push origin main
 git push origin vX.Y.Z

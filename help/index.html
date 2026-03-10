@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NotifyMe - User Guide (Offline)</title>
+    <title>NotifyMe - User Guide</title>
     <style>
       * {
         margin: 0;
@@ -294,7 +294,7 @@
         </div>
         <div class="feature-card">
           <strong>🗣️ Offline TTS</strong>
-          <p>Spoken reminders via Windows SAPI (English/Hindi).</p>
+          <p>Spoken reminders for accessibility (where supported).</p>
         </div>
       </div>
 
@@ -524,6 +524,10 @@
           <li>Enable notifications for NotifyMe</li>
         </ol>
         <p style="margin-top: 10px">
+          <strong>Notification Setup (Linux):</strong>
+        </p>
+        <p>Ensure a notification daemon (like <code>dunst</code>, <code>mako</code>, or the one provided by GNOME/KDE) is running.</p>
+        <p style="margin-top: 10px">
           <strong>Step 2:</strong> Test Notifications
         </p>
         <ol style="margin-top: 10px">
@@ -679,8 +683,8 @@
       <h2>📱 System Requirements</h2>
 
       <ul>
-        <li>Windows 10 or Windows 11</li>
-        <li>Python 3.8+ (if running from source)</li>
+        <li>Windows 10/11 or modern Linux distribution</li>
+        <li>Python 3.13+ (if running from source)</li>
         <li>No internet required for offline use</li>
         <li>Minimal disk space and RAM usage</li>
       </ul>
@@ -711,10 +715,14 @@
       </div>
 
       <div class="section">
-        <h3>Config File</h3>
+        <h3>Config / Data Files</h3>
         <p>
-          <strong>Path:</strong>
-          <code>%APPDATA%\NotifyMe\config.json</code>
+          <strong>Windows:</strong>
+          <code>%APPDATA%\NotifyMe\</code>
+        </p>
+        <p>
+          <strong>Linux:</strong>
+          <code>~/.config/NotifyMe/</code>
         </p>
         <p>
           <strong>Quick Access:</strong> Right-click tray icon → "📂 Open

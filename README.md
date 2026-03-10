@@ -1,6 +1,6 @@
 # 💧 NotifyMe
 
-A modern Windows desktop application that helps you stay healthy by reminding you to blink your eyes, take walking breaks, stay hydrated, and practice pranayama at regular intervals.
+A modern desktop application (Windows & Linux) that helps you stay healthy by reminding you to blink your eyes, take walking breaks, stay hydrated, and practice pranayama at regular intervals.
 
 <img src="icon.png" alt="NotifyMe Icon" width="160" height="160" />
 
@@ -28,7 +28,7 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
 
 - **Quad Reminders**: Eye blink reminders (default: 20 min), walking reminders (default: 60 min), water drinking reminders (default: 30 min), and pranayama reminders (default: 120 min)
 - **Background Operation**: Runs silently in the system tray
-- **Windows Toast Notifications**: Native Windows 10/11 notifications with sound control
+- **Native Notifications**: Native Windows toast and Linux desktop notifications with sound control
 - **Customizable Intervals**:
   - Blink reminders: 10-60 minutes
   - Walking reminders: 30-120 minutes
@@ -49,7 +49,7 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
   - **Randomized Messages**: Variety of friendly reminder messages
   - **Persistent Settings**: Your preferences are saved between sessions
   - **Dynamic Menu**: Menu adapts based on your visibility and sound preferences
-  - **Offline Text-to-Speech**: Optional TTS using Windows SAPI (pyttsx3). Enables offline spoken reminders (English by default, attempts Hindi when a Hindi voice is installed). Toggle per-reminder and globally via the tray menu.
+  - **Offline Text-to-Speech**: Optional TTS support. Enables offline spoken reminders. Toggle per-reminder and globally via the tray menu.
   - **Rolling Logs**: Log files automatically rotate to prevent disk space issues
   - **Easy Access**: Quickly open log, config, and app locations from the system tray menu
   - **Visual Menu Icons**: Emoji icons for easy navigation of menu options
@@ -58,18 +58,18 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
 
 ### Option 1: Download Pre-built Executable (Recommended)
 
-1. **Download** the latest `NotifyMe.exe` from [GitHub Releases](../../releases/latest)
-2. **Run** `NotifyMe.exe` - no installation required!
-3. **Optional: Auto-start with Windows**:
-   - Press `Win + R`, type `shell:startup`, press Enter
-   - Copy `NotifyMe.exe` or create a shortcut there
+1. **Download** the latest `NotifyMe.exe` (Windows) or `NotifyMe` (Linux) from [GitHub Releases](../../releases/latest)
+2. **Run** the executable - no installation required!
+3. **Optional: Auto-start**:
+   - **Windows**: Press `Win + R`, type `shell:startup`, and place a shortcut there.
+   - **Linux**: Add to your desktop environment's startup applications.
 
 ### Option 2: Run from Source
 
 #### Prerequisites
 
-- Windows 10 or Windows 11
-- Python 3.13+ (greater than 3.13)
+- Windows 10/11 or modern Linux distribution
+- Python 3.13+
 
 #### Installation
 
@@ -154,27 +154,18 @@ notifyme_app/
 
 ### Building a Standalone Executable (For Developers)
 
-You can create a portable `.exe` file that doesn't require Python:
+You can create a portable standalone executable:
 
 1. **Build the executable**:
 
-   **Batch** (for CMD):
+   **Windows**:
+   - PowerShell: `.\scripts\build.ps1`
+   - Batch: `scripts\build.bat`
 
-   ```bash
-   scripts\build.bat
-   ```
+   **Linux**:
+   - `chmod +x scripts/build.sh && ./scripts/build.sh`
 
-   **PowerShell** (recommended):
-
-   ```powershell
-   .\scripts\build.ps1
-   ```
-
-   Or manually:
-
-   ```bash
-   .venv\Scripts\python.exe -m PyInstaller NotifyMe.spec
-   ```
+   Or manually using PyInstaller with the platform-specific `.spec` file.
 
    The build process automatically:
    - Bundles all dependencies (including pyttsx3 for offline TTS)
@@ -236,8 +227,10 @@ The test suite covers:
 NotifyMe stores its configuration and logs in your user data folder:
 
 - **Windows**: `%APPDATA%\NotifyMe\`
+- **Linux**: `~/.config/NotifyMe/`
   - `config.json` - Your preferences
   - `notifyme.log` - Application logs
+  - `medicines.json` - Your medicine schedule
 
 To open this folder:
 
@@ -534,7 +527,8 @@ The app randomly selects from these friendly messages:
 
 - Python 3.13+
 - `pystray` - System tray integration
-- `winotify` - Windows toast notifications
+- `winotify` - Windows toast notifications (Windows only)
+- `plyer` - Native notifications (Linux and fallback)
 - `Pillow` - Icon image processing
 
 ## Build & Development Scripts
