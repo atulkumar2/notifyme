@@ -7,6 +7,7 @@ configuration, and system tray integration.
 """
 
 import os
+import signal
 import subprocess
 import sys
 import threading
@@ -15,8 +16,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from notifyme_app.tray_backend import configure_pystray_backend
+
+configure_pystray_backend()
+
 from pystray import Icon
-from winotify import Notification
 
 from notifyme_app.config import ConfigManager
 from notifyme_app.logger import get_logger
@@ -25,7 +29,6 @@ from notifyme_app.constants import (
     ALL_MEDICINE_TIMES,
     ALL_REMINDER_TYPES,
     APP_NAME,
-    APP_REMINDER_APP_ID,
     APP_VERSION,
     MEDICINE_BREAKFAST,
     MEDICINE_DINNER,
@@ -75,6 +78,8 @@ class NotifyMeApp:
             meal_time: None for meal_time in ALL_MEDICINE_TIMES
         }
         self._medicine_mtime = None
+        self._quitting = False
+        self._watcher_thread: threading.Thread | None = None
 
         # Initialize timers
         self._setup_timers()
@@ -164,21 +169,16 @@ class NotifyMeApp:
             medicine_list = "\n".join(medicine_names)
 
             title = f"💊 {meal_label} Medicine Reminder"
-            message = f"Time to take your medicine:\n{medicine_list}\n\nClick to mark as completed."
+            message = "Time to take your medicine:\n" + medicine_list
+            if self.notifications.supports_actions:
+                message += "\n\nClick to mark as completed."
 
-            # Create notification with action buttons
-            notification = Notification(
-                app_id=APP_REMINDER_APP_ID,
-                title=title,
-                msg=message,
+            self.notifications.show_action_notification(
+                title,
+                message,
+                action_label="Mark Completed",
+                launch=f"medicine_completed:{meal_time}",
             )
-
-            # Add action button to mark as completed
-            notification.add_actions(
-                label="Mark Completed", launch=f"medicine_completed:{meal_time}"
-            )
-
-            notification.show()
 
             # TTS
             if self.config.tts_enabled:
@@ -395,18 +395,7 @@ class NotifyMeApp:
                 "© 2024 Atul Kumar"
             )
 
-            toast_args = {
-                "app_id": APP_REMINDER_APP_ID,
-                "title": f"About {APP_NAME}",
-                "msg": message,
-            }
-
-            icon_path = self.notifications.get_icon_path()
-            if icon_path:
-                toast_args["icon"] = icon_path
-
-            toast = Notification(**toast_args)
-            toast.show()
+            self.notifications.show_notification(f"About {APP_NAME}", [message])
 
             self.logger.info("Showed about dialog")
         except Exception as e:
@@ -476,12 +465,10 @@ class NotifyMeApp:
             meal_label = MedicineTimeLabels.get(meal_time, meal_time.title())
 
             # Show confirmation notification
-            notification = Notification(
-                app_id=APP_REMINDER_APP_ID,
-                title=f"✅ {meal_label} Medicine Completed",
-                msg=f"Marked {meal_label} medicine as taken for today.",
+            self.notifications.show_notification(
+                f"✅ {meal_label} Medicine Completed",
+                [f"Marked {meal_label} medicine as taken for today."],
             )
-            notification.show()
 
             self.logger.info("Marked %s medicine as completed", meal_time)
             self.update_menu()
@@ -498,12 +485,10 @@ class NotifyMeApp:
 
         # Show notification
         status = "enabled" if self.config.medicine_enabled else "disabled"
-        notification = Notification(
-            app_id=APP_REMINDER_APP_ID,
-            title="💊 Medicine Reminders",
-            msg=f"Medicine reminders have been {status}.",
+        self.notifications.show_notification(
+            "💊 Medicine Reminders",
+            [f"Medicine reminders have been {status}."],
         )
-        notification.show()
 
         self.update_menu()
 
@@ -609,11 +594,25 @@ class NotifyMeApp:
 
     def quit_app(self) -> None:
         """Quit the application."""
+        if self._quitting:
+            return
+        self._quitting = True
         self.stop_reminders()
         if self.icon:
             self.icon.stop()
         # No need to stop TTS manager - it's created on-demand and cleans itself up
         self.logger.info("Application closed")
+
+    def _start_background_watchers(self) -> None:
+        """Start background workers that should not block the tray loop."""
+
+        def medicine_watcher() -> None:
+            while not self._quitting:
+                self.check_medicine_updates()
+                time.sleep(0.5)
+
+        self._watcher_thread = threading.Thread(target=medicine_watcher, daemon=True)
+        self._watcher_thread.start()
 
     def run(self) -> None:
         """Run the application with system tray icon and timers."""
@@ -638,43 +637,61 @@ class NotifyMeApp:
             ),
         )
 
-        self.updater.check_for_updates_async()
+        if not getattr(type(self.icon), "HAS_MENU", True):
+            self.logger.warning(
+                "Active tray backend %s does not support menus. "
+                "On Linux, install Gtk/AppIndicator bindings so pystray does not "
+                "fall back to Xorg-only mode.",
+                type(self.icon).__module__,
+            )
 
-        # Always start reminders on launch
-        self.start_reminders()
+        def setup(_icon: Icon) -> None:
+            # pystray does not auto-show the icon when a custom setup callback is used.
+            _icon.visible = True
+            self.updater.check_for_updates_async()
+            self.start_reminders()
+            self.system.show_startup_help()
+            self.notifications.show_welcome_notification()
+            self._start_background_watchers()
 
-        # Show startup help and welcome notification
-        self.system.show_startup_help()
-        self.notifications.show_welcome_notification()
+            self.logger.info("%s is running in the system tray", APP_NAME)
+            self.logger.info(
+                (
+                    "Blink interval: %s minutes, Walking interval: %s minutes,"
+                    " Water interval: %s minutes, Pranayama interval: %s minutes"
+                ),
+                self.config.get_reminder_interval_minutes(REMINDER_BLINK),
+                self.config.get_reminder_interval_minutes(REMINDER_WALKING),
+                self.config.get_reminder_interval_minutes(REMINDER_WATER),
+                self.config.get_reminder_interval_minutes(REMINDER_PRANAYAMA),
+            )
+            self.logger.info(
+                "%s version: %s", APP_NAME, self.updater.get_current_version()
+            )
+            print(f"{APP_NAME} is running. Press Ctrl+C to quit.")
 
-        # Run the icon in a separate thread so main thread can handle signals
-        self.logger.info("%s is running in the system tray", APP_NAME)
-        self.logger.info(
-            (
-                "Blink interval: %s minutes, Walking interval: %s minutes,"
-                " Water interval: %s minutes, Pranayama interval: %s minutes"
-            ),
-            self.config.get_reminder_interval_minutes(REMINDER_BLINK),
-            self.config.get_reminder_interval_minutes(REMINDER_WALKING),
-            self.config.get_reminder_interval_minutes(REMINDER_WATER),
-            self.config.get_reminder_interval_minutes(REMINDER_PRANAYAMA),
-        )
-        self.logger.info("%s version: %s", APP_NAME, self.updater.get_current_version())
-        print(f"{APP_NAME} is running. Press Ctrl+C to quit.")
+        previous_sigint = None
+        previous_sigterm = None
 
-        self.icon.run_detached()
-
-        # Main thread waits for Ctrl+C or explicit quit
-        try:
-            while True:
-                if not any(
-                    timer.is_running for timer in self.timers.timers.values()
-                ) and (not self.icon or not self.icon.visible):
-                    break
-                self.check_medicine_updates()
-                time.sleep(0.5)
-        except KeyboardInterrupt:
+        def handle_signal(_signum, _frame) -> None:
             print("\nShutting down...")
+            self.logger.info("Received termination signal, shutting down...")
+            self.quit_app()
+
+        try:
+            if threading.current_thread() is threading.main_thread():
+                previous_sigint = signal.getsignal(signal.SIGINT)
+                previous_sigterm = signal.getsignal(signal.SIGTERM)
+                signal.signal(signal.SIGINT, handle_signal)
+                signal.signal(signal.SIGTERM, handle_signal)
+            self.icon.run(setup=setup)
+        except KeyboardInterrupt:
             self.logger.info("Received Ctrl+C, shutting down...")
+            self.quit_app()
         finally:
+            if threading.current_thread() is threading.main_thread():
+                if previous_sigint is not None:
+                    signal.signal(signal.SIGINT, previous_sigint)
+                if previous_sigterm is not None:
+                    signal.signal(signal.SIGTERM, previous_sigterm)
             self.quit_app()

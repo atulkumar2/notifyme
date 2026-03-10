@@ -23,13 +23,14 @@ This folder contains all build and development scripts for the NotifyMe project.
 
 **What it does**:
 
+- Prefers `uv run` for PyInstaller and helper commands
 - Validates or creates icon from PNG
 - Compiles Python code to EXE using PyInstaller
 - Builds to temporary location first (safe failure)
 - Generates SHA256 checksum for verification
 - Creates `dist/notifyme.exe` (~18.5 MB)
 
-**Output**: `dist/notifyme.exe` and `dist/SHA256SUMS.txt`
+**Output**: `dist/NotifyMe.exe` and `dist/SHA256SUMS.txt`
 
 ---
 
@@ -54,6 +55,26 @@ This folder contains all build and development scripts for the NotifyMe project.
 
 - Launches NotifyMe using `uv run notifyme.py`
 - Provides fallback to local uv installation if needed
+
+---
+
+### `build.sh`
+
+**Purpose**: Build the Linux NotifyMe executable using PyInstaller
+
+**Usage**:
+
+```bash
+chmod +x ./scripts/build.sh
+./scripts/build.sh
+```
+
+**What it does**:
+
+- Prefers `uv run pyinstaller` when `uv` is available
+- Falls back to `.venv/bin/python` or `python`
+- Builds with `NotifyMe_linux.spec`
+- Writes `dist/NotifyMe` and `dist/SHA256SUMS.txt`
 
 ---
 
@@ -185,7 +206,7 @@ The `.bat` wrappers automatically bypass this policy, so `build.bat` will always
 
 ### Build fails at PyInstaller stage
 
-- Check that `.venv\Scripts\python.exe` exists
+- Check that `uv` is installed or that Python is available
 - Verify `icon.png` exists (or PNG→ICO conversion fails)
 - See `build.ps1` for detailed error messages
 

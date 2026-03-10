@@ -7,8 +7,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from winotify import audio
-
 from notifyme_app.notifications import NotificationManager
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -17,30 +15,31 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 class TestNotificationManager(unittest.TestCase):
     """Tests for NotificationManager."""
 
-    @patch("notifyme_app.notifications.Notification")
-    def test_show_notification_silent_does_not_set_audio(self, mock_notification):
-        """Silent notifications should not set audio explicitly."""
-        mock_toast = MagicMock()
-        mock_notification.return_value = mock_toast
+    @patch("notifyme_app.notifications.plyer_notification")
+    def test_show_notification_uses_plyer_on_linux(self, mock_notify):
+        """Linux notifications should use plyer."""
         manager = NotificationManager()
 
-        with patch.object(NotificationManager, "_get_icon_path", return_value=None):
+        with patch("notifyme_app.notifications.sys.platform", "linux"):
             manager.show_notification("Test", ["Message"], sound_enabled=False)
 
-        mock_toast.set_audio.assert_not_called()
-        mock_toast.show.assert_called_once()
+        mock_notify.notify.assert_called_once()
 
     @patch("notifyme_app.notifications.Notification")
-    def test_show_notification_with_sound_sets_audio_default(self, mock_notification):
-        """Sound-enabled notifications should set default audio."""
+    @patch("notifyme_app.notifications.audio")
+    def test_show_notification_with_sound_sets_audio_default(
+        self, mock_audio, mock_notification
+    ):
+        """Windows notifications should set default audio when enabled."""
         mock_toast = MagicMock()
         mock_notification.return_value = mock_toast
         manager = NotificationManager()
+        mock_audio.Default = "default"
 
-        with patch.object(NotificationManager, "_get_icon_path", return_value=None):
+        with patch("notifyme_app.notifications.sys.platform", "win32"):
             manager.show_notification("Test", ["Message"], sound_enabled=True)
 
-        mock_toast.set_audio.assert_called_once_with(audio.Default, loop=False)
+        mock_toast.set_audio.assert_called_once_with("default", loop=False)
         mock_toast.show.assert_called_once()
 
 

@@ -31,19 +31,43 @@ class SystemManager:
     def __init__(self):
         """Initialize the system manager."""
         self.icon_file = get_resource_path("icon.png")
+        self.icon_ico_file = get_resource_path("icon.ico")
+
+    def _open_path(self, path: Path, select_file: bool = False) -> None:
+        """Open a file or directory using the platform's default file manager."""
+        target = path.parent if select_file else path
+        if sys.platform == "win32":
+            args = ["explorer", str(target)]
+            if select_file:
+                args = ["explorer", "/select,", str(path)]
+        elif sys.platform == "darwin":
+            args = ["open", "-R", str(path)] if select_file else ["open", str(target)]
+        else:
+            args = ["xdg-open", str(target)]
+        subprocess.run(args, check=False)
 
     def create_icon_image(self) -> Image.Image:
         """Create or load the system tray icon image."""
-        if self.icon_file.exists():
+        candidate_paths = []
+        if sys.platform == "win32":
+            candidate_paths.append(self.icon_ico_file)
+        candidate_paths.append(self.icon_file)
+
+        for icon_path in candidate_paths:
+            if not icon_path.exists():
+                continue
             try:
-                return Image.open(self.icon_file)
+                with Image.open(icon_path) as image:
+                    return image.convert("RGBA")
             except Exception as e:
-                get_logger(__name__).error("Error loading icon: %s", e)
+                get_logger(__name__).error(
+                    "Error loading tray icon from %s: %s", icon_path, e
+                )
 
         # Fallback: Create a simple icon programmatically
         width = 64
         height = 64
-        image = Image.new("RGB", (width, height), color="white")
+        image = Image.new("RGBA", (width, height), color=(0, 0, 0, 0))
         draw = ImageDraw.Draw(image)
 
         # Draw a simple eye shape
@@ -54,17 +78,16 @@ class SystemManager:
         return image
 
     def open_log_location(self) -> None:
-        """Open the log file location in Explorer."""
+        """Open the log file location in the system file manager."""
         log_path = get_app_data_dir() / "notifyme.log"
         try:
-            # Open Explorer and select the log file
-            subprocess.run(["explorer", "/select,", str(log_path)], check=False)
+            self._open_path(log_path, select_file=True)
             get_logger(__name__).info("Opened log location: %s", get_app_data_dir())
         except Exception as e:
             get_logger(__name__).error("Failed to open log location: %s", e)
 
     def open_exe_location(self) -> None:
-        """Open the EXE/script location in Explorer."""
+        """Open the executable or script location in the system file manager."""
         if getattr(sys, "frozen", False):
             # Running as compiled executable
             exe_path = Path(sys.executable)
@@ -72,18 +95,16 @@ class SystemManager:
             # Running as script
             exe_path = Path(__file__).parent.parent / "notifyme.py"
         try:
-            # Open Explorer and select the executable/script
-            subprocess.run(["explorer", "/select,", str(exe_path)], check=False)
+            self._open_path(exe_path, select_file=True)
             get_logger(__name__).info("Opened EXE location: %s", exe_path.parent)
         except Exception as e:
             get_logger(__name__).error("Failed to open EXE location: %s", e)
 
     def open_config_location(self) -> None:
-        """Open the config file location in Explorer."""
+        """Open the config file location in the system file manager."""
         config_path = get_config_path()
         try:
-            # Open Explorer and select the config file
-            subprocess.run(["explorer", "/select,", str(config_path)], check=False)
+            self._open_path(config_path, select_file=True)
             get_logger(__name__).info("Opened config location: %s", config_path.parent)
         except Exception as e:
             get_logger(__name__).error("Failed to open config location: %s", e)

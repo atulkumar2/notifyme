@@ -6,10 +6,24 @@ reminder types with appropriate messages and sound settings.
 """
 
 import random
+import sys
 import time
 
 from PIL import Image
-from winotify import Notification, audio
+try:
+    from plyer import notification as plyer_notification
+except Exception:
+    plyer_notification = None
+
+try:
+    if sys.platform == "win32":
+        from winotify import Notification, audio
+    else:
+        Notification = None
+        audio = None
+except Exception:
+    Notification = None
+    audio = None
 
 from notifyme_app.constants import (
     APP_NAME,
@@ -29,7 +43,18 @@ class NotificationManager:
         self.logger = get_logger(__name__)
         self.icon_file = get_resource_path("icon.png")
         self.icon_file_ico = get_resource_path("icon.ico")
-        self._ensure_ico_exists()
+        if self.supports_actions:
+            self._ensure_ico_exists()
+
+    @property
+    def is_windows_toast_supported(self) -> bool:
+        """Return whether winotify-backed Windows toasts are available."""
+        return sys.platform == "win32" and Notification is not None
+
+    @property
+    def supports_actions(self) -> bool:
+        """Return whether the active notification backend supports actions."""
+        return self.is_windows_toast_supported
 
     def _ensure_ico_exists(self) -> None:
         """Ensure an .ico icon exists for toast notifications."""
@@ -43,11 +68,52 @@ class NotificationManager:
 
     def get_icon_path(self):
         """Get the path to the notification icon."""
-        if self.icon_file_ico.exists():
+        if self.is_windows_toast_supported and self.icon_file_ico.exists():
             return str(self.icon_file_ico)
         if self.icon_file.exists():
             return str(self.icon_file)
         return None
+
+    def _notify(
+        self,
+        title: str,
+        message: str,
+        *,
+        sound_enabled: bool = False,
+        launch: str | None = None,
+        action_label: str | None = None,
+    ) -> None:
+        """Show a notification using the active backend."""
+        icon_path = self.get_icon_path()
+
+        if self.is_windows_toast_supported:
+            toast_args = {
+                "app_id": APP_REMINDER_APP_ID,
+                "title": title,
+                "msg": message,
+            }
+            if icon_path:
+                toast_args["icon"] = icon_path
+
+            toast = Notification(**toast_args)
+            if sound_enabled and audio is not None:
+                toast.set_audio(audio.Default, loop=False)
+            if launch and action_label:
+                toast.add_actions(label=action_label, launch=launch)
+            toast.show()
+            return
+
+        if plyer_notification is not None:
+            plyer_notification.notify(
+                title=title,
+                message=message,
+                app_name=APP_NAME,
+                app_icon=icon_path,
+                timeout=10,
+            )
+            return
+
+        self.logger.warning("No notification backend available for platform %s", sys.platform)
 
     def show_notification(
         self,
@@ -63,25 +129,8 @@ class NotificationManager:
             message = f"{message}\nLast reminder: {format_elapsed(elapsed)} ago."
 
         try:
-            icon_path = self.get_icon_path()
             self.logger.info("Showing notification: %s", message)
-
-            # Create notification using winotify
-            toast_args = {
-                "app_id": APP_REMINDER_APP_ID,
-                "title": title,
-                "msg": message,
-            }
-            if icon_path:
-                toast_args["icon"] = icon_path
-
-            toast = Notification(**toast_args)
-
-            # Set audio based on sound settings. Default is silent.
-            if sound_enabled:
-                toast.set_audio(audio.Default, loop=False)
-
-            toast.show()
+            self._notify(title, message, sound_enabled=sound_enabled)
             # Return the selected message so callers can optionally use it (e.g. for TTS)
             return message
         except Exception as e:
@@ -112,39 +161,38 @@ class NotificationManager:
         """Show a toast notification for an available app update."""
         try:
             message = f"{APP_NAME} {latest_version} is available. Open the tray menu to update."
-            toast = Notification(
-                app_id=APP_REMINDER_APP_ID,
-                title="Update Available",
-                msg=message,
-            )
-            toast.set_audio(audio.Default, loop=False)
-            toast.show()
+            self._notify("Update Available", message, sound_enabled=True)
         except Exception as e:
             self.logger.error("Error showing update notification: %s", e)
 
     def show_welcome_notification(self) -> None:
         """Show a welcome notification when the app starts."""
         try:
-            icon_path = self.get_icon_path()
-
             message = (
                 f"{APP_NAME} is now installed and running in your system tray!\n"
                 "Right-click the tray icon to access controls and settings.\n"
                 "Reminders are enabled and ready to help you stay healthy."
             )
-
-            toast_args = {
-                "app_id": APP_REMINDER_APP_ID,
-                "title": f"🎉 Welcome to {APP_NAME}!",
-                "msg": message,
-            }
-            if icon_path:
-                toast_args["icon"] = icon_path
-
-            toast = Notification(**toast_args)
-            toast.set_audio(audio.Default, loop=False)
-            toast.show()
+            self._notify(f"Welcome to {APP_NAME}!", message, sound_enabled=True)
 
             self.logger.info("Showed welcome notification")
         except Exception as e:
             self.logger.error("Error showing welcome notification: %s", e)
+
+    def show_action_notification(
+        self,
+        title: str,
+        message: str,
+        *,
+        action_label: str,
+        launch: str,
+        sound_enabled: bool = False,
+    ) -> None:
+        """Show a notification and attach an action when supported."""
+        self._notify(
+            title,
+            message,
+            sound_enabled=sound_enabled,
+            action_label=action_label if self.supports_actions else None,
+            launch=launch if self.supports_actions else None,
+        )

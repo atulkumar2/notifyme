@@ -32,6 +32,34 @@ Set-Location $RepoRoot
 
 $ErrorActionPreference = "Stop"
 
+function Invoke-UvOrPython {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$UvArgs,
+        [Parameter(Mandatory = $true)]
+        [string[]]$PythonArgs
+    )
+
+    try {
+        & uv @UvArgs
+        return $LASTEXITCODE
+    }
+    catch {
+        if (Test-Path "$env:USERPROFILE\.local\bin\uv.exe") {
+            & "$env:USERPROFILE\.local\bin\uv.exe" @UvArgs
+            return $LASTEXITCODE
+        }
+    }
+
+    if (Test-Path ".\.venv\Scripts\python.exe") {
+        & .\.venv\Scripts\python.exe @PythonArgs
+        return $LASTEXITCODE
+    }
+
+    & python @PythonArgs
+    return $LASTEXITCODE
+}
+
 Write-Host "Building NotifyMe executable..."
 Write-Host ""
 
@@ -49,16 +77,20 @@ try {
     # Check if icon.ico exists, if not create it from icon.png
     if (-not (Test-Path "icon.ico")) {
         Write-Host "Creating icon.ico from icon.png..."
-        & .\.venv\Scripts\python.exe -c "from PIL import Image; Image.open('icon.png').save('icon.ico', format='ICO')"
-        if ($LASTEXITCODE -ne 0) {
+        $ExitCode = Invoke-UvOrPython `
+            -UvArgs @("run", "python", "-c", "from PIL import Image; Image.open('icon.png').save('icon.ico', format='ICO')") `
+            -PythonArgs @("-c", "from PIL import Image; Image.open('icon.png').save('icon.ico', format='ICO')")
+        if ($ExitCode -ne 0) {
             throw "Failed to create icon.ico"
         }
     }
 
     # Build the executable to temporary location
     Write-Host "Running PyInstaller..."
-    & .\.venv\Scripts\python.exe -m PyInstaller --distpath $TempDist -y NotifyMe.spec
-    if ($LASTEXITCODE -ne 0) {
+    $ExitCode = Invoke-UvOrPython `
+        -UvArgs @("run", "pyinstaller", "--distpath", $TempDist, "-y", "NotifyMe.spec") `
+        -PythonArgs @("-m", "PyInstaller", "--distpath", $TempDist, "-y", "NotifyMe.spec")
+    if ($ExitCode -ne 0) {
         throw "PyInstaller failed"
     }
 
@@ -115,8 +147,10 @@ try {
     Write-Host "Executable created at: $FinalDist\NotifyMe.exe"
     Write-Host ""
     Write-Host "Generating SHA256 hash..."
-    & .\.venv\Scripts\python.exe -c "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); open(r'dist\SHA256SUMS.txt', 'w').write(f'{h}  NotifyMe.exe\n')"
-    if ($LASTEXITCODE -ne 0) {
+    $ExitCode = Invoke-UvOrPython `
+        -UvArgs @("run", "python", "-c", "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); open(r'dist\SHA256SUMS.txt', 'w').write(f'{h}  NotifyMe.exe\n')") `
+        -PythonArgs @("-c", "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); open(r'dist\SHA256SUMS.txt', 'w').write(f'{h}  NotifyMe.exe\n')")
+    if ($ExitCode -ne 0) {
         throw "Failed to generate SHA256 hash"
     }
 

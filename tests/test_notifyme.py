@@ -30,13 +30,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 class TestGetAppDataDir(unittest.TestCase):
     """Tests for get_app_data_dir function."""
 
+    @patch("notifyme.Path.mkdir")
     @patch("notifyme.Path.home")
     @patch.dict("os.environ", {"APPDATA": ""}, clear=True)
-    def test_get_app_data_dir_no_appdata(self, mock_home):
+    def test_get_app_data_dir_no_appdata(self, mock_home, mock_mkdir):
         """Test get_app_data_dir when APPDATA is not set."""
         mock_home.return_value = Path("/home/user")
         result = get_app_data_dir()
         self.assertEqual(result.name, APP_NAME)
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
     @patch.dict("os.environ", {"APPDATA": "C:\\Users\\Test\\AppData\\Roaming"})
     @patch("notifyme.Path.mkdir")
@@ -248,8 +250,7 @@ class TestNotifyMeApp(unittest.TestCase):
         self.app.open_log_location()
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
-        self.assertEqual(args[0], "explorer")
-        self.assertEqual(args[1], "/select,")
+        self.assertIn(args[0], {"explorer", "xdg-open"})
 
     @patch("notifyme.subprocess.run")
     def test_open_exe_location(self, mock_run):
@@ -257,8 +258,7 @@ class TestNotifyMeApp(unittest.TestCase):
         self.app.open_exe_location()
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
-        self.assertEqual(args[0], "explorer")
-        self.assertEqual(args[1], "/select,")
+        self.assertIn(args[0], {"explorer", "xdg-open"})
 
     @patch("notifyme.subprocess.run")
     def test_open_config_location(self, mock_run):
@@ -266,8 +266,7 @@ class TestNotifyMeApp(unittest.TestCase):
         self.app.open_config_location()
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
-        self.assertEqual(args[0], "explorer")
-        self.assertEqual(args[1], "/select,")
+        self.assertIn(args[0], {"explorer", "xdg-open"})
 
     @patch("notifyme.webbrowser.open")
     def test_open_user_guide(self, mock_open):
@@ -322,61 +321,41 @@ class TestNotifyMeApp(unittest.TestCase):
         self.assertIn("30min", title)
         self.assertIn("120min", title)
 
-    @patch("notifyme.Notification")
-    def test_show_notification(self, mock_notification):
+    @patch("notifyme._LEGACY_NOTIFICATIONS.show_notification")
+    def test_show_notification(self, mock_show_notification):
         """Test showing a notification."""
-        mock_toast = MagicMock()
-        mock_notification.return_value = mock_toast
-
         self.app.show_notification("Test Title", ["Test Message"])
+        mock_show_notification.assert_called_once_with(
+            "Test Title", ["Test Message"], sound_enabled=True
+        )
 
-        mock_notification.assert_called_once()
-        mock_toast.set_audio.assert_called_once()
-        mock_toast.show.assert_called_once()
-
-    @patch("notifyme.Notification")
-    def test_show_blink_notification(self, mock_notification):
+    @patch("notifyme._LEGACY_NOTIFICATIONS.show_notification")
+    def test_show_blink_notification(self, mock_show_notification):
         """Test showing a blink notification."""
-        mock_toast = MagicMock()
-        mock_notification.return_value = mock_toast
-
         self.app.show_reminder_notification(REMINDER_BLINK)
+        call_args = mock_show_notification.call_args[0]
+        self.assertEqual(call_args[0], "Eye Blink Reminder")
 
-        call_args = mock_notification.call_args[1]
-        self.assertEqual(call_args["title"], "Eye Blink Reminder")
-
-    @patch("notifyme.Notification")
-    def test_show_walking_notification(self, mock_notification):
+    @patch("notifyme._LEGACY_NOTIFICATIONS.show_notification")
+    def test_show_walking_notification(self, mock_show_notification):
         """Test showing a walking notification."""
-        mock_toast = MagicMock()
-        mock_notification.return_value = mock_toast
-
         self.app.show_reminder_notification(REMINDER_WALKING)
+        call_args = mock_show_notification.call_args[0]
+        self.assertEqual(call_args[0], "Walking Reminder")
 
-        call_args = mock_notification.call_args[1]
-        self.assertEqual(call_args["title"], "Walking Reminder")
-
-    @patch("notifyme.Notification")
-    def test_show_water_notification(self, mock_notification):
+    @patch("notifyme._LEGACY_NOTIFICATIONS.show_notification")
+    def test_show_water_notification(self, mock_show_notification):
         """Test showing a water notification."""
-        mock_toast = MagicMock()
-        mock_notification.return_value = mock_toast
-
         self.app.show_reminder_notification(REMINDER_WATER)
+        call_args = mock_show_notification.call_args[0]
+        self.assertEqual(call_args[0], "Water Reminder")
 
-        call_args = mock_notification.call_args[1]
-        self.assertEqual(call_args["title"], "Water Reminder")
-
-    @patch("notifyme.Notification")
-    def test_show_pranayama_notification(self, mock_notification):
+    @patch("notifyme._LEGACY_NOTIFICATIONS.show_notification")
+    def test_show_pranayama_notification(self, mock_show_notification):
         """Test showing a pranayama notification."""
-        mock_toast = MagicMock()
-        mock_notification.return_value = mock_toast
-
         self.app.show_reminder_notification(REMINDER_PRANAYAMA)
-
-        call_args = mock_notification.call_args[1]
-        self.assertEqual(call_args["title"], "Pranayama Reminder")
+        call_args = mock_show_notification.call_args[0]
+        self.assertEqual(call_args[0], "Pranayama Reminder")
 
     def test_create_icon_image(self):
         """Test creating icon image."""
@@ -648,11 +627,13 @@ class TestTimerWorkers(unittest.TestCase):
         self.app.reminder_timer_worker(REMINDER_BLINK)
         mock_sleep.assert_called_with(1)
 
-    @patch("notifyme.logging.warning")
-    def test_reminder_timer_worker_unknown_type_logs(self, mock_warning):
+    @patch("notifyme.get_logger")
+    def test_reminder_timer_worker_unknown_type_logs(self, mock_get_logger):
         """Test unknown reminder types log a warning and return."""
+        mock_logger = MagicMock()
+        mock_get_logger.return_value = mock_logger
         self.app.reminder_timer_worker("unknown")
-        mock_warning.assert_called_once()
+        mock_logger.warning.assert_called_once()
 
 
 if __name__ == "__main__":

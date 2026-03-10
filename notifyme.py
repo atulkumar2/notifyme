@@ -15,11 +15,14 @@ from pathlib import Path
 
 
 from PIL import Image
-from winotify import Notification, audio
+
+from notifyme_app.tray_backend import configure_pystray_backend
+
+configure_pystray_backend()
 
 from notifyme_app import NotifyMeApp as _RuntimeNotifyMeApp
 from notifyme_app.logger import get_logger, setup_logging, shutdown_logging
-
+from notifyme_app.notifications import NotificationManager
 from notifyme_app.constants import (
     APP_NAME,
     APP_REMINDER_APP_ID,
@@ -78,10 +81,16 @@ __all__ = [
     "get_idle_seconds",
 ]
 
+_LEGACY_NOTIFICATIONS = NotificationManager()
+
 
 def get_app_data_dir() -> Path:
     """Return the per-user app data directory for config and logs."""
-    app_data = Path(os.environ.get("APPDATA", Path.home())) / APP_NAME
+    if sys.platform == "win32":
+        base_dir = Path(os.environ.get("APPDATA", Path.home()))
+    else:
+        base_dir = Path.home() / ".config"
+    app_data = base_dir / APP_NAME
     app_data.mkdir(parents=True, exist_ok=True)
     return app_data
 
@@ -225,15 +234,24 @@ class NotifyMeApp:
 
     def open_log_location(self) -> None:
         """Open the folder containing the log file."""
-        subprocess.run(["explorer", "/select,", str(get_log_file_path())], check=False)
+        args = ["explorer", "/select,", str(get_log_file_path())]
+        if sys.platform != "win32":
+            args = ["xdg-open", str(get_log_file_path().parent)]
+        subprocess.run(args, check=False)
 
     def open_exe_location(self) -> None:
         """Open the folder containing the executable."""
-        subprocess.run(["explorer", "/select,", str(get_exe_path())], check=False)
+        args = ["explorer", "/select,", str(get_exe_path())]
+        if sys.platform != "win32":
+            args = ["xdg-open", str(get_exe_path().parent)]
+        subprocess.run(args, check=False)
 
     def open_config_location(self) -> None:
         """Open the folder containing the configuration file."""
-        subprocess.run(["explorer", "/select,", str(self.config_file)], check=False)
+        args = ["explorer", "/select,", str(self.config_file)]
+        if sys.platform != "win32":
+            args = ["xdg-open", str(self.config_file.parent)]
+        subprocess.run(args, check=False)
 
     def open_help(self) -> None:
         """Open the help documentation in the default web browser."""
@@ -273,10 +291,7 @@ class NotifyMeApp:
 
     def show_notification(self, title: str, messages: Iterable[str]) -> None:
         """Show a notification with the given title and messages."""
-        message = next(iter(messages), "")
-        toast = Notification(app_id=APP_REMINDER_APP_ID, title=title, msg=message)
-        toast.set_audio(audio.Default, loop=False)
-        toast.show()
+        _LEGACY_NOTIFICATIONS.show_notification(title, list(messages), sound_enabled=True)
 
     def show_reminder_notification(self, reminder_type: str) -> None:
         """Show a notification for a specific reminder type."""
@@ -367,7 +382,12 @@ def cleanup_instances():
             # by window title or just rely on the user killing the exe.
             logger.info("Sent termination signal to NotifyMe.exe instances")
         else:
-            logger.warning("Cleanup not implemented for this platform")
+            subprocess.run(
+                ["pkill", "-f", "notifyme.py|NotifyMe"],
+                capture_output=True,
+                check=False,
+            )
+            logger.info("Sent termination signal to Linux NotifyMe instances")
     except Exception as e:
         logger.error("Failed to cleanup instances: %s", e)
 

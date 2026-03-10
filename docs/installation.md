@@ -103,10 +103,10 @@ If you want to build your own `.exe`:
    .\scripts\build.ps1
    ```
 
-   Or manually with Python:
+   Or manually with uv:
 
    ```bash
-   .venv\Scripts\python.exe -m PyInstaller NotifyMe.spec
+   uv run pyinstaller NotifyMe.spec
    ```
 
 3. Find your executable at `dist/NotifyMe.exe`

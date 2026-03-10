@@ -39,7 +39,6 @@ License: MIT
 Version: 2.2.0
 """
 
-from .app import NotifyMeApp
 from .constants import APP_VERSION
 
 __version__ = APP_VERSION
@@ -47,3 +46,12 @@ __author__ = "Atul Kumar"
 __license__ = "MIT"
 
 __all__ = ["NotifyMeApp", "APP_VERSION"]
+
+
+def __getattr__(name: str):
+    """Lazy-load heavy modules so utility imports do not require UI deps."""
+    if name == "NotifyMeApp":
+        from .app import NotifyMeApp
+
+        return NotifyMeApp
+    raise AttributeError(name)

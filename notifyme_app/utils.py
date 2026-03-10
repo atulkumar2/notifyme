@@ -5,27 +5,32 @@ This module contains helper functions for file paths, system operations,
 and other utility functions used throughout the application.
 """
 
-import ctypes
 import os
 import sys
-from ctypes import wintypes
 from pathlib import Path
+
+if sys.platform == "win32":
+    import ctypes
+    from ctypes import wintypes
+
+    class LASTINPUTINFO(ctypes.Structure):
+        """Windows structure for getting last input information."""
+
+        _fields_ = [
+            ("cbSize", wintypes.UINT),
+            ("dwTime", wintypes.DWORD),
+        ]
 
 from notifyme_app.constants import APP_NAME
 
 
-class LASTINPUTINFO(ctypes.Structure):
-    """Windows structure for getting last input information."""
-
-    _fields_ = [
-        ("cbSize", wintypes.UINT),
-        ("dwTime", wintypes.DWORD),
-    ]
-
-
 def get_app_data_dir() -> Path:
     """Return the per-user app data directory for config and logs."""
-    app_data = Path(os.environ.get("APPDATA", Path.home())) / APP_NAME
+    if sys.platform == "win32":
+        base_dir = Path(os.environ.get("APPDATA", Path.home()))
+    else:
+        base_dir = Path.home() / ".config"
+    app_data = base_dir / APP_NAME
     app_data.mkdir(parents=True, exist_ok=True)
     return app_data
 
@@ -63,6 +68,9 @@ def get_resource_path(filename: str) -> Path:
 
 def get_idle_seconds() -> float | None:
     """Return system idle time in seconds, or None if unavailable."""
+    if sys.platform != "win32":
+        return None
+
     try:
         info = LASTINPUTINFO(cbSize=ctypes.sizeof(LASTINPUTINFO))
         if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(info)):

@@ -112,7 +112,7 @@ Online docs: <https://atulkumar2.github.io/notifyme/>
    Or manually:
 
    ```bash
-   python notifyme.py
+   uv run notifyme.py
    ```
 
 The application will appear in your system tray (look for the icon in the bottom-right corner of your screen).
@@ -150,7 +150,7 @@ notifyme_app/
 
 - **For Users**: No changes needed - all functionality remains the same
 - **For Developers**: See [MIGRATION.md](MIGRATION.md) for detailed migration guide
-- **Entry Point**: `python notifyme.py` (now uses the new modular architecture)
+- **Entry Point**: `uv run notifyme.py` (now uses the new modular architecture)
 
 ### Building a Standalone Executable (For Developers)
 
@@ -177,7 +177,7 @@ You can create a portable standalone executable:
 3. **Optional: Generate SHA256 hash** for integrity verification:
 
    ```bash
-   .venv\Scripts\python.exe -c "import hashlib; p = r'dist\NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); print(f'{h}  NotifyMe.exe')"
+   uv run python -c "import hashlib; p = r'dist/NotifyMe.exe'; h = hashlib.sha256(open(p, 'rb').read()).hexdigest(); print(f'{h}  NotifyMe.exe')"
    ```
 
 ### Running Tests (For Developers)
